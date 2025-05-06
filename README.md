@@ -24,7 +24,7 @@ npm install
 
 ### 3. Buat File `.env`
 ```bash
-cp .env.example .env
+copy .env.example .env
 ```
 
 Edit file `.env` dan sesuaikan konfigurasi database:
