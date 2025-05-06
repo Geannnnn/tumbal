@@ -1,0 +1,66 @@
+<!-- <php
+
+$jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat')->toArray();
+
+        $suratList = Surat::with(['jenisSurat', 'dibuatOleh','pengusul'])
+            ->whereHas('dibuatOleh.role', function($q) {
+                $q->where('role', 'mahasiswa');
+            })->paginate(5);
+
+        [$columns, $data] = $this->generateTableData($suratList);
+
+        return view('pengusul.mahasiswa.pengajuansurat', compact('jenisSurat', 'columns', 'data','suratList'));
+    
+
+
+
+@if ($surat->lampiran)
+    <a href="{{ asset('storage/' . $surat->lampiran) }}"
+       class="text-blue-600 hover:underline"
+       target="_blank" download>
+        <i class="fa-solid fa-download mr-1"></i> Unduh Lampiran
+    </a>
+@else
+    <p class="text-sm text-gray-500">Tidak ada lampiran</p>
+@endif
+
+namespace App\Http;
+
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
+
+class Kernel extends HttpKernel
+{
+    /**
+     * The application's route middleware groups.
+     *
+     * @var array<string, array<int, class-string|string>>
+     */
+    protected $middlewareGroups = [
+        'web' => [
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
+
+        'api' => [
+            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
+    ];
+
+    /**
+     * The application's route middleware.
+     *
+     * @var array<string, class-string|string>
+     */
+    protected $middlewareAliases = [
+        'auth' => \App\Http\Middleware\Authenticate::class,
+        'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'role' => \App\Http\Middleware\RoleMiddleware::class,
+        'multi-auth' => \App\Http\Middleware\AuthenticatePengusulOrStaff::class,
+    ];
+} -->
