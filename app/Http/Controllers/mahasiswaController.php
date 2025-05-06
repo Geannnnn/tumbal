@@ -18,6 +18,9 @@ class mahasiswaController extends Controller
         $query = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul'])
             ->whereHas('pengusul', function ($q) use ($userId) {
                 $q->where('pivot_pengusul_surat.id_pengusul', $userId);
+            })
+            ->orWhereHas('dibuatOleh', function ($q) use ($userId) {
+                $q->where('id_pengusul', $userId);
             });
 
         if ($search = $request->input('search.value')) {

@@ -8,7 +8,7 @@
         }
     @endphp
    <!-- Sidebar -->
-    <div class="w-[250px] bg-[#F1F2F7] shadow-lg flex flex-col p-4">
+    <div class="w-[250px] bg-[#F1F2F7] shadow-lg flex flex-col p-4 min-h-screen">
         <div class="flex items-center">
             <img src="{{ asset('images/surat_logo.svg') }}" alt="logo" class="w-14 h-14 rounded-full mb-2 ml-2">
             <h1 class="text-1xl font-bold text-blue-500 ml-1">Ur Mine</h1>
