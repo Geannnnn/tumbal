@@ -19,7 +19,7 @@
         
             {{-- Mahasiswa --}}
             @if($roleRoutePrefix)
-                <x-sidebar-link route="{{ $roleRoutePrefix }}.dashboard" icon="fa-house fa-shake" label="Dashboard" />
+                <x-sidebar-link route="{{ $roleRoutePrefix }}.dashboard" icon="fa-house fa-shake" label="Beranda" />
 
                 @if(in_array($roleRoutePrefix, ['dosen', 'mahasiswa']))
                     <x-sidebar-link route="{{ $roleRoutePrefix }}.pengajuansurat" icon="fa-file-import fa-bounce" label="Pengajuan Surat" />
@@ -37,16 +37,17 @@
             
             {{-- Tata Usaha --}}
             @if(isset($roleStaff) && $roleStaff === 'Tata Usaha')
-                <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Dashboard" />
+                <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Beranda" />
                 <x-sidebar-link route="tatausaha.statistik" icon="fa-solid fa-chart-simple mr-3" label="Statistik" />
         
             {{-- Staff Umum --}}
             @elseif(isset($roleStaff) && $roleStaff === 'Staff Umum')
-                <x-sidebar-link route="staffumum.dashboard" icon="fa-house" label="Dashboard" />
+                <x-sidebar-link route="staffumum.dashboard" icon="fa-house" label="Beranda" />
                 <x-sidebar-link route="staffumum.statistik" icon="fa-solid fa-chart-simple mr-3" label="Statistik" />
                 {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Terbitkan" /> --}}
                 {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Status Surat" /> --}}
                 {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Kelola Jenis Surat" /> --}}
+                {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Profil" /> --}}
             @endif
             <a href="{{ route('logout') }}" class="hover:text-white hover:bg-red-900 text-[#878A9A] rounded-[5px] font-medium py-2 px-5">
                 <i class="fa-solid fa-gear fa-spin mr-3"></i>Setting
