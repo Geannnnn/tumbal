@@ -30,7 +30,7 @@ copy .env.example .env
 Edit file `.env` dan sesuaikan konfigurasi database:
 
 ```env
-DB_DATABASE=nama_database
+DB_DATABASE=db_surat
 DB_USERNAME=root
 DB_PASSWORD=
 ```
