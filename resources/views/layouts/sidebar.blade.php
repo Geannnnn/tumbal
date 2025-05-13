@@ -38,12 +38,12 @@
             {{-- Tata Usaha --}}
             @if(isset($roleStaff) && $roleStaff === 'Tata Usaha')
                 <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Dashboard" />
-                {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Statistik" /> --}}
+                <x-sidebar-link route="tatausaha.statistik" icon="fa-solid fa-chart-simple mr-3" label="Statistik" />
         
             {{-- Staff Umum --}}
             @elseif(isset($roleStaff) && $roleStaff === 'Staff Umum')
                 <x-sidebar-link route="staffumum.dashboard" icon="fa-house" label="Dashboard" />
-                {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Statistik" /> --}}
+                <x-sidebar-link route="staffumum.statistik" icon="fa-solid fa-chart-simple mr-3" label="Statistik" />
                 {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Terbitkan" /> --}}
                 {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Status Surat" /> --}}
                 {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Kelola Jenis Surat" /> --}}
