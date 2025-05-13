@@ -86,6 +86,7 @@ Route::middleware(['multi-auth'])->group(function () {
 
         Route::prefix('tata-usaha')->controller(tatausahaController::class)->group(function () {
             Route::get('/', 'index')->name('tatausaha.dashboard');
+            Route::get('/statistik','statistik')->name(tatausaha.statistik');
         });
     });
 });
