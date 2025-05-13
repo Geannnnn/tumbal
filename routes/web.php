@@ -80,6 +80,7 @@ Route::middleware(['multi-auth'])->group(function () {
         Route::prefix('staff-umum')->controller(staffumumController::class)->group(function () {
             Route::get('/', 'index')->name('staffumum.dashboard');
             Route::get('/search', 'search')->name('staffumum.search');
+            Route::get('/statistik','statistik')->name('staffumum.statistik');
 
         });
 

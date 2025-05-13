@@ -17,4 +17,9 @@ class staffumumController extends Controller
 
         return view('staff.staff-umum.index',compact('columns'));
     }
+
+    public function statistik()
+    {
+        return view('staff.staff-umum.statistik');
+    }
 }
