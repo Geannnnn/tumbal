@@ -1,4 +1,4 @@
-<?php
+<!-- <php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('surat', function (Blueprint $table) {
-            $table->boolean('is_draft')->default(0)->after('deskripsi');
+        Schema::table('pengusul', function (Blueprint $table) {
+            $table->timestamps();
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('surat', function (Blueprint $table) {
-            $table->dropColumn('is_draft');
+        Schema::table('pengusul', function (Blueprint $table) {
+            $table->dropColumn(['created_at', 'updated_at']);
         });
     }
-};
+}; -->

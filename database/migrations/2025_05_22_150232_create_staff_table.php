@@ -11,7 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pengusul', function (Blueprint $table) {
+        Schema::create('staff', function (Blueprint $table) {
+            $table->id('id_staff');
+            $table->string('nama');
+            $table->string('nip', 20)->unique()->nullable();
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->enum('role', ['Tata Usaha', 'Staff Umum']);
             $table->timestamps();
         });
     }
@@ -21,8 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pengusul', function (Blueprint $table) {
-            $table->dropColumn(['created_at', 'updated_at']);
-        });
+        Schema::dropIfExists('staff');
     }
 };
