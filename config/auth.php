@@ -50,6 +50,16 @@ return [
             'driver' => 'session',
             'provider' => 'staffs',
         ],
+
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admins',
+        ],
+
+        'kepala_sub' => [
+            'driver' => 'session',
+            'provider' => 'kepala_subs',
+        ],
     ],
 
     /*
@@ -83,6 +93,16 @@ return [
         'staffs' => [
             'driver' => 'eloquent',
             'model' => App\Models\Staff::class,
+        ],
+
+         'admins' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Admin::class,
+        ],
+
+        'kepala_subs' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\KepalaSub::class,
         ],
     ],
 

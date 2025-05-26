@@ -41,6 +41,10 @@
                             {{ Auth::guard('pengusul')->user()->nama }}
                         @elseif(Auth::guard('staff')->check())
                             {{ Auth::guard('staff')->user()->nama }}
+                        @elseif (Auth::guard('admin')->check())
+                            {{ Auth::guard('admin')->user()->nama }}
+                        @elseif (Auth::guard('kepala_sub')->check())
+                            {{ Auth::guard('kepala_sub')->user()->nama }}
                         @endif
                     </h1>  <!-- Ambil nama dari user --> 
                     <div class="flex justify-end">
@@ -55,6 +59,10 @@
                             @elseif(Auth::guard('staff')->check())
                                 {{-- Ambil role dari staff --}}
                                 {{ Auth::guard('staff')->user()->role }}
+                            @elseif(Auth::guard('kepala_sub')->check())
+                                Kepala Sub
+                            @elseif(Auth::guard('admin')->check())
+                                Admin 
                             @endif
                         </span>
                     </div>

@@ -9,7 +9,12 @@ class AuthenticatePengusulOrStaff
 {
     public function handle($request, Closure $next)
     {
-        if (Auth::guard('pengusul')->check() || Auth::guard('staff')->check()) {
+        if (
+            Auth::guard('pengusul')->check() ||
+            Auth::guard('staff')->check() ||
+            Auth::guard('admin')->check() ||
+            Auth::guard('kepala_sub')->check()
+        ) {
             return $next($request);
         }
 

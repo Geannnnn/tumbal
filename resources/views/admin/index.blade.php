@@ -2,7 +2,7 @@
 
 @include('components.alertnotif')
 
-@section('title','Dashboard Mahasiswa')
+@section('title','Dashboard Admin')
 
 @section('content')
 <x-alertnotif />
@@ -11,27 +11,33 @@
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
-        <main class="flex-1 bg-white p-4 sm:p-6 md:p-8 lg:p-12">
+        <main class="flex-1 bg-white p-12">
             @yield('content')
-            <div class="title-page flex flex-col md:flex-row justify-between gap-4">
-                <h1 class="text-2xl md:text-[32px] text-[#1F384C] font-medium">
-                    Dashboard
-                </h1>
-                
-                <div class="flex flex-col md:flex-row items-start md:items-center gap-3">
-                    <div class="flex bg-[#707FDD] rounded-[15px] font-medium h-10 overflow-hidden">
+            <div class="title-page flex justify-between">
+                <div class="flex justify-start">
+                    <h1 class="text-[32px] text-[#1F384C] font-medium">
+                        Dashboard
+                    </h1>
+                </div>
+                <div class="flex justify-end">
+                    
+                    <div class="flex mt-4 mr-5 bg-[#707FDD] rounded-[15px] font-medium relative h-10">
                         <button class="py-2 px-4 hover:cursor-pointer rounded-[15px] " id="btn-jarak">Jarak</button>
                         <button class="py-2 px-4 hover:cursor-pointer rounded-[15px] " id="btn-bulan">Bulan</button>
                         <button class="inline-block bg-[#4628A4] text-white rounded-[15px] py-2 px-4 hover:cursor-pointer" id="btn-tahun">Tahun</button>
                     </div>
-                    <div class="" id="input-container">
+                    
+                    <div class="mt-4" id="input-container">
                         <select name="year" id="year" class="bg-[#707FDD] py-2 px-4 rounded-[5px]"></select>
                     </div>
+                    
+                    
+ 
                 </div>
             </div>
         
 
-            <div class="flex flex-col sm:flex-row gap-4 mt-6">
+            <div class="flex mt-6">
                 <div class="flex justify-around items-center bg-[#AB8DE533] w-[660px] h-[148px] rounded-[30px]">
                     <div class="flex items-center">
                         <div class="w-[90px] h-[82px] rounded-full bg-gradient-to-b from-[#5A6ACF] via-[#5A6ACF] flex justify-center items-center">
@@ -70,8 +76,8 @@
             <div class="w-full">
                 <x-datatable
                     id="surat-table"
-                    :columns="$columns"
-                    ajaxUrl="{{ route('mahasiswa.search') }}"
+                    {{-- :columns="$columns" --}}
+                    {{-- ajaxUrl="{{ route('mahasiswa.search') }}" --}}
                     :ordering="true"
                     :lengthMenu="false"
                     :pageLength="5"

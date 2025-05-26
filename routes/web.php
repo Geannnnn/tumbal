@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\adminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\dosenController;
+use App\Http\Controllers\KepalaSubController;
 use App\Http\Controllers\mahasiswaController;
 use App\Http\Controllers\PengusulController;
 use App\Http\Controllers\staffumumController;
@@ -86,11 +88,23 @@ Route::middleware(['multi-auth'])->group(function () {
 
         Route::prefix('tata-usaha')->controller(tatausahaController::class)->group(function () {
             Route::get('/', 'index')->name('tatausaha.dashboard');
-            Route::get('/statistik','statistik')->name(tatausaha.statistik');
+            Route::get('/statistik','statistik')->name('tatausaha.statistik');
         });
     });
+
+    // Admin
+    Route::middleware('role:admin')->prefix('admin')->controller(adminController::class)->group(function () {
+        Route::get('/', 'index')->name('admin.dashboard');
+        Route::get('/kelola-pengusul', 'kelolapengusul')->name('admin.kelolapengusul');
+        Route::get('/jenis-surat', 'jenissurat')->name('admin.kelolajenissurat');
+        Route::post('/jenis-surat',  'store')->name('admin.jenissurat.store');
+        Route::put('/jenis-surat/{id}',  'update')->name('admin.jenissurat.update');
+        Route::delete('/jenis-surat/{id}',  'destroy')->name('admin.jenissurat.destroy');
+    });
+
+    // Kepala Sub
+    Route::middleware('role:kepala_sub')->prefix('kepala-sub')->controller(KepalaSubController::class)->group(function () {
+        Route::get('/', 'index')->name('kepalasub.dashboard');
+    });
+
 });
-
-
-Route::post('/test',[testController::class,'test'])->name('test');
-Route::post('/aju',[testController::class,'aju'])->name('aju');// Route::middleware('auth')->group(function () { // Middleware auth untuk memastikan user sudah login

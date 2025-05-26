@@ -53,115 +53,27 @@ class AuthController extends Controller
                 return back()->withErrors(['error', 'Role tidak dikenal.']);
             }
         }
+
+        $adminCredentials = ['username' => $identity, 'password' => $password];
+        if (Auth::guard('admin')->attempt($adminCredentials)) {
+            $request->session()->regenerate();
+            return redirect('/admin')->with('success', 'Berhasil login sebagai Admin!');
+        }
+
+        $kepalaSubCredentials = ['nip' => $identity, 'password' => $password];
+        if (Auth::guard('kepala_sub')->attempt($kepalaSubCredentials)) {
+            $request->session()->regenerate();
+            return redirect('/kepala-sub')->with('success', 'Berhasil login sebagai Kepala Sub!');
+        }
+
+
         return back()->withErrors(['identity' => 'NIP atau password salah.']);
+
+        
+
+
     }
 }
 
        
-        // $staffCredentials = ['nip' => $identity, 'password' => $password];
-
-        // if (Auth::guard('staff')->attempt($staffCredentials)) {
-        //     Log::info('Login staff berhasil', ['nip' => $identity]);
-        //     $request->session()->regenerate();
-        //     $staff = Auth::guard('staff')->user();
-        //     Log::info('Staff yang login:', ['staff' => $staff]);
-        //     switch ($staff->role) {
-        //         case 'Tata Usaha':
-        //             return redirect('/staff/tata-usaha')->with('success', 'Berhasil login sebagai Tata Usaha!');
-        //         case 'Staff Umum':
-        //             return redirect('/staff/staff-umum')->with('success', 'Berhasil login sebagai Staff Umum!');
-        //         default:
-        //             return redirect('/')->with('info', 'Login berhasil, tapi role staff tidak dikenali.');
-        //     }
-        // }
-
-    //     return back()->with('error', 'NIM / NIP atau password salah.');
-    // }
-
-
-
-
-  // $pengusul = Auth::guard('pengusul')->user();
-
-    //     dd($pengusul);
-    // Login sebagai Pengusul
-    // if (Auth::guard('pengusul')->attempt($credentials)) {
-    //     $request->session()->regenerate();
-    //     $pengusul = Auth::guard('pengusul')->user();
-    //     Log::info('Pengusul login berhasil', ['nim' => $pengusul->nim]);
-    //     // Arahkan sesuai dengan role
-    //     switch ($pengusul->id_role_pengusul) {
-    //         case 1:
-    //             return redirect('/pengusul/dosen')->with('success', 'Berhasil login sebagai Dosen!');
-    //         case 2:
-    //             return redirect('/pengusul/mahasiswa')->with('success', 'Berhasil login sebagai Mahasiswa!');
-    //         default:
-    //             return redirect('/')->with('error', 'Role tidak dikenal.');
-    //     }
-    // }
-
-    // // Login sebagai Staff
-    // if (Auth::guard('staff')->attempt($credentials)) {
-    //     $request->session()->regenerate();
-    //     $staff = Auth::guard('staff')->user();
-
-    //     switch ($staff->role) {
-    //         case 'Tata Usaha':
-    //             return redirect('/staff/tata-usaha')->with('success', 'Berhasil login sebagai Tata Usaha!');
-    //         case 'Staff Umum':
-    //             return redirect('/staff/staff-umum')->with('success', 'Berhasil login sebagai Staff Umum!');
-    //         default:
-    //             return redirect('/')->with('info', 'Login berhasil, tapi role staff tidak dikenali.');
-    //     }
-    // }
-
-
-    //===========================//
-
-    // if (filter_var($identity, FILTER_VALIDATE_EMAIL)) {
-    //     $credentials = [
-    //         'email' => $identity,
-    //         'password' => $request->password,
-    //     ];
-    // } else {
-    //     $credentials = [
-    //         'nim' => $identity,
-    //         'password' => $request->password,
-    //     ];
-    // }
-
-
-    // if (Auth::guard('pengusul')->attempt($credentials)) {
-    //     // dd('Pengusul berhasil login!');
-    //     $request->session()->regenerate();
-    //     $pengusul = Auth::guard('pengusul')->user();
-    //     Log::info('Pengusul login berhasil', ['nim' => $pengusul->nim]);
-    //     switch ($pengusul->id_role_pengusul) {
-    //         case 1:
-    //             return redirect('/dosen')->with('success', 'Berhasil login sebagai Dosen!');
-    //         case 2:
-    //             return redirect()->intended('/mahasiswa')->with('success', 'Berhasil login sebagai Mahasiswa!');
-    //             // dd('Berhasil login sebagai Mahasiswa!');
-    //         default:
-    //             return redirect('/')->with('error', 'Role tidak dikenal.');
-    //     }
-    // } else {
-    //     // dd('Pengusul login gagal!');
-    //     Log::info('Login sebagai Pengusul gagal', ['credentials' => $credentials]);
-    // }
     
-    // if (Auth::guard('staff')->attempt($credentials)) {
-    //     $request->session()->regenerate();
-    //     $staff = Auth::guard('staff')->user();
-    //     Log::info('Staff login berhasil', ['role' => $staff->role]);
-    //     switch ($staff->role) {
-    //         case 'Tata Usaha':
-    //             return redirect('/staff/tata-usaha')->with('success', 'Berhasil login sebagai Tata Usaha!');
-    //         case 'Staff Umum':
-    //             return redirect('/staff/staff-umum')->with('success', 'Berhasil login sebagai Staff Umum!');
-    //         default:
-    //             return redirect('/')->with('info', 'Login berhasil, tapi role staff tidak dikenali.');
-    //     }
-    // } else {
-    //     Log::info('Login sebagai Staff gagal', ['credentials' => $credentials]);
-    // }

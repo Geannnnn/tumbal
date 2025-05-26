@@ -33,23 +33,18 @@
                 <x-sidebar-link route="tatausaha.dashboard" icon="fa-square-check fa-flip" label="Status Surat" />
                 <x-sidebar-link route="tatausaha.dashboard" icon="fa-file fa-flip" label="Kelola Jenis Surat" />
                 @endif
+            @endif          
+
+            @if (Auth::guard('admin')->check()) 
+                <x-sidebar-link route="admin.dashboard" icon="fa-house" label="Beranda" />
+                <x-sidebar-link route="admin.kelolapengusul" icon="fa-chart-bar" label="Kelola Pengusul" />
+                <x-sidebar-link route="admin.kelolajenissurat" icon="fa-chart-bar" label="Kelola Jenis Surat" />
+            @elseif (Auth::guard('kepala_sub')->check()) 
+                <x-sidebar-link route="kepalasub.dashboard" icon="fa-house" label="Beranda" />
+              
             @endif
-            
-            {{-- Tata Usaha --}}
-            @if(isset($roleStaff) && $roleStaff === 'Tata Usaha')
-                <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Beranda" />
-                <x-sidebar-link route="tatausaha.statistik" icon="fa-solid fa-chart-simple mr-3" label="Statistik" />
-        
-            {{-- Staff Umum --}}
-            @elseif(isset($roleStaff) && $roleStaff === 'Staff Umum')
-                <x-sidebar-link route="staffumum.dashboard" icon="fa-house" label="Beranda" />
-                <x-sidebar-link route="staffumum.statistik" icon="fa-solid fa-chart-simple mr-3" label="Statistik" />
-                {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Terbitkan" /> --}}
-                {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Status Surat" /> --}}
-                {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Kelola Jenis Surat" /> --}}
-                {{-- <x-sidebar-link route="tatausaha.dashboard" icon="fa-house" label="Profil" /> --}}
-            @endif
-            <a href="{{ route('logout') }}" class="hover:text-white hover:bg-red-900 text-[#878A9A] rounded-[5px] font-medium py-2 px-5">
+
+            <a href="" class="hover:text-white hover:bg-[#7682d2] text-[#878A9A] rounded-[5px] font-medium py-2 px-5">
                 <i class="fa-solid fa-gear fa-spin mr-3"></i>Setting
             </a>
             <a href="{{ route('logout') }}" class="hover:text-white hover:bg-red-900 text-[#878A9A] rounded-[5px] font-medium py-2 px-5 mt-auto">
