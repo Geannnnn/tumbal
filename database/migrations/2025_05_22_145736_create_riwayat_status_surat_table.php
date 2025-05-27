@@ -17,8 +17,6 @@ return new class extends Migration
             $table->unsignedBigInteger('id_surat');
             $table->timestamp('tanggal_rilis')->useCurrent();
 
-            $table->foreign('id_status_surat')->references('id_status_surat')->on('status_surat')->onDelete('cascade');
-            $table->foreign('id_surat')->references('id_surat')->on('surat')->onDelete('cascade');
         });
     }
 

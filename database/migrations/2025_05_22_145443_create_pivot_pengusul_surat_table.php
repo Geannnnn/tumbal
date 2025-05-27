@@ -17,10 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('id_surat');
             $table->unsignedBigInteger('id_peran_keanggotaan');
 
-            $table->foreign('id_pengusul')->references('id_pengusul')->on('pengusul')->onDelete('cascade');
-            $table->foreign('id_surat')->references('id_surat')->on('surat')->onDelete('cascade');
-            $table->foreign('id_peran_keanggotaan')->references('id_peran_keanggotaan')->on('peran_anggota')->onDelete('cascade');
-        });
+         });
     }
 
     /**

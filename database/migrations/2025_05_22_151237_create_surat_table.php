@@ -24,9 +24,6 @@ return new class extends Migration
             $table->string('lampiran')->nullable();
             $table->timestamps();
 
-            // Foreign keys
-            $table->foreign('id_jenis_surat')->references('id_jenis_surat')->on('jenis_surat')->onDelete('restrict')->onUpdate('restrict');
-            $table->foreign('dibuat_oleh')->references('id_pengusul')->on('pengusul')->onDelete('restrict')->onUpdate('cascade');
         });
     }
 

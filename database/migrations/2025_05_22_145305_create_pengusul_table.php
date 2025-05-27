@@ -21,7 +21,6 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamps();
 
-            $table->foreign('id_role_pengusul')->references('id_role_pengusul')->on('role_pengusul')->onDelete('cascade');
         });
     }
 
