@@ -13,7 +13,7 @@ return new class extends Migration
     {
         // Tambahkan foreign key ke tabel pengusul
         Schema::table('pengusul', function (Blueprint $table) {
-            $table->foreign('id_role_pengusul')->references('id_role_pengusul')->on('role_pengusul')->onDelete('cascade');
+            $table->foreign('id_role_pengusul')->references('id_role_pengusul')->on('role_pengusul');
         });
 
         // Tambahkan foreign key ke tabel surat
@@ -24,15 +24,15 @@ return new class extends Migration
 
         // Tambahkan foreign key ke tabel pivot_pengusul_surat
         Schema::table('pivot_pengusul_surat', function (Blueprint $table) {
-            $table->foreign('id_pengusul')->references('id_pengusul')->on('pengusul')->onDelete('cascade');
-            $table->foreign('id_surat')->references('id_surat')->on('surat')->onDelete('cascade');
-            $table->foreign('id_peran_keanggotaan')->references('id_peran_keanggotaan')->on('peran_anggota')->onDelete('cascade');
+            $table->foreign('id_pengusul')->references('id_pengusul')->on('pengusul');
+            $table->foreign('id_surat')->references('id_surat')->on('surat');
+            $table->foreign('id_peran_keanggotaan')->references('id_peran_keanggotaan')->on('peran_anggota');
         });
 
         // Tambahkan foreign key ke tabel riwayat_status_surat
         Schema::table('riwayat_status_surat', function (Blueprint $table) {
-            $table->foreign('id_status_surat')->references('id_status_surat')->on('status_surat')->onDelete('cascade');
-            $table->foreign('id_surat')->references('id_surat')->on('surat')->onDelete('cascade');
+            $table->foreign('id_status_surat')->references('id_status_surat')->on('status_surat')->onDelete('restrict')->onUpdate('restrict');
+            $table->foreign('id_surat')->references('id_surat')->on('surat');
         });
     }
 
