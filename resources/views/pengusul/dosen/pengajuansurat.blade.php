@@ -36,17 +36,18 @@
         
                     {{-- Data Table --}}
         
-                    <div class="p-5">
-                        <x-dt-index
-                        :search="false"
-                        :columns="['Judul','Tanggal Terbit','Jenis Surat','Diajukan Oleh','Anggota','Dokumen','Deskripsi']"
-                        :data="[
-                        ['Row 1 Data 1','Row 1 Data 2','Row 1 Data 3','Row 1 Data 4','Row 1 Data 5','Row 1 Data 6','Row 1 Data 7'],
-                        ['Row 2 Data 1','Row 2 Data 2','Row 2 Data 3','Row 2 Data 4','Row 2 Data 5','Row 2 Data 6','Row 2 Data 7'],
-                        ]"
+                    <div id="datatable-container" class="p-5">
+                        <x-datatable
+                            id="pengajuan-table"
+                            :columns="$columns"
+                            ajaxUrl="{{ route('pengajuan.search') }}"
+                            :ordering="true"
+                            :lengthMenu="false"
+                            :pageLength="5"
+                            :showEdit="false"
+                            :showDelete="false"
                         />
-                        
-                    </div>
+                    </div>  
         
                 </div>
             </div>

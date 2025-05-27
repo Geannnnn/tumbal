@@ -11,66 +11,6 @@ use Yajra\DataTables\Facades\DataTables;
 class mahasiswaController extends Controller
 {   
 
-    public function pengajuansearch(Request $request){
-        
-        $userId = auth('pengusul')->id();
-
-        $query = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul'])
-            ->whereHas('pengusul', function ($q) use ($userId) {
-                $q->where('pivot_pengusul_surat.id_pengusul', $userId);
-            })
-            ->orWhereHas('dibuatOleh', function ($q) use ($userId) {
-                $q->where('id_pengusul', $userId);
-            });
-
-        if ($search = $request->input('search.value')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('judul_surat', 'like', "%{$search}%")
-                ->orWhereHas('dibuatOleh', function ($sub) use ($search) {
-                    $sub->where('nama', 'like', "%{$search}%");
-                })
-                ->orWhereHas('pengusul', function ($sub) use ($search) {
-                    $sub->where('nama', 'like', "%{$search}%");
-                });
-            });
-        }
-
-        $query->orderBy('tanggal_pengajuan','desc');
-
-        $recordsTotal = $query->count();
-
-        $suratList = $query->skip($request->start)
-            ->take($request->length)
-            ->get();
-
-        $data = [];
-        foreach ($suratList as $surat) {
-            $anggota = $surat->pengusul->where('pivot.id_peran_keanggotaan', 2)->pluck('nama')->join(', ');
-            $ketua = $surat->pengusul->firstWhere('pivot.id_peran_keanggotaan', 1)?->nama ?? '';
-            $shortDescription = \Illuminate\Support\Str::limit(strip_tags($surat->deskripsi), 50, '...');
-
-            $data[] = [
-                'judul_surat' => $surat->judul_surat,
-                'tanggal_pengajuan' => $surat->tanggal_pengajuan ?? '-',
-                'jenis_surat' => '<div class="flex items-center gap-1 text-md">
-                    <span>' . e($surat->jenisSurat->jenis_surat ?? '-') . '</span>
-                 </div>',
-                'dibuat_oleh' => $surat->dibuatOleh->nama ?? '-',
-                'ketua' => $ketua,
-                'anggota' => $anggota,
-                'lampiran' => $surat->lampiran ?? null,
-                'deskripsi' => $shortDescription,
-                'id' => $surat->id_surat
-            ];
-        }
-
-        return response()->json([
-            'draw' => intval($request->draw),
-            'recordsTotal' => $recordsTotal,
-            'recordsFiltered' => $recordsTotal,
-            'data' => $data
-        ]);
-    }
     public function index () {
 
         $columns = [
@@ -100,8 +40,10 @@ class mahasiswaController extends Controller
         $data = Surat::with(['dibuatOleh'])
             ->where('is_draft',1)
             ->whereHas('dibuatOleh.role',function($q){
-                $q->where('role',['mahasiswa','dosen']);
-            })->get();
+                $q->whereIn('role',['mahasiswa','dosen']);
+            })
+            ->orderBy('tanggal_pengajuan','desc')
+            ->get();
 
         $jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat')->toArray();
         return view('pengusul.mahasiswa.pengajuansurat', compact('jenisSurat','columns','data'));

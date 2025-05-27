@@ -40,7 +40,7 @@
                         <x-datatable
                             id="pengajuan-table"
                             :columns="$columns"
-                            ajaxUrl="{{ route('mahasiswa.pengajuansearch') }}"
+                            ajaxUrl="{{ route('pengajuan.search') }}"
                             :ordering="true"
                             :lengthMenu="false"
                             :pageLength="5"

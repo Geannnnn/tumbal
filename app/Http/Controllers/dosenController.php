@@ -9,82 +9,34 @@ use Illuminate\Http\Request;
 
 class dosenController extends Controller
 {
-    private function generateTableData($suratList){
-
-        $data = [];
-        $userId = auth('pengusul')->id();
-
-        foreach ($suratList as $surat) {
-
-            $isUserInvolved = 
-            $surat->pengusul->contains('id_pengusul',$userId) ||
-            $surat->dibuat_oleh == $userId;
-
-            if (!$isUserInvolved) continue;
-
-            $anggota = $surat->pengusul->where('pivot.id_peran_keanggotaan', 2)->pluck('nama')->join(', ');
-
-            $ketua = $surat->pengusul
-                ->firstWhere('pivot.id_peran_keanggotaan',1)?->nama ?? '';
-
-            $shortDescription = \Illuminate\Support\Str::limit(strip_tags($surat->deskripsi), 50, '...');   
-
-            $data[] = [
-                'id' => $surat->id_surat,
-                $surat->judul_surat,
-                $surat->tanggal_pengajuan ?? '-',
-                $surat->jenisSurat->jenis_surat ?? '-',
-                $surat->dibuatOleh->nama ?? '-',
-                $ketua,
-                $anggota,
-                $surat->lampiran 
-                    ? '<a href="' . asset('storage/' . $surat->lampiran) . '" target="_blank" class="text-blue-600 hover:underline"><i class="fa-solid fa-download mr-1"></i>Unduh</a>' 
-                    : 'Tidak ada lampiran',
-                $shortDescription
-            ];
-        }
-
-        $columns = ['Judul', 'Tanggal Pengajuan', 'Jenis Surat', 'Diajukan Oleh', 'Diketuai Oleh', 'Anggota', 'Dokumen', 'Deskripsi'];
-
-        return [$columns, $data];
-    }
-
     public function index () {
         return view('pengusul.dosen.index');
     }
 
-    // public function pengajuanshow(Request $request)
-    // {
-    //     if ($request->ajax()) {
-    //         $data = Surat::where('role', 1)  
-    //                     ->paginate(10);
-
-    //         return view('partials.surat_table', compact('data'));
-    //     }
-
-    //     return view('pengajuan.surat_dosen'); 
-    // }
 
     public function pengajuan() {
-        $jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat')->toArray();
 
-        $userId = auth('pengusul')->id();
-
-        $suratList = Surat::with(['jenisSurat', 'dibuatOleh','pengusul'])
-            ->where(function($query) use ($userId){
-                $query->wherehas('pengusul',function($q) use ($userId){
-                    $q->where('pengusul.id_pengusul',$userId);
-                }) 
-                ->orWhere('dibuat_oleh',$userId);
+        $columns = [
+            'judul_surat' => 'Judul Surat',
+            'tanggal_pengajuan' => 'Tanggal Pengajuan',
+            'jenis_surat' => 'Jenis Surat',
+            'dibuat_oleh' => 'Diajukan Oleh',
+            'ketua' => 'Ketua',
+            'anggota' => 'Anggota',
+            'lampiran' => 'Dokumen',
+            'deskripsi' => 'Deskripsi',
+        ];
+        
+        $data = Surat::with(['dibuatOleh'])
+            ->where('is_draft',1)
+            ->whereHas('dibuatOleh.role',function($q){
+                $q->whereIn('role',['mahasiswa','dosen']);
             })
-            ->paginate(10);
-            // ->whereHas('dibuatOleh.role', function($q) {
-            //     $q->where('role', 'mahasiswa');
-            // })->get();
+            ->orderBy('tanggal_pengajuan','desc')
+            ->get();
 
-        [$columns, $data] = $this->generateTableData($suratList);
-
-        return view('pengusul.mahasiswa.pengajuansurat', compact('jenisSurat', 'columns', 'data','suratList'));
+        $jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat')->toArray();
+        return view('pengusul.mahasiswa.pengajuansurat', compact('jenisSurat','columns','data'));
     }
 
     public function draft() {

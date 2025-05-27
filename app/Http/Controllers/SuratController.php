@@ -15,25 +15,34 @@ class SuratController extends Controller
 {
     public function store(Request $request)
 {
-    // Debug untuk melihat nilai is_draft yang diterima
+    // is_draft=0 berarti draft (boleh kosong), is_draft=1 berarti ajukan (wajib lengkap)
+    $isDraft = $request->input('is_draft') == 0;
 
-    $isDraft = $request->input('is_draft') === '0' || $request->input('is_draft') === 0;
-
-    $request->validate([
+    // Validasi
+    $rules = [
         'judul_surat' => 'required|string|max:255',
-        'id_pengusul' => $isDraft ? 'nullable' : 'required|exists:pengusul,id_pengusul',
+        'lampiran' => 'nullable|file|mimes:pdf,jpeg,png,jpg,docx,xlsx|max:10240',
         'anggota' => 'array',
         'anggota.*' => 'exists:pengusul,id_pengusul',
-        'jenis_surat' => $isDraft ? 'nullable' : 'required|exists:jenis_surat,id_jenis_surat',
-        'deskripsi' => $isDraft ? 'nullable|string|max:300' : 'required|string|max:300',
-        'lampiran' => 'nullable|file|mimes:pdf,jpeg,png,jpg,docx,xlsx|max:10240',
-    ]);
+    ];
+
+    if ($isDraft) {
+        $rules['id_pengusul'] = 'nullable|exists:pengusul,id_pengusul';
+        $rules['jenis_surat'] = 'nullable|exists:jenis_surat,id_jenis_surat';
+        $rules['deskripsi'] = 'nullable|string|max:300';
+    } else {
+        $rules['id_pengusul'] = 'required|exists:pengusul,id_pengusul';
+        $rules['jenis_surat'] = 'required|exists:jenis_surat,id_jenis_surat';
+        $rules['deskripsi'] = 'required|string|max:300';
+    }
+
+    $request->validate($rules);
 
     DB::beginTransaction();
     try {
         $lampiranPath = null;
         if ($request->hasFile('lampiran')) {
-            $lampiranPath = $request->file('lampiran')->store('lampiran', 'public'); 
+            $lampiranPath = $request->file('lampiran')->store('lampiran', 'public');
         }
 
         $dataSurat = [
@@ -41,49 +50,123 @@ class SuratController extends Controller
             'tanggal_pengajuan' => now(),
             'dibuat_oleh' => auth('pengusul')->id(),
             'lampiran' => $lampiranPath,
-            'is_draft' => $request->input('is_draft', 0), // Pastikan is_draft sesuai input
+            'is_draft' => $isDraft ? 0 : 1,
+            'id_jenis_surat' => $request->filled('jenis_surat') ? $request->jenis_surat : null,
+            'deskripsi' => $request->filled('deskripsi') ? $request->deskripsi : null,
         ];
-
-        $dataSurat['id_jenis_surat'] = $request->filled('jenis_surat') ? $request->jenis_surat : null;
-        $dataSurat['deskripsi'] = $request->filled('deskripsi') ? $request->deskripsi : null;
-
-
 
         $surat = Surat::create($dataSurat);
 
-        // Tentukan status berdasarkan is_draft
-        $statusSuratId = $isDraft ? 3 : 2; 
+        // Status surat: 3 = Draft, 2 = Diajukan
+        $statusSuratId = $isDraft ? 3 : 2;
         RiwayatStatusSurat::create([
             'id_surat' => $surat->id_surat,
             'id_status_surat' => $statusSuratId,
             'tanggal_rilis' => now(),
         ]);
 
+        // Insert ketua dan anggota hanya saat ajukan (is_draft=1)
         if (!$isDraft) {
             PivotPengusulSurat::create([
                 'id_surat' => $surat->id_surat,
                 'id_pengusul' => $request->id_pengusul,
-                'id_peran_keanggotaan' => 1, 
+                'id_peran_keanggotaan' => 1,
             ]);
-        
+
             if ($request->filled('anggota')) {
                 foreach ($request->anggota as $anggotaId) {
                     PivotPengusulSurat::create([
                         'id_surat' => $surat->id_surat,
                         'id_pengusul' => $anggotaId,
-                        'id_peran_keanggotaan' => 2, 
+                        'id_peran_keanggotaan' => 2,
                     ]);
                 }
             }
         }
 
         DB::commit();
-        return redirect()->route('mahasiswa.pengajuansurat')->with('success', $isDraft ? 'Surat berhasil disimpan sebagai draft.' : 'Surat berhasil diajukan.');
+
+        // Redirect sesuai role user
+        $user = auth('pengusul')->user();
+        $redirectRoute = 'mahasiswa.pengajuansurat';
+        if ($user->role === 'dosen') {
+            $redirectRoute = 'dosen.pengajuansurat';
+        }
+
+        $message = $isDraft ? 'Surat berhasil disimpan sebagai draft.' : 'Surat berhasil diajukan.';
+        return redirect()->route($redirectRoute)->with('success', $message);
+
     } catch (\Exception $e) {
         DB::rollBack();
-        return redirect()->route('mahasiswa.pengajuansurat')->with('error', 'Gagal mengajukan surat: ' . $e->getMessage());
+        return back()->withInput()->with('error', 'Gagal menyimpan surat: ' . $e->getMessage());
     }
 }
+
+    public function pengajuansearch(Request $request)
+{
+    $userId = auth('pengusul')->id();
+
+    $query = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul'])
+        ->where('is_draft', 1) // hanya surat yang diajukan
+        ->where(function ($q) use ($userId) {
+            $q->whereHas('pengusul', function ($q2) use ($userId) {
+                $q2->where('pivot_pengusul_surat.id_pengusul', $userId);
+            })
+            ->orWhereHas('dibuatOleh', function ($q3) use ($userId) {
+                $q3->where('id_pengusul', $userId);
+            });
+        });
+
+    if ($search = $request->input('search.value')) {
+        $query->where(function ($q) use ($search) {
+            $q->where('judul_surat', 'like', "%{$search}%")
+                ->orWhereHas('dibuatOleh', function ($sub) use ($search) {
+                    $sub->where('nama', 'like', "%{$search}%");
+                })
+                ->orWhereHas('pengusul', function ($sub) use ($search) {
+                    $sub->where('nama', 'like', "%{$search}%");
+                });
+        });
+    }
+
+    // Urutkan FIFO = tanggal_pengajuan ascending
+    $query->orderBy('created_at', 'asc');
+
+    $recordsTotal = $query->count();
+
+    $suratList = $query->skip($request->start)
+        ->take($request->length)
+        ->get();
+
+    $data = [];
+    foreach ($suratList as $surat) {
+        $anggota = $surat->pengusul->where('pivot.id_peran_keanggotaan', 2)->pluck('nama')->join(', ');
+        $ketua = $surat->pengusul->firstWhere('pivot.id_peran_keanggotaan', 1)?->nama ?? '';
+        $shortDescription = \Illuminate\Support\Str::limit(strip_tags($surat->deskripsi), 50, '...');
+
+        $data[] = [
+            'judul_surat' => $surat->judul_surat,
+            'tanggal_pengajuan' => $surat->tanggal_pengajuan ?? '-',
+            'jenis_surat' => '<div class="flex items-center gap-1 text-md">
+                <span>' . e($surat->jenisSurat->jenis_surat ?? '-') . '</span>
+             </div>',
+            'dibuat_oleh' => $surat->dibuatOleh->nama ?? '-',
+            'ketua' => $ketua,
+            'anggota' => $anggota,
+            'lampiran' => $surat->lampiran ?? null,
+            'deskripsi' => $shortDescription,
+            'id' => $surat->id_surat
+        ];
+    }
+
+    return response()->json([
+        'draw' => intval($request->draw),
+        'recordsTotal' => $recordsTotal,
+        'recordsFiltered' => $recordsTotal,
+        'data' => $data
+    ]);
+}
+
 
     
     public function edit($id)
@@ -216,7 +299,7 @@ class SuratController extends Controller
                 'tanggal_pengajuan' => $surat->tanggal_pengajuan ?? '-',
                 'jenis_surat' => $surat->jenisSurat->jenis_surat ?? '-',
                 'dibuat_oleh' => $surat->dibuatOleh->nama ?? '-',
-                // Tambahkan data lainnya jika perlu
+                
             ];
         }
 

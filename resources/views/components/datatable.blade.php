@@ -44,19 +44,20 @@
             processing: true,
             serverSide: true,
             ajax: '{{ $ajaxUrl }}',
+            ordering: false, // matikan ordering global
             columns: [
-                { data: null, name: 'no', orderable: false, searchable: false },
+                { data: null, name: 'no', orderable: false, searchable: false }, // No tetap tidak bisa diurutkan
                 @foreach ($columns as $key => $column)
                     { 
                         data: '{{ $key }}',
                         name: '{{ $key }}',
+                        orderable: false,
                         @if ($key === 'lampiran')
                             render: function (data, type, row) {
                                 return data ? `<a href="/storage/${data}" target="_blank" class="flex items-center gap-2 text-blue-800 hover:underline">
                                             <i class="fa-solid fa-cloud-arrow-up text-gray-500"></i>
                                             <span>Download</span>
-                                    </a>`
-                                    : '-';
+                                        </a>` : '-';
                             }
                         @endif
                     },
@@ -80,11 +81,9 @@
                 @endif
             ],
             paging: {{ $paging ? 'true' : 'false' }},
-            ordering: {{ $ordering ? 'true' : 'false' }},
             info: {{ $info ? 'true' : 'false' }},
             pageLength: {{ $pageLength }},
             lengthChange: {{ $lengthMenu ? 'true' : 'false' }},
-            order: [[1, 'asc']],
             drawCallback: function (settings) {
                 var api = this.api();
                 var pageInfo = api.page.info();
@@ -99,3 +98,4 @@
         });
     });
 </script>
+

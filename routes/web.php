@@ -46,6 +46,8 @@ Route::get('/search-dosen', [dosenController::class, 'searchDosen'])->name('sear
 Route::get('/pengajuan/detail/{id}', [SuratController::class, 'show'])->name('surat.detail');
 Route::delete('/surat/{id}',[SuratController::class, 'destroy'])->name('surat.destroy');
 Route::put('/surat/{id}', [SuratController::class, 'update'])->name('surat.update');
+Route::get('/pengajuan/search', [SuratController::class, 'pengajuansearch'])->name('pengajuan.search');
+
 
 
 Route::middleware(['multi-auth'])->group(function () {
@@ -60,8 +62,7 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/search', 'search')->name('mahasiswa.search');
             Route::get('/surat/{id}/edit', [SuratController::class, 'edit'])->name('surat.edit');
             Route::get('/draft/data','draftData')->name('mahasiswa.draftData');
-            Route::get('/pengajuan/search', 'pengajuansearch')->name('mahasiswa.pengajuansearch');
-            Route::get('/pengajuan/data','pengajuandata')->name('pengajuan.data');
+            // Route::get('/pengajuan/data','pengajuandata')->name('pengajuan.data');
             Route::get('/draft', 'draft')->name('mahasiswa.draft');
             Route::get('/status', 'status')->name('mahasiswa.statussurat');
 
