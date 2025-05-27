@@ -78,6 +78,17 @@ return redirect()->back()->with('info', 'Ini hanya informasi biasa.'); --}}
     </script>
 @endif
 
+@if($errors->any())
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: '{{ $errors->first() }}',
+            confirmButtonColor: '#d33'
+        });
+    </script>
+@endif
+
 
 <script>
     function showConfirmationAlert({ formId, event, title = 'Konfirmasi', text = 'Apakah Anda yakin?', confirmText = 'Ya', cancelText = 'Batal', icon = 'warning' }) {

@@ -66,7 +66,7 @@ class AuthController extends Controller
             return redirect('/kepala-sub')->with('success', 'Berhasil login sebagai Kepala Sub!');
         }
 
-
+        // Log::info('Login gagal untuk identity: ' . $identity);
         return back()->withErrors(['identity' => 'NIP atau password salah.']);
 
         
