@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\RolePengusul;
+use Illuminate\Contracts\Auth\CanResetPassword;
+use Illuminate\Auth\Passwords\CanResetPassword as CanResetPasswordTrait;
 
-class Pengusul extends Authenticatable
+class Pengusul extends Authenticatable implements CanResetPassword
 {
+    use CanResetPasswordTrait;
+
     protected $table = 'pengusul';
     protected $primaryKey = 'id_pengusul';
 

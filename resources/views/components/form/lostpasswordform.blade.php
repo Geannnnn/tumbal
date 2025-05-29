@@ -5,7 +5,7 @@
 
     <div class="mt-5 relative mb-6">
         <label for="email" class="absolute -top-3 left-4 bg-none px-2 text-gray-600 font-medium">Email</label>
-        <input type="email" id="email" name="email" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300">
+        <input type="email" id="email" name="email" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300" required>
     </div>
 
     <div class="flex items-center justify-center mt-2">

@@ -23,9 +23,9 @@ Route::get('/login', function () {
 })->name('login.form')->middleware('guest');
 
 Route::post('/login', [AuthController::class, 'login'])->name('login');
-Route::post('/awdawdawd',function(){
-    return view('auth.lostpassword');
-})->name('lostpassword');
+Route::post('/auth/reset-password',[AuthController::class,'lostpassword'])->name('lostpassword');
+Route::get('/reset-password',[AuthController::class,'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'updatePassword'])->name('password.update');
 Route::post('/surat/store', [SuratController::class, 'store'])->name('surat.store');
 
 // Logout

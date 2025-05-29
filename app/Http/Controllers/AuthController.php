@@ -2,9 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+
 
 class AuthController extends Controller
 {
@@ -66,13 +76,82 @@ class AuthController extends Controller
             return redirect('/kepala-sub')->with('success', 'Berhasil login sebagai Kepala Sub!');
         }
 
-        // Log::info('Login gagal untuk identity: ' . $identity);
         return back()->withErrors(['identity' => 'NIP atau password salah.']);
-
-        
-
-
     }
+
+    public function lostpassword(Request $request){
+       
+        $email = $request->email;
+
+        $found = DB::table('pengusul')->where('email', $email)->exists() ||
+                DB::table('admin')->where('email', $email)->exists() ||
+                DB::table('staff')->where('email', $email)->exists() ||
+                DB::table('kepala_sub')->where('email', $email)->exists();
+
+        if (!$found) {
+            return redirect()->route('login.form')
+                            ->with('showForgotForm', true)
+                            ->withErrors(['email' => 'Email tidak ditemukan.']);
+        }
+
+        $token = Str::random(64);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $email],
+            [
+                'email' => $email,
+                'token' => Hash::make($token),
+                'created_at' => now(),
+            ]
+        );
+
+        $resetLink = route('password.reset', [
+            'token' => $token,
+            'email' => $email,
+        ]);
+
+        Mail::to($email)->send(new ResetPasswordMail($resetLink));
+
+        return redirect()->route('login')
+                    ->with('showForgotForm', true)
+                    ->with('success', 'Link reset password sudah dikirim ke email Anda.');
+    }
+
+    public function showResetForm(Request $request){
+        $token = $request->query('token');
+        $email = $request->query('email');
+
+        return view('auth.lostpassword', [
+            'token' => $token,
+            'email' => $email,
+        ]);
+    }
+
+    public function updatePassword(Request $request)
+{
+    $request->validate([
+        'token' => 'required',
+        'email' => 'required|email',
+        'password' => 'required|string|min:8|confirmed',
+    ]);
+
+    $status = Password::broker('pengusuls')->reset(
+        $request->only('email', 'password', 'password_confirmation', 'token'),
+        function ($pengusul, $password) {
+            $pengusul->forceFill([
+                'password' => Hash::make($password),
+            ])->save();
+
+           
+            event(new PasswordReset($pengusul));
+        }
+    );
+
+    return $status === Password::PASSWORD_RESET
+        ? redirect()->route('login')->with('success', __($status))
+        : back()->withErrors(['email' => [__($status)]]);
+}
+
 }
 
        

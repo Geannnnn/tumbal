@@ -36,6 +36,17 @@
         forgotPasswordForm.classList.add('hidden');
         loginForm.classList.remove('hidden');
     });
+
+    document.addEventListener("DOMContentLoaded", function () {
+            @if(session('showForgotForm'))
+                const loginForm = document.querySelector('form[action="{{ route('login') }}"]');
+                const forgotPasswordForm = document.getElementById('forgot-password-form');
+                if (loginForm && forgotPasswordForm) {
+                    loginForm.classList.add('hidden');
+                    forgotPasswordForm.classList.remove('hidden');
+                }
+            @endif
+        });
 </script>
 
 @endsection

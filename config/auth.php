@@ -132,6 +132,31 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+            'pengusuls' => [
+            'provider' => 'pengusuls',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+            'staffs' => [
+                'provider' => 'staffs',
+                'table' => 'password_reset_tokens',
+                'expire' => 60,
+                'throttle' => 60,
+        ],
+            'kepala_subs' => [
+                'provider' => 'kepala_subs',
+                'table' => 'password_reset_tokens',
+                'expire' => 60,
+                'throttle' => 60,
+        ],
+            'admins' => [
+                'provider' => 'admins',
+                'table' => 'password_reset_tokens',
+                'expire' => 60,
+                'throttle' => 60,
+        ],
+        
     ],
 
     /*
