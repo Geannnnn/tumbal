@@ -15,10 +15,10 @@ class SuratController extends Controller
 {
     public function store(Request $request)
 {
-    // is_draft=0 berarti draft (boleh kosong), is_draft=1 berarti ajukan (wajib lengkap)
+    
     $isDraft = $request->input('is_draft') == 0;
 
-    // Validasi
+    
     $rules = [
         'judul_surat' => 'required|string|max:255',
         'lampiran' => 'nullable|file|mimes:pdf,jpeg,png,jpg,docx,xlsx|max:10240',
@@ -57,7 +57,7 @@ class SuratController extends Controller
 
         $surat = Surat::create($dataSurat);
 
-        // Status surat: 3 = Draft, 2 = Diajukan
+        
         $statusSuratId = $isDraft ? 3 : 2;
         RiwayatStatusSurat::create([
             'id_surat' => $surat->id_surat,
@@ -65,7 +65,7 @@ class SuratController extends Controller
             'tanggal_rilis' => now(),
         ]);
 
-        // Insert ketua dan anggota hanya saat ajukan (is_draft=1)
+        
         if (!$isDraft) {
             PivotPengusulSurat::create([
                 'id_surat' => $surat->id_surat,
@@ -128,8 +128,7 @@ class SuratController extends Controller
                 });
         });
     }
-
-    
+  
     $query->orderBy('tanggal_pengajuan', 'desc')
       ->orderBy('id_surat', 'desc');
 
@@ -214,7 +213,7 @@ class SuratController extends Controller
             $surat->lampiran = $lampiranPath;
         }
     } else {
-        // Hapus lampiran jika toggle dimatikan
+        
         if ($surat->lampiran && Storage::disk('public')->exists($surat->lampiran)) {
             Storage::disk('public')->delete($surat->lampiran);
         }
@@ -262,50 +261,6 @@ class SuratController extends Controller
     public function show($id){
         $surat = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul'])->findOrFail($id);
         return view('pengusul.detail', compact('surat'));
-    }
-
-    public function search(Request $request)
-    {
-        $query = $request->get('query'); // Ambil query pencarian
-
-        // Query data berdasarkan pencarian
-        $suratList = Surat::with('jenisSurat', 'dibuatOleh', 'pengusul')
-            ->where('judul_surat', 'like', "%$query%")
-            ->orWhere('deskripsi', 'like', "%$query%")
-            ->orWhereHas('jenisSurat', function ($q) use ($query) {
-                $q->where('jenis_surat', 'like', "%$query%");
-            })
-            ->orWhereHas('dibuatOleh', function ($q) use ($query) {
-                $q->where('nama', 'like', "%$query%");
-            })
-            ->paginate(10);
-
-        // Generate data tabel
-        $columns = ['Judul', 'Tanggal Pengajuan', 'Jenis Surat', 'Diajukan Oleh', 'Diketuai Oleh', 'Anggota', 'Deskripsi'];
-        $data = $this->generateTableData($suratList);
-
-        return response()->json([
-            'html' => view('pengusul.mahasiswa.pengajuansurat_table', compact('suratList', 'columns', 'data'))->render(),
-            'pagination' => (string) $suratList->links(), // Mengirim pagination
-        ]);
-    }
-
-    private function generateTableData($suratList)
-    {
-        // Menyiapkan data untuk ditampilkan di tabel
-        $data = [];
-        foreach ($suratList as $surat) {
-            $data[] = [
-                'id' => $surat->id_surat,
-                'judul_surat' => $surat->judul_surat,
-                'tanggal_pengajuan' => $surat->tanggal_pengajuan ?? '-',
-                'jenis_surat' => $surat->jenisSurat->jenis_surat ?? '-',
-                'dibuat_oleh' => $surat->dibuatOleh->nama ?? '-',
-                
-            ];
-        }
-
-        return $data;
     }
 
 }

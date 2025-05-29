@@ -21,5 +21,7 @@ class PengusulController extends Controller
         return response()->json($pengusuls);
     }
 
-        
+   public function pengaturan(){
+    return view('pengaturan');
+   }     
 }

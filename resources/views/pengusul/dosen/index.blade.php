@@ -148,14 +148,14 @@
 
             <div class="w-full">
                 <x-datatable
-                :search="false"
-                :showLengthMenu="false"
-                :columns="['Nomor Surat', 'Nama Surat', 'Tanggal', 'Dokumen','Dibuat Pada']"
-                :data="[
-                ['Row 1 Data 1','Row 1 Data 2','Row 1 Data 3','Row 1 Data 4','Row 1 Data 5'],
-                ['Row 2 Data 1','Row 2 Data 2','Row 2 Data 3','Row 2 Data 4','Row 2 Data 5'],
-                ]"
-                
+                    id="surat-table"
+                    :columns="$columns"
+                    ajaxUrl="{{ route('mahasiswa.search') }}"
+                    :ordering="true"
+                    :lengthMenu="false"
+                    :pageLength="5"
+                    :showEdit="false"
+                    :showDelete="false"
                 />
             </div>
         </main>
