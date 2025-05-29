@@ -12,13 +12,12 @@
     'showDelete' => false
 ])
 
-
 <table id="{{ $id }}" class="w-full bg-transparent text-md text-left text-gray-700">
     <thead>
         <tr>
             <th>No</th>
-            @foreach ($columns as $column)
-                <th >{{ $column }}</th>
+            @foreach ($columns as $label)
+                <th>{{ $label }}</th>
             @endforeach
             @if ($showEdit || $showDelete)
                 <th>Aksi</th>
@@ -44,20 +43,21 @@
             processing: true,
             serverSide: true,
             ajax: '{{ $ajaxUrl }}',
-            ordering: false, // matikan ordering global
+            ordering: {{ $ordering ? 'true' : 'false' }},
             columns: [
-                { data: null, name: 'no', orderable: false, searchable: false }, // No tetap tidak bisa diurutkan
-                @foreach ($columns as $key => $column)
-                    { 
+                { data: null, name: 'no', orderable: false, searchable: false },
+                @foreach ($columns as $key => $label)
+                    {
                         data: '{{ $key }}',
                         name: '{{ $key }}',
-                        orderable: false,
+                        orderable: {{ $ordering ? 'true' : 'false' }},
+                        searchable: true,
                         @if ($key === 'lampiran')
                             render: function (data, type, row) {
                                 return data ? `<a href="/storage/${data}" target="_blank" class="flex items-center gap-2 text-blue-800 hover:underline">
-                                            <i class="fa-solid fa-cloud-arrow-up text-gray-500"></i>
-                                            <span>Download</span>
-                                        </a>` : '-';
+                                    <i class="fa-solid fa-cloud-arrow-up text-gray-500"></i>
+                                    <span>Download</span>
+                                </a>` : '-';
                             }
                         @endif
                     },
@@ -87,15 +87,16 @@
             drawCallback: function (settings) {
                 var api = this.api();
                 var pageInfo = api.page.info();
-                api.column(0).nodes().each(function(cell, i) {
+                api.column(0).nodes().each(function (cell, i) {
                     cell.innerHTML = i + 1 + pageInfo.start;
                 });
             }
         });
 
+        @if ($search)
         $('#custom-search').on('keyup', function () {
             table.search(this.value).draw();
         });
+        @endif
     });
 </script>
-

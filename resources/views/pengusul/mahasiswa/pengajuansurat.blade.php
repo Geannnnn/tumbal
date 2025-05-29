@@ -39,9 +39,18 @@
                     <div id="datatable-container" class="p-5">
                         <x-datatable
                             id="pengajuan-table"
-                            :columns="$columns"
+                            :columns="[
+                                'judul_surat' => 'Judul Surat',
+                                'tanggal_pengajuan' => 'Tanggal Pengajuan',
+                                'jenis_surat' => 'Jenis Surat',
+                                'dibuat_oleh' => 'Dibuat Oleh',
+                                'ketua' => 'Ketua',
+                                'anggota' => 'Anggota',
+                                'lampiran' => 'Lampiran',
+                                'deskripsi' => 'Deskripsi',
+                            ]"
                             ajaxUrl="{{ route('pengajuan.search') }}"
-                            :ordering="true"
+                            :ordering="false"
                             :lengthMenu="false"
                             :pageLength="5"
                             :showEdit="false"

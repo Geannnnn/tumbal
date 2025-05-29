@@ -129,8 +129,9 @@ class SuratController extends Controller
         });
     }
 
-    // Urutkan FIFO = tanggal_pengajuan ascending
-    $query->orderBy('created_at', 'asc');
+    
+    $query->orderBy('tanggal_pengajuan', 'desc')
+      ->orderBy('id_surat', 'desc');
 
     $recordsTotal = $query->count();
 
@@ -158,13 +159,14 @@ class SuratController extends Controller
             'id' => $surat->id_surat
         ];
     }
-
+    
     return response()->json([
         'draw' => intval($request->draw),
         'recordsTotal' => $recordsTotal,
         'recordsFiltered' => $recordsTotal,
         'data' => $data
     ]);
+
 }
 
 

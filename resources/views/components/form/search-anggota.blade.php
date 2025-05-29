@@ -21,7 +21,7 @@
                     const query = this.value.trim();
                     clearTimeout(debounceTimeout);
 
-                    if (query.length < 2) {
+                    if (query.length < 1) {
                         resultsAnggota.classList.add('hidden');
                         return;
                     }
