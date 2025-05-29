@@ -93,59 +93,6 @@ class mahasiswaController extends Controller
         ]);
     }
     
-
-        // public function pengajuandata(Request $request){
-        //     $userId = auth('pengusul')->id();
-
-        //     $query = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul'])
-        //         ->whereHas('pengusul', function ($q) use ($userId) {
-        //             $q->where('pivot_pengusul_surat.id_pengusul', $userId);
-        //         });
-
-        //     if ($search = $request->input('search.value')) {
-        //         $query->where(function ($q) use ($search) {
-        //             $q->where('judul_surat', 'like', "%$search%")
-        //             ->orWhere('nomor_surat', 'like', "%$search%");
-        //         });
-        //     }
-
-        //     $recordsTotal = $query->count();
-
-        //     $suratList = $query->skip($request->start)
-        //         ->take($request->length)
-        //         ->get();
-
-        //     $data = [];
-        //     foreach ($suratList as $surat) {
-        //         $anggota = $surat->pengusul->where('pivot.id_peran_keanggotaan', 2)->pluck('nama')->join(', ');
-        //         $ketua = $surat->pengusul->firstWhere('pivot.id_peran_keanggotaan', 1)?->nama ?? '';
-        //         $shortDescription = \Illuminate\Support\Str::limit(strip_tags($surat->deskripsi), 50, '...');
-
-        //         $data[] = [
-        //             'judul_surat' => $surat->judul_surat,
-        //             'tanggal_pengajuan' => $surat->tanggal_pengajuan ?? '-',
-        //             'jenis_surat' => $surat->jenisSurat->jenis_surat ?? '-',
-        //             'dibuat_oleh' => $surat->dibuatOleh->nama ?? '-',
-        //             'ketua' => $ketua,
-        //             'anggota' => $anggota,
-        //             'lampiran' => $surat->lampiran 
-        //                 ? '<a href="' . asset('storage/' . $surat->lampiran) . '" target="_blank" class="text-blue-600 hover:underline"><i class="fa-solid fa-download mr-1"></i>Unduh</a>' 
-        //                 : '-',
-        //             'deskripsi' => $shortDescription,
-        //             'id' => $surat->id_surat
-        //         ];
-        //     }
-
-        //     return response()->json([
-        //         'draw' => intval($request->draw),
-        //         'recordsTotal' => $recordsTotal,
-        //         'recordsFiltered' => $recordsTotal,
-        //         'data' => $data
-        //     ]);
-        // }
-        
-    
-
     public function detail($id){
 
         $surat = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul'])->findOrFail($id);
