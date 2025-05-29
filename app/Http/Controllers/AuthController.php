@@ -127,30 +127,47 @@ class AuthController extends Controller
         ]);
     }
 
-    public function updatePassword(Request $request)
-{
-    $request->validate([
-        'token' => 'required',
-        'email' => 'required|email',
-        'password' => 'required|string|min:8|confirmed',
-    ]);
+        public function updatePassword(Request $request){
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
 
-    $status = Password::broker('pengusuls')->reset(
-        $request->only('email', 'password', 'password_confirmation', 'token'),
-        function ($pengusul, $password) {
-            $pengusul->forceFill([
-                'password' => Hash::make($password),
-            ])->save();
+        $email = $request->email;
 
-           
-            event(new PasswordReset($pengusul));
+        if (DB::table('pengusul')->where('email', $email)->exists()) {
+            $broker = 'pengusuls';
+            $modelClass = \App\Models\Pengusul::class;
+        } elseif (DB::table('admin')->where('email', $email)->exists()) {
+            $broker = 'admins';
+            $modelClass = \App\Models\Admin::class;
+        } elseif (DB::table('kepala_sub')->where('email', $email)->exists()) {
+            $broker = 'kepala_subs';
+            $modelClass = \App\Models\KepalaSub::class;
+        } elseif (DB::table('staff')->where('email', $email)->exists()) {
+            $broker = 'staffs';
+            $modelClass = \App\Models\Staff::class;
+        } else {
+            return back()->withErrors(['email' => 'Email tidak ditemukan.']);
         }
-    );
 
-    return $status === Password::PASSWORD_RESET
-        ? redirect()->route('login')->with('success', __($status))
-        : back()->withErrors(['email' => [__($status)]]);
-}
+        $status = Password::broker($broker)->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) use ($modelClass) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                ])->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        return $status === Password::PASSWORD_RESET
+            ? redirect()->route('login')->with('success', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
+    }
+
 
 }
 
