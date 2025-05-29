@@ -53,6 +53,7 @@ Atau import manual file SQL:
 ### 6. Jalankan Vite (untuk frontend)
 ```bash
 npm run dev
+atau bisa lebih simpel dengan npm run start
 ```
 
 ### 7. Jalankan Laravel Server
