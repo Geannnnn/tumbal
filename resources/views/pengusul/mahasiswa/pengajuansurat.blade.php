@@ -23,7 +23,7 @@
                 <div class="w-full h-full max-h-180 bg-[#F0F2FF] rounded-[70px]">
                     
                     <div class="pl-15 pt-8">
-                        <h1 class="font-medium text-[28px]">Pengajuan Surat</h1>
+                        <h1 class="font-medium sm:text-[10px] md:text-[10px] lg:text-[20px]">Pengajuan Surat</h1>
                         <div class="flex justify-between w-full">
                             <h1 class="text-[#6D727C] font-medium text-[24px] py-4">List Pengajuan Surat Politeknik Negeri Batam</h1>
         
