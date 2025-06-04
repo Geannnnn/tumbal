@@ -44,7 +44,7 @@
                 <x-sidebar-link route="kepalasub.dashboard" icon="fa-house" label="Beranda" />
               
             @endif
-            {{-- <x-sidebar-link route="settings" icon="fa-solid fa-gear fa-spin mr-3" label="Pengaturan" /> --}}
+            <x-sidebar-link route="settings" icon="fa-solid fa-gear fa-spin mr-3" label="Pengaturan" />
             <a href="{{ route('logout') }}" class="hover:text-white hover:bg-red-900 text-[#878A9A] rounded-[5px] font-medium py-2 px-5 mt-auto">
                 <i class="fa-solid fa-arrow-right-from-bracket mr-3"></i>Keluar
             </a>
