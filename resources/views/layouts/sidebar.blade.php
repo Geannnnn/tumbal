@@ -19,12 +19,12 @@
         
             {{-- Mahasiswa --}}
             @if($roleRoutePrefix)
-                <x-sidebar-link route="{{ $roleRoutePrefix }}.dashboard" icon="fa-house fa-shake" label="Beranda" />
+                <x-sidebar-link route="{{ $roleRoutePrefix }}.dashboard" icon="fa-house" label="Beranda" />
 
                 @if(in_array($roleRoutePrefix, ['dosen', 'mahasiswa']))
-                    <x-sidebar-link route="{{ $roleRoutePrefix }}.pengajuansurat" icon="fa-file-import fa-bounce" label="Pengajuan Surat" />
-                    <x-sidebar-link route="{{ $roleRoutePrefix }}.draft" icon="fa-file-export fa-spin fa-spin-reverse" label="Draft" />
-                    <x-sidebar-link route="{{ $roleRoutePrefix }}.statussurat" icon="fa-square-check fa-flip" label="Status Surat" />
+                    <x-sidebar-link route="{{ $roleRoutePrefix }}.pengajuansurat" icon="fa-file-import" label="Pengajuan Surat" />
+                    <x-sidebar-link route="{{ $roleRoutePrefix }}.draft" icon="fa-file-export" label="Draft" />
+                    <x-sidebar-link route="{{ $roleRoutePrefix }}.statussurat" icon="fa-square-check" label="Status Surat" />
                     <x-sidebar-link route="{{ $roleRoutePrefix }}.setting" icon="fa-solid fa-user" label="Profil" />
                 @endif
 
@@ -33,6 +33,7 @@
                 <x-sidebar-link route="tatausaha.dashboard" icon="fa-arrow-up-wide-short fa-spin fa-spin-reverse" label="Terbitkan" />
                 <x-sidebar-link route="tatausaha.dashboard" icon="fa-square-check fa-flip" label="Status Surat" />
                 <x-sidebar-link route="tatausaha.dashboard" icon="fa-file fa-flip" label="Kelola Jenis Surat" />
+                
                 @endif
             @endif          
 
@@ -44,7 +45,7 @@
                 <x-sidebar-link route="kepalasub.dashboard" icon="fa-house" label="Beranda" />
               
             @endif
-            <x-sidebar-link route="settings" icon="fa-solid fa-gear fa-spin mr-3" label="Pengaturan" />
+            {{-- <x-sidebar-link route="settings" icon="fa-solid fa-gear fa-spin mr-3" label="Pengaturan" /> --}}
             <a href="{{ route('logout') }}" class="hover:text-white hover:bg-red-900 text-[#878A9A] rounded-[5px] font-medium py-2 px-5 mt-auto">
                 <i class="fa-solid fa-arrow-right-from-bracket mr-3"></i>Keluar
             </a>
