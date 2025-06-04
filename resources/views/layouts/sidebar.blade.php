@@ -25,7 +25,6 @@
                     <x-sidebar-link route="{{ $roleRoutePrefix }}.pengajuansurat" icon="fa-file-import fa-bounce" label="Pengajuan Surat" />
                     <x-sidebar-link route="{{ $roleRoutePrefix }}.draft" icon="fa-file-export fa-spin fa-spin-reverse" label="Draft" />
                     <x-sidebar-link route="{{ $roleRoutePrefix }}.statussurat" icon="fa-square-check fa-flip" label="Status Surat" />
-                    <x-sidebar-link route="{{ $roleRoutePrefix }}.setting" icon="fa-solid fa-user" label="Profil" />
                 @endif
 
                 @if(in_array($roleRoutePrefix, ['tatausaha', 'staffumum']))

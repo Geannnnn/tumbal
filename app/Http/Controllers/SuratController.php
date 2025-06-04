@@ -168,6 +168,7 @@ class SuratController extends Controller
 
 }
 
+    
 
     
     public function edit($id)
@@ -247,8 +248,25 @@ class SuratController extends Controller
     return redirect()->route('mahasiswa.draft')->with('success', 'Surat berhasil diperbarui sebagai draft.');
 }
 
+    
 
+    // public function showRiwayatStatus($id_surat){
+        
+    //     $riwayats = DB::table('riwayat_status_surat')
+    //         ->join('status_surat', 'riwayat_status_surat.id_status_surat', '=', 'status_surat.id_status_surat')
+    //         ->join('pengusul', 'riwayat_status_surat.id_pengusul', '=', 'pengusul.id_pengusul')
+    //         ->where('riwayat_status_surat.id_surat', $id_surat)
+    //         ->orderBy('waktu_perubahan', 'asc')
+    //         ->select(
+    //             'riwayat_status_surat.*',
+    //             'status_surat.nama_status',
+    //             'pengusul.nama as nama_pengusul',
+    //             'pengusul.nim_nip'
+    //         )
+    //         ->get();
 
+    //     return view('pengusul.mahasiswa.status', compact('riwayats'));
+    // }
     
     public function destroy($id)
     {
