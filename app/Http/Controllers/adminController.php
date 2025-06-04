@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\JenisSurat;
+use App\Models\Pengusul;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -14,6 +15,18 @@ class adminController extends Controller
 
     public function kelolapengusul () {
         return view('admin.kelolapengusul');
+    }
+
+    public function pengusulData() {
+
+        $data = Pengusul::with('role')->select('pengusul.*');
+
+        return DataTables::of($data)
+            ->addColumn('role', fn($row) => $row->role->role ?? '-')
+            ->addColumn('nim',fn($row) => $row->nim ?? '-')
+            ->addColumn('nip',fn($row) => $row->nip ?? '-')
+            ->addColumn('id', fn($row) => $row->id_pengusul)
+            ->make(true);
     }
 
     public function jenissurat () {

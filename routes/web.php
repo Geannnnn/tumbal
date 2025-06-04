@@ -104,6 +104,7 @@ Route::middleware(['multi-auth'])->group(function () {
         Route::post('/jenis-surat',  'store')->name('admin.jenissurat.store');
         Route::put('/jenis-surat/{id}',  'update')->name('admin.jenissurat.update');
         Route::delete('/jenis-surat/{id}',  'destroy')->name('admin.jenissurat.destroy');
+        Route::get('pengusul/data',  'pengusulData')->name('admin.pengusul.data');
     });
 
     // Kepala Sub

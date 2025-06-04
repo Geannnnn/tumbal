@@ -22,6 +22,10 @@ class PengusulController extends Controller
     }
 
    public function pengaturan(){
-    return view('pengaturan');
+        return view('pengaturan');
    }     
+
+   
+
+
 }
