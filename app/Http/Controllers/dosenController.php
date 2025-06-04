@@ -90,4 +90,9 @@ class dosenController extends Controller
 
         return response()->json($dosens);
     }
+
+            public function setting()
+        {
+            return view('pengusul.dosen.setting');
+        }
 }
