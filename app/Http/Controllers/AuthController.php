@@ -127,7 +127,7 @@ class AuthController extends Controller
         ]);
     }
 
-        public function updatePassword(Request $request){
+    public function updatePassword(Request $request){
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
@@ -168,6 +168,38 @@ class AuthController extends Controller
             : back()->withErrors(['email' => [__($status)]]);
     }
 
+    public function profileUpdatePassword(Request $request){
+        $request->validate([
+            'current_password' => ['required'],
+            'new_password' => ['required', 'min:8', 'confirmed'],
+        ]);
+
+         $guards = ['pengusul', 'staff', 'admin', 'kepala_sub'];
+        /** @var \Illuminate\Database\Eloquent\Model|null $user */
+        $user = null;
+
+        foreach ($guards as $guard) {
+            if (Auth::guard($guard)->check()) {
+                $user = Auth::guard($guard)->user();
+                break;
+            }
+        }
+
+        if (!$user) {
+            return back()->withErrors(['auth' => 'Tidak ada pengguna yang login.']);
+        }
+
+        // Cek apakah current_password cocok
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Kata sandi saat ini salah.']);
+        }
+
+        // Update password baru
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return back()->with('success', 'Kata sandi berhasil diperbarui.');
+    }
 
 }
 
