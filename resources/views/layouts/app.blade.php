@@ -22,6 +22,7 @@
 
     @yield('content')
     
+    @include('components.alertnotif')
 
     @stack('scripts')
 </body>

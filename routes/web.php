@@ -48,6 +48,7 @@ Route::delete('/surat/{id}',[SuratController::class, 'destroy'])->name('surat.de
 Route::put('/surat/{id}', [SuratController::class, 'update'])->name('surat.update');
 Route::get('/pengajuan/search', [SuratController::class, 'pengajuansearch'])->name('pengajuan.search');
 Route::get('/pengaturan',[PengusulController::class,'pengaturan'])->name('settings');
+Route::post('/ubah-password', [AuthController::class, 'profileUpdatePassword'])->name('profile.update');
 
 
 Route::middleware(['multi-auth'])->group(function () {
