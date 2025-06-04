@@ -65,6 +65,7 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/draft/data','draftData')->name('mahasiswa.draftData');
             Route::get('/draft', 'draft')->name('mahasiswa.draft');
             Route::get('/status', 'status')->name('mahasiswa.statussurat');
+            Route::get('/setting', 'setting')->name('mahasiswa.setting');
 
         });
 

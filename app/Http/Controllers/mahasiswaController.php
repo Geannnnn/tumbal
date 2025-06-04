@@ -127,5 +127,10 @@ class mahasiswaController extends Controller
     public function status() {
         return view('pengusul.mahasiswa.status');
     }
+
+        public function setting()
+        {
+            return view('pengusul.mahasiswa.setting');
+        }
 }
 
