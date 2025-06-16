@@ -1,65 +1,109 @@
 @props([
     'id' => 'datatable-status',
     'ajaxUrl' => '',
-    'search' => false,
-    'showEdit' => false,
-    'showDelete' => false,
-    'columns' => [],
-    
+    'columns' => []
 ])
 
-<table id="{{ $id }}" class="w-full bg-transparent text-sm text-left text-gray-700">
-    <thead>
-        <tr>
-            <th>No</th>
-            @foreach ($columns as $label)
-                <th>{{ $label }}</th>
-            @endforeach
-            <th>Aksi</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-</table>
+<div class="overflow-x-auto">
+    <table id="{{ $id }}" class="w-full text-sm text-left text-gray-700 rounded-3xl shadow bg-transparent">
+        <thead>
+            <tr>
+                <th class="py-4 px-4">No</th>
+                @foreach($columns as $key => $label)
+                    <th class="py-4 px-4">{{ $label }}</th>
+                @endforeach
+                <th class="py-4 px-4">Aksi</th>
+            </tr>
+        </thead>
+    </table>
+</div>
 
+@push('scripts')
 <script>
-  $(document).ready(function () {
-    var table = $('#{{ $id }}').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: '{{ $ajaxUrl }}',
-            data: function(d) {
-                // Tambahkan search manual ke parameter ajax sesuai struktur DataTables
-                d.search.value = $('#custom-search').val();
-            }
-        },
-        pageLength: 5,
-        lengthChange: false,
-        searching: false, // tetap nonaktifkan search bawaan
-        columns: [
-            { data: null, name: 'no', orderable: false, searchable: false },
-            @foreach (array_keys($columns) as $key)
-                { data: '{{ $key }}', name: '{{ $key }}' },
-            @endforeach
-            {
-                data: 'aksi',
-                name: 'aksi',
-                orderable: false,
-                searchable: false
-            }
-        ],
-        drawCallback: function (settings) {
-            var api = this.api();
-            var pageInfo = api.page.info();
-            api.column(0).nodes().each(function (cell, i) {
-                cell.innerHTML = i + 1 + pageInfo.start;
-            });
-        }
-    });
+    $(document).ready(function() {
+        let table = $('#' + '{{ $id }}').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{{ $ajaxUrl }}',
+                data: function(d) {
+                    d.search.value = $('#custom-search').val();
+                }
+            },
+            pageLength: 5,
+            lengthChange: false,
+            searching: false,
+            info: false,
+            columns: [
+                { data: null, orderable: false, searchable: false },
+                @foreach($columns as $key => $label)
+                    {
+                        data: '{{ $key }}',
+                        name: '{{ $key }}',
+                        @if($key === 'status')
+                        render: function(data, type, row) {
+                            let badge = '';
+                            let text = data;
+                            let dot = '';
+                            let badgeClass = 'bg-gray-100 text-gray-700';
+                            let dotClass = 'bg-gray-400';
+                            switch (data.toLowerCase()) {
+                                case 'diajukan':
+                                    badgeClass = 'bg-orange-100 text-orange-700';
+                                    dotClass = 'bg-orange-400';
+                                    break;
+                                case 'disetujui':
+                                    badgeClass = 'bg-green-100 text-green-700';
+                                    dotClass = 'bg-green-400';
+                                    break;
+                                case 'ditolak':
+                                    badgeClass = 'bg-red-100 text-red-700';
+                                    dotClass = 'bg-red-400';
+                                    break;
+                                case 'draft':
+                                    badgeClass = 'bg-gray-100 text-gray-700';
+                                    dotClass = 'bg-gray-400';
+                                    break;
+                            }
+                            dot = `<span class=\"w-2.5 h-2.5 rounded-full mr-2 ${dotClass} inline-block\"></span>`;
+                            badge = `<span class=\"inline-flex items-center rounded-full px-4 py-1 font-semibold text-sm ${badgeClass}\">${dot}${text}</span>`;
+                            return badge;
+                        }
+                        @endif
+                    },
+                @endforeach
+                {
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    render: function(data, type, row) {
+                        let id = row.id || row.id_surat;
+                        let url = `/mahasiswa/statussurat/${id}`;
+                        return `<button class=\"bg-blue-100 text-black rounded-xl px-4 py-1 font-semibold text-sm hover:bg-blue-200 transition btn-detail-surat\" data-id=\"${id}\" data-url=\"${url}\">Detail</button>`;
+                    }
+                }
+            ],
+            order: [[3, 'desc']],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json'
+            },
+            drawCallback: function(settings) {
+                var api = this.api();
+                api.column(0, {search:'applied', order:'applied'}).nodes().each(function(cell, i) {
+                    cell.innerHTML = i + 1 + settings._iDisplayStart;
+                });
+                $('.btn-detail-surat').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    const url = $(this).data('url');
+                    window.open(url, '_blank');
+                });
+            },
+            dom: 'tip'
+        });
 
-    $('#custom-search').on('keyup', function () {
-        table.ajax.reload();  
+        $('#custom-search').on('keyup', function () {
+            table.ajax.reload();  
+        });
     });
-});
-
 </script>
+@endpush

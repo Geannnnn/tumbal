@@ -67,6 +67,7 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/status', 'status')->name('mahasiswa.statussurat');
             Route::get('/status/data', 'getStatusSuratData')->name('statusSurat.data');
             Route::get('/setting', 'setting')->name('mahasiswa.setting');
+            Route::get('/statussurat/{id}', 'showStatusSurat')->name('mahasiswa.statussurat.show');
 
         });
 

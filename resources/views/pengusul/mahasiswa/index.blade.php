@@ -77,6 +77,7 @@
                     :pageLength="5"
                     :showEdit="false"
                     :showDelete="false"
+                    :search="true"
                 />
 
                 

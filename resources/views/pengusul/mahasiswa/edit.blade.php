@@ -66,8 +66,8 @@
                             <span>Judul Surat</span>
                             <input type="text" name="judul_surat" class="bg-[#F0F2FF] py-2 px-4 rounded-lg outline-none" value="{{ old('judul_surat', $surat->judul_surat) }}">
 
-                            <x-form.search-ketua :selected="$ketua->pluck('id_pengusul')->toArray()" />
-                            <x-form.search-anggota :selected="$anggota->pluck('id_pengusul')->toArray()" />
+                            <x-form.search-ketua :selected="$ketua" />
+                            <x-form.search-anggota :selected="$anggota" />
 
                             <div class="flex flex-col gap-3">
                                 <div class="mb-4 flex items-center">
