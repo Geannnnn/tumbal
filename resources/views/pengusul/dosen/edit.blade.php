@@ -25,7 +25,7 @@
                                 onclick="showSweetAlertConfirmation(
                                     'Ya, Kembali', 
                                     'Tidak, Tetap di sini',  
-                                    '{{ route('mahasiswa.draft') }}'  
+                                    '{{ route('dosen.draft') }}'  
                                 )"
                                 class="hover:cursor-pointer px-5 py-2 bg-red-600 font-semibold rounded-2xl hover:scale-110 duration-300 flex items-center"
                             >

@@ -17,7 +17,7 @@
 
                 <div class="flex justify-between items-center mb-4 mt-14">
                 <div class="flex justify-start">
-                        <button id="btnShowModal" class="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 transition">Tambah Jenis Surat</button>
+                        <button id="btnShowModal" class="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition">Tambah Jenis Surat</button>
                     </div>
                     <div class="flex justify-end">
                         <div class="w-64 mr-0">
@@ -36,6 +36,7 @@
                     <table id="jenis-surat-table" class="w-full">
                         <thead>
                             <tr>
+                                <th class="px-4 py-2 text-left">Nomor</th>
                                 <th class="px-4 py-2 text-left">Jenis Surat</th>
                                 <th class="px-4 py-2 text-left">Aksi</th>
                             </tr>
@@ -43,10 +44,11 @@
                         <tbody>
                             @foreach($jsdata as $item)
                             <tr>
+                                <td class="px-4 py-2">{{ $loop->iteration }}</td>
                                 <td class="px-4 py-2">{{ $item->jenis_surat }}</td>
                                 <td class="px-4 py-2">
-                                    <button type="button" class="text-white ml-2 px-3 py-1 rounded-md hover:cursor-pointer hover:opacity-70 bg-blue-500 hover:bg-blue-600 btn-edit" data-id="{{ $item->id_jenis_surat }}" data-nama="{{ $item->jenis_surat }}">Ubah</button>
-                                    <button type="button" class="text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded-md hover:cursor-pointer hover:opacity-70 btn-hapus" data-id="{{ $item->id_jenis_surat }}">Hapus</button>
+                                    <button type="button" class="text-white ml-2 px-3 py-1 rounded-lg hover:cursor-pointer hover:opacity-80 bg-blue-700 hover:bg-blue-800 btn-edit" data-id="{{ $item->id_jenis_surat }}" data-nama="{{ $item->jenis_surat }}">Ubah</button>
+                                    <button type="button" class="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg hover:cursor-pointer hover:opacity-80 btn-hapus" data-id="{{ $item->id_jenis_surat }}">Hapus</button>
                                     <form id="form-hapus-{{ $item->id_jenis_surat }}" action="{{ route('admin.jenissurat.destroy', $item->id_jenis_surat) }}" method="POST" style="display:none;">
                                         <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="_method" value="DELETE">
@@ -59,39 +61,47 @@
                 </div>
 
                 <!-- Modal Tambah Jenis Surat -->
-                <div id="modalTambah" class="fixed inset-0 z-50 flex items-center justify-center bg-black-100 bg-opacity-90 hidden">
-                    <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md relative">
-                        <button id="btnCloseModal" class="absolute top-2 right-3 text-gray-400 hover:text-red-500 text-2xl">&times;</button>
-                        <h2 class="text-xl font-bold mb-4">Tambah Jenis Surat</h2>
-                        <form action="{{ route('admin.jenissurat.store') }}" method="POST" class="space-y-4">
+                <div id="modalTambah" class="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40 backdrop-blur-sm hidden transition-opacity duration-300 ease-in-out">
+                    <div class="relative w-full max-w-md mx-auto bg-white rounded-2xl shadow-2xl p-8 animate-modal-show">
+                        <button id="btnCloseModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <h2 class="text-2xl font-bold mb-6 text-center">Tambah Jenis Surat</h2>
+                        <form action="{{ route('admin.jenissurat.store') }}" method="POST" class="space-y-5">
                             @csrf
                             <div>
-                                <label class="block mb-1 font-medium">Jenis Surat Baru</label>
-                                <input type="text" name="jenis_surat" class="border p-2 rounded w-full" placeholder="Masukkan jenis surat..." required>
+                                <label class="block mb-1 font-semibold text-gray-700">Jenis Surat Baru</label>
+                                <input type="text" name="jenis_surat" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Masukkan jenis surat..." required>
                             </div>
-                            <div class="flex justify-end gap-2">
-                                <button type="button" id="btnCancelModal" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Batal</button>
-                                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 transition hover:cursor-pointer">Tambah</button>
+                            <div class="flex justify-end gap-2 pt-2">
+                                <button type="button" id="btnCancelModal" class="py-2 px-5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">Batal</button>
+                                <button type="submit" class="py-2 px-5 rounded-lg bg-blue-700 text-white font-semibold hover:bg-blue-800 transition">Tambah</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
                 <!-- Modal Edit Jenis Surat -->
-                <div id="modalEdit" class="fixed inset-0 z-50 flex items-center justify-center bg-black-100 bg-opacity-90 hidden">
-                    <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md relative">
-                        <button id="btnCloseEditModal" class="absolute top-2 right-3 text-gray-400 hover:text-red-500 text-2xl">&times;</button>
-                        <h2 class="text-xl font-bold mb-4">Edit Jenis Surat</h2>
-                        <form id="formEditJenisSurat" method="POST" class="space-y-4">
+                <div id="modalEdit" class="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40 backdrop-blur-sm hidden transition-opacity duration-300 ease-in-out">
+                    <div class="relative w-full max-w-md mx-auto bg-white rounded-2xl shadow-2xl p-8 animate-modal-show">
+                        <button id="btnCloseEditModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <h2 class="text-2xl font-bold mb-6 text-center">Edit Jenis Surat</h2>
+                        <form id="formEditJenisSurat" method="POST" class="space-y-5">
                             @csrf
                             @method('PUT')
                             <div>
-                                <label class="block mb-1 font-medium">Jenis Surat</label>
-                                <input type="text" name="jenis_surat" id="editJenisSuratInput" class="border p-2 rounded w-full" required>
+                                <label class="block mb-1 font-semibold text-gray-700">Jenis Surat</label>
+                                <input type="text" name="jenis_surat" id="editJenisSuratInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required>
                             </div>
-                            <div class="flex justify-end gap-2">
-                                <button type="button" id="btnCancelEditModal" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Batal</button>
-                                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 transition hover:cursor-pointer">Simpan</button>
+                            <div class="flex justify-end gap-2 pt-2">
+                                <button type="button" id="btnCancelEditModal" class="py-2 px-5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">Batal</button>
+                                <button type="submit" class="py-2 px-5 rounded-lg bg-blue-700 text-white font-semibold hover:bg-blue-800 transition">Simpan</button>
                             </div>
                         </form>
                     </div>
@@ -310,4 +320,21 @@
         </main>
     </div>
 </div>
+
+<style>
+@keyframes modal-show {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+@keyframes modal-hide {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
+}
+.animate-modal-show {
+    animation: modal-show 0.3s ease;
+}
+.animate-modal-hide {
+    animation: modal-hide 0.3s ease;
+}
+</style>
 @endsection

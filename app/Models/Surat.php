@@ -27,4 +27,9 @@ class Surat extends Model
         return $this->belongsToMany(Pengusul::class, 'pivot_pengusul_surat', 'id_surat', 'id_pengusul')
                     ->withPivot('id_peran_keanggotaan');
     }
+    public function statusTerakhir()
+    {
+        return $this->hasOne(RiwayatStatusSurat::class, 'id_surat')->latest('tanggal_rilis');
+    }
 }
+

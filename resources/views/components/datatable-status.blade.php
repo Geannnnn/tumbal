@@ -1,7 +1,8 @@
 @props([
     'id' => 'datatable-status',
     'ajaxUrl' => '',
-    'columns' => []
+    'columns' => [],
+    'userRole' => null
 ])
 
 <div class="overflow-x-auto">
@@ -78,7 +79,8 @@
                     searchable: false,
                     render: function(data, type, row) {
                         let id = row.id || row.id_surat;
-                        let url = `/mahasiswa/statussurat/${id}`;
+                        let baseUrl = '{{ $userRole === "Dosen" ? "dosen" : "mahasiswa" }}';
+                        let url = `/${baseUrl}/statussurat/${id}`;
                         return `<button class=\"bg-blue-100 text-black rounded-xl px-4 py-1 font-semibold text-sm hover:bg-blue-200 transition btn-detail-surat\" data-id=\"${id}\" data-url=\"${url}\">Detail</button>`;
                     }
                 }

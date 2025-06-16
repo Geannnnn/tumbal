@@ -9,6 +9,7 @@
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
+        @include('components.alertnotif')
         <main class="flex-1 bg-white p-12">
             @yield('content')
 
@@ -47,6 +48,7 @@
                             'jenis_surat' => 'Jenis Surat',
                             'status' => 'Status',
                         ]"
+                        userRole="Mahasiswa"
                     />
 
                 </x-backplat>

@@ -8,7 +8,7 @@
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
-        
+        @include('components.alertnotif')
         <main class="flex-1 bg-white p-10">
             @yield('content')
 

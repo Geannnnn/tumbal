@@ -8,7 +8,7 @@
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
-        
+        @include('components.alertnotif')
         <main class="flex-1 bg-white p-10">
             @yield('content')
 
@@ -23,7 +23,7 @@
                 <div class="w-full h-full max-h-180 bg-[#F0F2FF] rounded-[70px]">
                     
                     <div class="pl-15 pt-8">
-                        <h1 class="font-medium text-[28px]">Pengajuan Surat</h1>
+                        <h1 class="font-medium sm:text-[10px] md:text-[10px] lg:text-[20px]">Pengajuan Surat</h1>
                         <div class="flex justify-between w-full">
                             <h1 class="text-[#6D727C] font-medium text-[24px] py-4">List Pengajuan Surat Politeknik Negeri Batam</h1>
         
@@ -39,16 +39,25 @@
                     <div id="datatable-container" class="p-5">
                         <x-datatable
                             id="pengajuan-table"
-                            :columns="$columns"
+                            :columns="[
+                                'judul_surat' => 'Judul Surat',
+                                'tanggal_pengajuan' => 'Tanggal Pengajuan',
+                                'jenis_surat' => 'Jenis Surat',
+                                'dibuat_oleh' => 'Dibuat Oleh',
+                                'ketua' => 'Ketua',
+                                'anggota' => 'Anggota',
+                                'lampiran' => 'Lampiran',
+                                'deskripsi' => 'Deskripsi',
+                            ]"
                             ajaxUrl="{{ route('pengajuan.search') }}"
-                            :ordering="true"
+                            :ordering="false"
                             :lengthMenu="false"
                             :pageLength="5"
                             :showEdit="false"
                             :showDelete="false"
+                            :search="true"
                         />
-                    </div>  
-        
+                    </div>      
                 </div>
             </div>
 
@@ -56,28 +65,23 @@
 
         
 
-            @push('scripts')
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    const ajukanDataHide = document.getElementById('ajukanDataHide');
-                    const ajukanDataShow = document.getElementById('ajukanData');
-                    const ajukanFormShow = document.getElementById('ajukanForm');
-                    const ajukanFormHide = document.getElementById('ajukanFormHide');
-            
-                    if (ajukanDataHide && ajukanDataShow && ajukanFormShow && ajukanFormHide) {
-                        ajukanDataHide.addEventListener('click', () => {
-                            ajukanDataShow.classList.add('hidden');
-                            ajukanFormShow.classList.remove('hidden');
-                        });
-            
-                        ajukanFormHide.addEventListener('click', () => {
-                            ajukanFormShow.classList.add('hidden');
-                            ajukanDataShow.classList.remove('hidden');
-                        });
-                    }
-                });
-            </script>
-            @endpush
+        <script>
+            const ajukanDataHide = document.getElementById('ajukanDataHide');
+            const ajukanDataShow = document.getElementById('ajukanData');
+            const ajukanFormShow = document.getElementById('ajukanForm');
+            const ajukanFormHide = document.getElementById('ajukanFormHide');
+
+            ajukanDataHide.addEventListener('click',function(){
+                ajukanDataShow.classList.add('hidden');
+                ajukanFormShow.classList.remove('hidden');
+            });
+
+            ajukanFormHide.addEventListener('click',function(){
+                ajukanFormShow.classList.add('hidden');
+                ajukanDataShow.classList.remove('hidden');
+            })
+
+        </script>
         
         </main>
 </div>

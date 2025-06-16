@@ -17,21 +17,31 @@
                 </button>
             
                 <!-- Notifikasi -->
-                <div id="notifShow" class="absolute top-full right-0 mt-2 z-50 w-[300px] rounded-[15px] bg-[#F0EDF2] p-4 invisible opacity-0 scale-95 pointer-events-none transition-all duration-200 ease-out">
+                <div id="notifShow" class="absolute top-full right-0 mt-2 z-50 w-[300px] rounded-[15px] bg-[#F0EDF2] p-4 invisible opacity-0 scale-95 pointer-events-none transition-all duration-200">
                     <div class="flex justify-center pt-2">
                         <h1 class="font-semibold text-2xl">Notifikasi</h1>
                     </div>
                     <hr class="my-2">
-                    <div class="flex p-2 gap-3">
-                        <div class="w-9 h-9 bg-black rounded-full relative">
-                            <i class="absolute top-2.5 left-2.5 fa-solid fa-envelope text-white"></i>
+                
+                    @forelse($notifikasiSurat as $surat)
+                        <div class="flex p-2 gap-3">
+                            <div class="w-9 h-9 bg-black rounded-full relative">
+                                <i class="absolute top-2.5 left-2.5 fa-solid fa-envelope text-white"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <h1 class="font-semibold text-base">{{ $surat->jenisSurat->nama_jenis ?? 'Surat' }}</h1>
+                                <h1 class="text-sm text-gray-700">Surat Nomor {{ $surat->nomor_surat ?? 'Belum Ada' }}</h1>
+                                <h1 class="text-sm text-gray-600 italic">
+                                    Status: {{ $surat->statusTerakhir->statusSurat->status_surat ?? '-' }}
+                                </h1>
+                                <span class="text-[13px] font-extralight">
+                                    {{ \Carbon\Carbon::parse($surat->statusTerakhir->tanggal_rilis)->diffForHumans() }}
+                                </span>
+                            </div>
                         </div>
-                        <div class="flex flex-col">
-                            <h1 class="font-semibold text-base">Surat Tugas</h1>
-                            <h1 class="text-sm text-gray-700">Surat Nomor ###</h1>
-                            <span class="text-[13px] font-extralight">0 menit yang lalu</span>
-                        </div>
-                    </div>
+                    @empty
+                        <p class="text-sm text-gray-500 text-center mt-3">Belum ada notifikasi surat.</p>
+                    @endforelse
                 </div>
 
                 {{-- Nama & Role --}}

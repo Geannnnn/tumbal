@@ -15,6 +15,8 @@ class SuratController extends Controller
 {
     public function store(Request $request)
     {
+        $user = auth('pengusul')->user();
+        $role = $user->role; // 'mahasiswa' atau 'dosen'
         $isDraft = $request->input('is_draft') == 0;
 
         $rules = [
@@ -46,7 +48,7 @@ class SuratController extends Controller
             $dataSurat = [
                 'judul_surat' => $request->judul_surat,
                 'tanggal_pengajuan' => now('Asia/Jakarta'),
-                'dibuat_oleh' => auth('pengusul')->id(),
+                'dibuat_oleh' => $user->id_pengusul,
                 'lampiran' => $lampiranPath,
                 'is_draft' => $isDraft ? 0 : 1,
                 'id_jenis_surat' => $request->filled('jenis_surat') ? $request->jenis_surat : null,
@@ -86,14 +88,14 @@ class SuratController extends Controller
 
             DB::commit();
 
-            // Redirect sesuai role user
-            $user = auth('pengusul')->user();
-            $redirectRoute = 'mahasiswa.pengajuansurat';
-            if ($user->role === 'dosen') {
-                $redirectRoute = 'dosen.pengajuansurat';
+            $roleName = is_array($role) ? ($role['role'] ?? null) : (is_object($role) ? $role->role : $role);
+            if ($isDraft) {
+                $redirectRoute = $roleName === 'Dosen' ? 'dosen.draft' : 'mahasiswa.draft';
+                $message = 'Surat berhasil disimpan sebagai draft.';
+            } else {
+                $redirectRoute = $roleName === 'Dosen' ? 'dosen.pengajuansurat' : 'mahasiswa.pengajuansurat';
+                $message = 'Surat berhasil diajukan.';
             }
-
-            $message = $isDraft ? 'Surat berhasil disimpan sebagai draft.' : 'Surat berhasil diajukan.';
             return redirect()->route($redirectRoute)->with('success', $message);
 
         } catch (\Exception $e) {
@@ -169,6 +171,8 @@ class SuratController extends Controller
 
     public function edit($id)
     {
+        $user = auth('pengusul')->user();
+        $role = $user->role;
         $surat = Surat::with(['pengusul' => function($query) {
             $query->select('pengusul.id_pengusul', 'pengusul.nama', 'pengusul.nim', 'pengusul.nip', 'pivot_pengusul_surat.id_peran_keanggotaan');
         }])->findOrFail($id);
@@ -184,14 +188,21 @@ class SuratController extends Controller
             'surat' => $surat,
             'jenisSurat' => $jenisSurat,
             'ketua' => $ketua,
-            'anggota' => $anggota
+            'anggota' => $anggota,
+            'role' => $role
         ];
 
-        return view('pengusul.mahasiswa.edit', $data);
+        // Tentukan view berdasarkan role
+        $roleName = is_array($role) ? ($role['role'] ?? null) : (is_object($role) ? $role->role : $role);
+        $view = $roleName === 'Dosen' ? 'pengusul.dosen.edit' : 'pengusul.mahasiswa.edit';
+        
+        return view($view, $data);
     }
 
     public function update(Request $request, $id)
     {
+        $user = auth('pengusul')->user();
+        $role = $user->role;
         $isDraft = $request->input('is_draft') == 1;
 
         $rules = [
@@ -271,13 +282,14 @@ class SuratController extends Controller
             DB::commit();
 
             // Redirect sesuai role user
-            $user = auth('pengusul')->user();
-            $redirectRoute = 'mahasiswa.pengajuansurat';
-            if ($user->role === 'dosen') {
-                $redirectRoute = 'dosen.pengajuansurat';
+            $roleName = is_array($role) ? ($role['role'] ?? null) : (is_object($role) ? $role->role : $role);
+            if ($isDraft) {
+                $redirectRoute = $roleName === 'Dosen' ? 'dosen.draft' : 'mahasiswa.draft';
+                $message = 'Surat berhasil disimpan sebagai draft.';
+            } else {
+                $redirectRoute = $roleName === 'Dosen' ? 'dosen.pengajuansurat' : 'mahasiswa.pengajuansurat';
+                $message = 'Surat berhasil diajukan.';
             }
-
-            $message = $isDraft ? 'Surat berhasil disimpan sebagai draft.' : 'Surat berhasil diajukan.';
             return redirect()->route($redirectRoute)->with('success', $message);
 
         } catch (\Exception $e) {
@@ -288,6 +300,8 @@ class SuratController extends Controller
 
     public function destroy($id)
     {
+        $user = auth('pengusul')->user();
+        $role = $user->role;
         DB::beginTransaction();
         try {
             // Hapus data di tabel pivot_pengusul_surat
@@ -307,15 +321,15 @@ class SuratController extends Controller
             $surat->delete();
             
             DB::commit();
-            return redirect()->route('mahasiswa.draft')->with('success', 'Surat berhasil dihapus');
+            $roleName = is_array($role) ? ($role['role'] ?? null) : (is_object($role) ? $role->role : $role);
+            $redirectRoute = $roleName === 'Dosen' ? 'dosen.draft' : 'mahasiswa.draft';
+            return redirect()->route($redirectRoute)->with('success', 'Surat berhasil dihapus');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('mahasiswa.draft')->with('error', 'Gagal menghapus surat: ' . $e->getMessage());
+            $roleName = is_array($role) ? ($role['role'] ?? null) : (is_object($role) ? $role->role : $role);
+            $redirectRoute = $roleName === 'Dosen' ? 'dosen.draft' : 'mahasiswa.draft';
+            return redirect()->route($redirectRoute)->with('error', 'Gagal menghapus surat: ' . $e->getMessage());
         }
     }
 
-    public function show($id){
-        $surat = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul'])->findOrFail($id);
-        return view('pengusul.detail', compact('surat'));
-    }
 }

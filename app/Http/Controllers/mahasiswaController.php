@@ -14,6 +14,16 @@ class mahasiswaController extends Controller
 
     public function index () {
 
+        $suratDiterima = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+            $q->where('id_status_surat',1);
+        })->count();
+
+        $suratDitolak = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+            $q->where('id_status_surat',2);
+        })->count();
+
+        $notifikasiSurat = collect(); // default empty
+        
         $columns = [
             'nomor_surat' => "Nomor Surat",
             'judul_surat' =>'Nama Surat', 
@@ -22,7 +32,7 @@ class mahasiswaController extends Controller
             'tanggal_pengajuan' => 'Dibuat Pada'];
 
 
-        return view('pengusul.mahasiswa.index', compact('columns'));
+        return view('pengusul.mahasiswa.index', compact('columns','suratDiterima','suratDitolak','notifikasiSurat'));
     }
 
     public function pengajuan() {
@@ -94,32 +104,29 @@ class mahasiswaController extends Controller
             'data' => $data,
         ]);
     }
-    
-    public function detail($id){
-
-        $surat = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul'])->findOrFail($id);
-        return view('pengusul.mahasiswa.detail', compact('surat'));
-    }
 
     public function draftData()
-{
-    // Ambil surat dengan is_draft = 0
-    $surats = Surat::where('is_draft', 0)->select(['id_surat','judul_surat'])->get();
+    {
+        // Ambil hanya draft milik user yang sedang login
+        $userId = auth('pengusul')->id();
+        $surats = Surat::where('is_draft', 0)
+            ->where('dibuat_oleh', $userId)
+            ->select(['id_surat','judul_surat'])
+            ->get();
 
-    return DataTables::of($surats)
-        ->addColumn('action', function ($surat) {
-            
-            return '
-                <a href="' . route('surat.edit', $surat->id_surat) . '" class="py-2 px-4 rounded-[10px] bg-blue-700 text-white">Edit</a>
-                <button onclick="hapusSurat(' . $surat->id_surat . ')" class="py-2 px-4 rounded-[10px] bg-red-700 text-white ml-2 hover:cursor-pointer">Hapus</button>
-                <form id="form-hapus-' . $surat->id_surat . '" action="' . route('surat.destroy', $surat->id_surat) . '" method="POST" style="display: none; ">
-                    ' . csrf_field() . method_field('DELETE') . '
-                </form>
-            ';
-        })
-        ->rawColumns(['action']) // supaya tombol tidak di-escape
-        ->make(true);
-}
+        return DataTables::of($surats)
+            ->addColumn('action', function ($surat) {
+                return '
+                    <a href="' . route('surat.edit', $surat->id_surat) . '" class="py-2 px-4 rounded-[10px] bg-blue-700 text-white">Edit</a>
+                    <button onclick="hapusSurat(' . $surat->id_surat . ')" class="py-2 px-4 rounded-[10px] bg-red-700 text-white ml-2 hover:cursor-pointer">Hapus</button>
+                    <form id="form-hapus-' . $surat->id_surat . '" action="' . route('surat.destroy', $surat->id_surat) . '" method="POST" style="display: none; ">
+                        ' . csrf_field() . method_field('DELETE') . '
+                    </form>
+                ';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
+    }
     
     public function draft()
     {

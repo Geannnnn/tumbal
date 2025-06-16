@@ -1,15 +1,12 @@
 @extends('layouts.app')
 
-@include('components.alertnotif')
-
 @section('title', 'Halaman Login')
 
 @section('content')
 <x-logo></x-logo>
-<x-alertnotif />
 <div class="flex w-full justify-around items-center space-x-20">
     <!-- Form Login -->
-    
+    <x-alertnotif />
     <x-form.loginform />
 
 

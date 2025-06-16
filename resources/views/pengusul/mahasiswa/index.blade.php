@@ -1,16 +1,16 @@
 @extends('layouts.app')
 
-@include('components.alertnotif')
 
 @section('title','Dashboard Mahasiswa')
 
 @section('content')
-<x-alertnotif />
+
 <div class="flex h-screen">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
+        @include('components.alertnotif')
         <main class="flex-1 bg-white p-4 sm:p-6 md:p-8 lg:p-12">
             @yield('content')
             <div class="title-page flex flex-col md:flex-row justify-between gap-4">
@@ -38,7 +38,7 @@
                         <i class="fa-solid fa-file text-white text-4xl"></i>
                     </div>
                     <span class="text-[#5A6ACF] font-medium text-base mt-2">Surat Diterima</span>
-                    <span class="text-blue-800 font-bold text-3xl mt-1">0</span>
+                    <span class="text-blue-800 font-bold text-3xl mt-1">{{ $suratDiterima }}</span>
                 </div>
                 <!-- Surat Ditolak -->
                 <div class="flex-1 flex flex-col items-center bg-[#F1F2F7] shadow-md shadow-blue-100 rounded-2xl py-6 mx-2">
@@ -46,7 +46,7 @@
                         <i class="fa-solid fa-file text-white text-4xl"></i>
                     </div>
                     <span class="text-blue-500 font-medium text-base mt-2">Surat Ditolak</span>
-                    <span class="text-blue-800 font-bold text-3xl mt-1">1</span>
+                    <span class="text-blue-800 font-bold text-3xl mt-1">{{ $suratDitolak }}</span>
                 </div>
             </div>
             

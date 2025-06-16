@@ -43,7 +43,6 @@ Route::get('/logout', function () {
 
 Route::get('/anggota/search', [PengusulController::class, 'searchAnggota']);
 Route::get('/search-dosen', [dosenController::class, 'searchDosen'])->name('search.dosen');
-Route::get('/pengajuan/detail/{id}', [SuratController::class, 'show'])->name('surat.detail');
 Route::delete('/surat/{id}',[SuratController::class, 'destroy'])->name('surat.destroy');
 Route::put('/surat/{id}', [SuratController::class, 'update'])->name('surat.update');
 Route::get('/pengajuan/search', [SuratController::class, 'pengajuansearch'])->name('pengajuan.search');
@@ -52,7 +51,6 @@ Route::post('/ubah-password', [AuthController::class, 'profileUpdatePassword'])-
 
 
 Route::middleware(['multi-auth'])->group(function () {
-
     // ======================= Pengusul =======================
     Route::middleware('role:pengusul')->group(function () {
         // Mahasiswa
@@ -74,11 +72,16 @@ Route::middleware(['multi-auth'])->group(function () {
         // Dosen
         Route::prefix('dosen')->controller(dosenController::class)->group(function () {
             Route::get('/', 'index')->name('dosen.dashboard');
+            Route::get('/index/data','data')->name('surat.data');
             Route::get('/pengajuan', 'pengajuan')->name('dosen.pengajuansurat');
-            Route::get('/draft/data','draftData')->name('mahasiswa.draftData');
+            Route::get('/search', 'search')->name('dosen.search');
+            Route::get('/surat/{id}/edit', [SuratController::class, 'edit'])->name('surat.edit');
+            Route::get('/draft/data','draftData')->name('dosen.draftData');
             Route::get('/draft', 'draft')->name('dosen.draft');
             Route::get('/status', 'status')->name('dosen.statussurat');
+            Route::get('/status/data', 'getStatusSuratData')->name('statusSurat.data');
             Route::get('/setting', 'setting')->name('dosen.setting');
+            Route::get('/statussurat/{id}', 'showStatusSurat')->name('dosen.statussurat.show');
         });
     });
 
@@ -102,20 +105,24 @@ Route::middleware(['multi-auth'])->group(function () {
         });
     });
 
-    // Admin
-    Route::middleware('role:admin')->prefix('admin')->controller(adminController::class)->group(function () {
-        Route::get('/', 'index')->name('admin.dashboard');
-        Route::get('/kelola-pengusul', 'kelolapengusul')->name('admin.kelolapengusul');
-        Route::get('/jenis-surat', 'jenissurat')->name('admin.kelolajenissurat');
-        Route::post('/jenis-surat',  'store')->name('admin.jenissurat.store');
-        Route::put('/jenis-surat/{id}',  'update')->name('admin.jenissurat.update');
-        Route::delete('/jenis-surat/{id}',  'destroy')->name('admin.jenissurat.destroy');
-        Route::get('pengusul/data',  'pengusulData')->name('admin.pengusul.data');
+    // ======================= Admin =======================
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/', [adminController::class, 'index'])->name('dashboard');
+        Route::get('/kelola-pengusul', [adminController::class, 'kelolapengusul'])->name('kelolapengusul');
+        Route::get('/jenis-surat', [adminController::class, 'jenissurat'])->name('kelolajenissurat');
+        Route::post('/jenis-surat', [adminController::class, 'store'])->name('jenissurat.store');
+        Route::put('/jenis-surat/{id}', [adminController::class, 'update'])->name('jenissurat.update');
+        Route::delete('/jenis-surat/{id}', [adminController::class, 'destroy'])->name('jenissurat.destroy');
+        Route::get('/pengusul/data', [adminController::class, 'pengusulData'])->name('pengusul.data');
+        Route::get('/pengusul/{id}', [adminController::class, 'getPengusul'])->name('pengusul.get');
+        Route::post('/pengusul', [adminController::class, 'storePengusul'])->name('pengusul.store');
+        Route::put('/pengusul/{id}', [adminController::class, 'updatePengusul'])->name('pengusul.update');
+        Route::delete('/pengusul/{id}', [adminController::class, 'destroyPengusul'])->name('pengusul.destroy');
+        
     });
 
-    // Kepala Sub
+    // ======================= Kepala Sub =======================
     Route::middleware('role:kepala_sub')->prefix('kepala-sub')->controller(KepalaSubController::class)->group(function () {
         Route::get('/', 'index')->name('kepalasub.dashboard');
     });
-
 });

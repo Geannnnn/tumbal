@@ -9,15 +9,16 @@
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
+        @include('components.alertnotif')
         <main class="flex-1 bg-white p-12">
             @yield('content')
-            <x-alertnotif />
+            
             <x-backplat
                 :title="'Draft'" 
                 :subtitle="'Draft Surat Politeknik Negeri Batam'" 
                 :search="true"
                 :searchPlaceholder="'Cari draft surat...'">
-                >
+                
                 <a href=""></a>
                 <x-datatable 
                     id="datatable"

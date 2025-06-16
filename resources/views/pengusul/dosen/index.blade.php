@@ -109,29 +109,22 @@
                     
                 </div>
             </div>
-            <div class="flex mt-6">
-                <div class="flex justify-around items-center bg-[#AB8DE533] w-[660px] h-[148px] rounded-[30px]">
-                    <div class="flex items-center">
-                        <div class="w-[90px] h-[82px] rounded-full bg-gradient-to-b from-[#5A6ACF] via-[#5A6ACF] flex justify-center items-center">
-                            <i class="fa-solid fa-file text-white text-5xl"></i>
-                        </div>
-                
-                        <div class="flex flex-col mt-5 ml-4">
-                            <h1 class="text-[14px] text-[#ACACAC]">Tanggapan Masuk</h1>
-                            <h1 class="font-semibold w-[93px] h-[31px]">0</h1>
-                        </div>
+            <div class="flex flex-col sm:flex-row gap-6 mt-6">
+                <!-- Surat Diterima -->
+                <div class="flex-1 flex flex-col items-center bg-[#F1F2F7] shadow-md shadow-blue-100 rounded-2xl py-6 mx-2">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-b from-[#5A6ACF] to-blue-300 flex items-center justify-center mb-2 shadow">
+                        <i class="fa-solid fa-file text-white text-4xl"></i>
                     </div>
-            
-                    <div class="flex items-center">
-                        <div class="w-[90px] h-[82px] rounded-full bg-gradient-to-b from-[#5A6ACF] via-[#5A6ACF] flex justify-center items-center">
-                            <i class="fa-solid fa-file text-white text-5xl"></i>
-                        </div>
-                        
-                        <div class="flex flex-col mt-5 ml-4">
-                            <h1 class="text-[14px] text-[#ACACAC]">Tanggapan Masuk</h1>
-                            <h1 class="font-semibold w-[93px] h-[31px]">1</h1>
-                        </div>
+                    <span class="text-[#5A6ACF] font-medium text-base mt-2">Surat Diterima</span>
+                    <span class="text-blue-800 font-bold text-3xl mt-1">{{ $suratDiterima }}</span>
+                </div>
+                <!-- Surat Ditolak -->
+                <div class="flex-1 flex flex-col items-center bg-[#F1F2F7] shadow-md shadow-blue-100 rounded-2xl py-6 mx-2">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-b from-[#5A6ACF] to-blue-300 flex items-center justify-center mb-2 shadow">
+                        <i class="fa-solid fa-file text-white text-4xl"></i>
                     </div>
+                    <span class="text-blue-500 font-medium text-base mt-2">Surat Ditolak</span>
+                    <span class="text-blue-800 font-bold text-3xl mt-1">{{ $suratDitolak }}</span>
                 </div>
             </div>
             

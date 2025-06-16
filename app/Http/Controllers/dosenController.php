@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\JenisSurat;
 use App\Models\Pengusul;
+use App\Models\StatusSurat;
 use App\Models\Surat;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -12,6 +13,16 @@ class dosenController extends Controller
 {
     public function index () {
 
+        $suratDiterima = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+            $q->where('id_status_surat',1);
+        })->count();
+
+        $suratDitolak = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+            $q->where('id_status_surat',2);
+        })->count();
+
+        $notifikasiSurat = collect(); // default empty
+        
         $columns = [
             'nomor_surat' => "Nomor Surat",
             'judul_surat' =>'Nama Surat', 
@@ -20,7 +31,7 @@ class dosenController extends Controller
             'tanggal_pengajuan' => 'Dibuat Pada'];
 
 
-        return view('pengusul.dosen.index', compact('columns'));
+        return view('pengusul.dosen.index', compact('columns','suratDiterima','suratDitolak','notifikasiSurat'));
     }
 
 
@@ -55,8 +66,12 @@ class dosenController extends Controller
 
     public function draftData()
 {
-    // Ambil surat dengan is_draft = 0
-    $surats = Surat::where('is_draft', 0)->select(['id_surat','judul_surat'])->get();
+    // Ambil hanya draft milik user yang sedang login
+    $userId = auth('pengusul')->id();
+    $surats = Surat::where('is_draft', 0)
+        ->where('dibuat_oleh', $userId)
+        ->select(['id_surat','judul_surat'])
+        ->get();
 
     return DataTables::of($surats)
         ->addColumn('action', function ($surat) {
@@ -74,7 +89,81 @@ class dosenController extends Controller
 }
 
     public function status() {
-        return view('pengusul.dosen.status');
+        $jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat')->toArray();
+        $StatusSurat = StatusSurat::pluck('status_surat', 'id_status_surat')->toArray();
+        
+        return view('pengusul.dosen.status',compact('jenisSurat','StatusSurat'));
+    }
+
+    public function getStatusSuratData(Request $request)
+    {
+        $user = null;
+        $guard = null;
+    
+        if (auth('pengusul')->check()) {
+            $guard = 'pengusul';
+            $user = auth('pengusul')->user();
+        } elseif (auth('admin')->check()) {
+            $guard = 'admin';
+            $user = auth('admin')->user();
+        } elseif (auth('kepala_sub')->check()) {
+            $guard = 'kepala_sub';
+            $user = auth('kepala_sub')->user();
+        }
+    
+        if (!$user) {
+            return response()->json([
+                'data' => [],
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'error' => 'Unauthorized',
+            ], 401);
+        }
+    
+            $query = Surat::with(['jenisSurat', 'riwayatStatus' => function($q) {
+                $q->with('statusSurat')->latest('tanggal_rilis');
+            }])
+            ->whereYear('tanggal_pengajuan', $request->input('year', date('Y')))
+            ->where('is_draft', 1);
+    
+        if ($guard === 'pengusul') {
+            $query->where('dibuat_oleh', $user->id_pengusul);
+        }
+    
+            // Filter berdasarkan jenis surat
+            if ($request->has('jenis_surat') && $request->jenis_surat) {
+                $query->where('id_jenis_surat', $request->jenis_surat);
+            }
+    
+            // Filter berdasarkan status
+            if ($request->has('status_surat') && $request->status_surat) {
+                $query->whereHas('riwayatStatus', function($q) use ($request) {
+                    $q->where('id_status_surat', $request->status_surat);
+                });
+            }
+    
+        if ($request->has('search') && $request->search['value'] != '') {
+            $searchValue = $request->search['value'];
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('judul_surat', 'like', "%{$searchValue}%")
+                  ->orWhere('nomor_surat', 'like', "%{$searchValue}%");
+            });
+        }
+    
+        return DataTables::of($query)
+            ->addColumn('jenis_surat', fn($row) => $row->jenisSurat->jenis_surat ?? '-')
+                ->addColumn('nomor_surat', function($row) {
+                return $row->nomor_surat ? $row->nomor_surat : '-';
+            })
+            ->addColumn('status', function ($row) {
+                    $latestStatus = $row->riwayatStatus->first();
+                    return $latestStatus ? $latestStatus->statusSurat->status_surat : '-';
+            })
+                ->addColumn('tanggal_pengajuan', function($row) {
+                    return $row->tanggal_pengajuan ? date('d/m/Y', strtotime($row->tanggal_pengajuan)) : '-';
+            })
+                ->rawColumns(['status'])
+            ->make(true);
     }
 
     public function searchDosen(Request $request) {
@@ -95,4 +184,31 @@ class dosenController extends Controller
         {
             return view('pengusul.dosen.setting');
         }
+
+    public function showStatusSurat($id)
+    {
+        $surat = Surat::with(['riwayatStatus' => function($q) {
+            $q->with('statusSurat')->orderBy('tanggal_rilis', 'asc');
+        }, 'dibuatOleh'])->findOrFail($id);
+
+        $riwayat = [];
+        $prevStatus = null;
+        foreach ($surat->riwayatStatus as $item) {
+            $statusName = $item->statusSurat->status_surat ?? '-';
+            $oleh = $surat->dibuatOleh->nim ?? $surat->dibuatOleh->nip ?? '-' . ' | ' . $surat->dibuatOleh->nama;
+            $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y, H:i') . ' wib';
+            $riwayat[] = [
+                'tanggal' => $tanggal,
+                'dari' => $prevStatus ? $prevStatus : 'Draft',
+                'ke' => $statusName,
+                'oleh' => $oleh,
+                'warna' => 'bg-purple-500',
+            ];
+            $prevStatus = $statusName;
+        }
+
+        return view('pengusul.dosen.riwayatstatus', [
+            'riwayat' => $riwayat
+        ]);
+    }
 }
