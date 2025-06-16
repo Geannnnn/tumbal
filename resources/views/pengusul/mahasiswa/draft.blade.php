@@ -15,51 +15,28 @@
             <x-backplat
                 :title="'Draft'" 
                 :subtitle="'Draft Surat Politeknik Negeri Batam'" 
-                :search="true">
+                :search="true"
+                :searchPlaceholder="'Cari draft surat...'">
+                >
                 <a href=""></a>
-                <table id="datatable" class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Nomor</th>
-                            <th>Id Surat</th>
-                            <th>Judul Surat</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+                <x-datatable 
+                    id="datatable"
+                    :ajaxUrl="route('mahasiswa.draftData')"
+                    :columns="[
+                        'judul_surat' => 'Judul Surat',
+                        'action' => 'Aksi'
+                    ]"
+                    :search="true"
+                    :ordering="false"
+                    :paging="true"
+                    :info="true"
+                    :lengthMenu="false"
+                    :pageLength="5"
+                />
             </x-backplat>
 
-
-            <style>
-                .dataTables_filter {
-                    display: none;
-                }
-            </style>
             @push('scripts')
                 <script>
-                    $(document).ready(function() {
-                        $('#datatable').DataTable({
-                            pageLength:false,
-                            lengthChange:false,
-                            processing: true,
-                            serverSide: true,
-                            ajax: '{{ route('mahasiswa.draftData') }}', // Pastikan URL ini sesuai dengan rute yang Anda buat
-                            columns: [
-                                { data: null, searchable: false, render: function (data, type, row, meta) {
-                                    return meta.row + 1;
-                                }},
-                                { data: 'id_surat', visible: false },
-                                { data: 'judul_surat' },
-                                { data: 'action', orderable: false, searchable: false }, 
-                            ],
-                        });
-                    });
-                    $('#custom-search').on('keyup', function () {
-                        table.search(this.value).draw();
-                    });
-
                     function hapusSurat(id) {
                         Swal.fire({
                             title: 'Yakin ingin menghapus?',

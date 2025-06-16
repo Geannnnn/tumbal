@@ -288,9 +288,30 @@ class SuratController extends Controller
 
     public function destroy($id)
     {
-        DB::table('riwayat_status_surat')->where('id_surat', $id)->delete();
-        Surat::findOrFail($id)->delete();
-        return redirect()->route('mahasiswa.draft')->with('success', 'Surat berhasil dihapus');
+        DB::beginTransaction();
+        try {
+            // Hapus data di tabel pivot_pengusul_surat
+            DB::table('pivot_pengusul_surat')->where('id_surat', $id)->delete();
+            
+            // Hapus data di tabel riwayat_status_surat
+            DB::table('riwayat_status_surat')->where('id_surat', $id)->delete();
+            
+            // Hapus data di tabel surat
+            $surat = Surat::findOrFail($id);
+            
+            // Hapus file lampiran jika ada
+            if ($surat->lampiran && Storage::disk('public')->exists($surat->lampiran)) {
+                Storage::disk('public')->delete($surat->lampiran);
+            }
+            
+            $surat->delete();
+            
+            DB::commit();
+            return redirect()->route('mahasiswa.draft')->with('success', 'Surat berhasil dihapus');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('mahasiswa.draft')->with('error', 'Gagal menghapus surat: ' . $e->getMessage());
+        }
     }
 
     public function show($id){

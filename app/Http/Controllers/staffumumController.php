@@ -22,4 +22,19 @@ class staffumumController extends Controller
     {
         return view('staff.staff-umum.statistik');
     }
+
+    public function terbitkan()
+    {
+        return view('staff.staff-umum.terbitkan');
+    }
+
+    public function statussurat()
+    {
+        return view('staff.staff-umum.statussurat');
+    }
+
+    public function jenissurat()
+    {
+        return view('staff.staff-umum.jenissurat');
+    }
 }

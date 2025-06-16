@@ -15,7 +15,7 @@
 <table id="{{ $id }}" class="w-full bg-transparent text-md text-left text-gray-700">
     <thead>
         <tr>
-            <th>No</th>
+            <th>Nomor</th>
             @foreach ($columns as $label)
                 <th>{{ $label }}</th>
             @endforeach
@@ -40,6 +40,16 @@
 <script>
     $(document).ready(function () {
         var table = $('#{{ $id }}').DataTable({
+            language: {
+                paginate: {
+                    previous: 'Sebelumnya',
+                    next: 'Selanjutnya'
+                },
+                info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                infoEmpty: 'Menampilkan 0 sampai 0 dari 0 data',
+                infoFiltered: '(difilter dari _MAX_ total data)',
+                zeroRecords: 'Tidak ada data yang cocok'
+            },
             processing: true,
             serverSide: true,
             ajax: '{{ $ajaxUrl }}',
@@ -96,6 +106,12 @@
         @if ($search)
         $('#custom-search').on('keyup', function () {
             table.search(this.value).draw();
+        });
+
+        $('#custom-search').on('input', function () {
+            if (this.value === '') {
+                table.search('').draw();
+            }
         });
         @endif
     });

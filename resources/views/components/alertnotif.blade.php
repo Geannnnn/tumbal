@@ -1,39 +1,3 @@
-{{-- <button onclick="showSuccess()">SweetAlert Success</button>
-            <button onclick="showConfirm()">SweetAlert Confirm Delete</button>
-
-<script>
-function showSuccess() {
-    Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: 'Data berhasil disimpan',
-    });
-}
-
-function showConfirm() {
-    Swal.fire({
-        title: 'Yakin ingin menghapus?',
-        text: 'Data tidak bisa dikembalikan!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, hapus!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            Swal.fire('Terhapus!', 'Data sudah dihapus.', 'success');
-            
-        }
-    });
-}
-</script> --}}
-
-{{-- Key --}}
-{{-- return redirect()->back()->with('success', 'Data berhasil ditambahkan.');
-return redirect()->back()->with('error', 'Gagal menambahkan data.');
-return redirect()->back()->with('info', 'Ini hanya informasi biasa.'); --}}
-
-
 @if(session('success'))
     <script>
         Swal.fire({
@@ -88,7 +52,6 @@ return redirect()->back()->with('info', 'Ini hanya informasi biasa.'); --}}
         });
     </script>
 @endif
-
 
 <script>
     function showConfirmationAlert({ formId, event, title = 'Konfirmasi', text = 'Apakah Anda yakin?', confirmText = 'Ya', cancelText = 'Batal', icon = 'warning' }) {

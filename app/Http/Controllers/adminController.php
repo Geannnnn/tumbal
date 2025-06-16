@@ -53,11 +53,21 @@ class adminController extends Controller
             'jenis_surat' => 'required|string|max:255',
         ]);
 
-        JenisSurat::where('id_jenis_surat', $id)->update([
-            'jenis_surat' => $request->jenis_surat,
-        ]);
+        try {
+            JenisSurat::where('id_jenis_surat', $id)->update([
+                'jenis_surat' => $request->jenis_surat,
+            ]);
 
-        return redirect()->back()->with('success', 'Jenis surat berhasil diperbarui.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Jenis surat berhasil diperbarui'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui jenis surat: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy($id)

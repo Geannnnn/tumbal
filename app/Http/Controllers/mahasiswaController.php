@@ -137,29 +137,29 @@ class mahasiswaController extends Controller
    
 
     public function getStatusSuratData(Request $request)
-    {
-        $user = null;
-        $guard = null;
+{
+    $user = null;
+    $guard = null;
 
-        if (auth('pengusul')->check()) {
-            $guard = 'pengusul';
-            $user = auth('pengusul')->user();
-        } elseif (auth('admin')->check()) {
-            $guard = 'admin';
-            $user = auth('admin')->user();
-        } elseif (auth('kepala_sub')->check()) {
-            $guard = 'kepala_sub';
-            $user = auth('kepala_sub')->user();
-        }
+    if (auth('pengusul')->check()) {
+        $guard = 'pengusul';
+        $user = auth('pengusul')->user();
+    } elseif (auth('admin')->check()) {
+        $guard = 'admin';
+        $user = auth('admin')->user();
+    } elseif (auth('kepala_sub')->check()) {
+        $guard = 'kepala_sub';
+        $user = auth('kepala_sub')->user();
+    }
 
-        if (!$user) {
-            return response()->json([
-                'data' => [],
-                'recordsTotal' => 0,
-                'recordsFiltered' => 0,
-                'error' => 'Unauthorized',
-            ], 401);
-        }
+    if (!$user) {
+        return response()->json([
+            'data' => [],
+            'recordsTotal' => 0,
+            'recordsFiltered' => 0,
+            'error' => 'Unauthorized',
+        ], 401);
+    }
 
         $query = Surat::with(['jenisSurat', 'riwayatStatus' => function($q) {
             $q->with('statusSurat')->latest('tanggal_rilis');
@@ -167,9 +167,9 @@ class mahasiswaController extends Controller
         ->whereYear('tanggal_pengajuan', $request->input('year', date('Y')))
         ->where('is_draft', 1);
 
-        if ($guard === 'pengusul') {
-            $query->where('dibuat_oleh', $user->id_pengusul);
-        }
+    if ($guard === 'pengusul') {
+        $query->where('dibuat_oleh', $user->id_pengusul);
+    }
 
         // Filter berdasarkan jenis surat
         if ($request->has('jenis_surat') && $request->jenis_surat) {
@@ -183,29 +183,29 @@ class mahasiswaController extends Controller
             });
         }
 
-        if ($request->has('search') && $request->search['value'] != '') {
-            $searchValue = $request->search['value'];
-            $query->where(function ($q) use ($searchValue) {
-                $q->where('judul_surat', 'like', "%{$searchValue}%")
-                  ->orWhere('nomor_surat', 'like', "%{$searchValue}%");
-            });
-        }
+    if ($request->has('search') && $request->search['value'] != '') {
+        $searchValue = $request->search['value'];
+        $query->where(function ($q) use ($searchValue) {
+            $q->where('judul_surat', 'like', "%{$searchValue}%")
+              ->orWhere('nomor_surat', 'like', "%{$searchValue}%");
+        });
+    }
 
-        return DataTables::of($query)
-            ->addColumn('jenis_surat', fn($row) => $row->jenisSurat->jenis_surat ?? '-')
+    return DataTables::of($query)
+        ->addColumn('jenis_surat', fn($row) => $row->jenisSurat->jenis_surat ?? '-')
             ->addColumn('nomor_surat', function($row) {
-                return $row->nomor_surat ? $row->nomor_surat : '-';
-            })
-            ->addColumn('status', function ($row) {
+            return $row->nomor_surat ? $row->nomor_surat : '-';
+        })
+        ->addColumn('status', function ($row) {
                 $latestStatus = $row->riwayatStatus->first();
                 return $latestStatus ? $latestStatus->statusSurat->status_surat : '-';
-            })
+        })
             ->addColumn('tanggal_pengajuan', function($row) {
                 return $row->tanggal_pengajuan ? date('d/m/Y', strtotime($row->tanggal_pengajuan)) : '-';
-            })
+        })
             ->rawColumns(['status'])
-            ->make(true);
-    }
+        ->make(true);
+}
 
     public function showStatusSurat($id)
     {
@@ -311,6 +311,6 @@ class mahasiswaController extends Controller
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal menyimpan surat: ' . $e->getMessage());
         }
-    }
+        }
 }
 

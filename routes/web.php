@@ -88,12 +88,17 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/', 'index')->name('staffumum.dashboard');
             Route::get('/search', 'search')->name('staffumum.search');
             Route::get('/statistik','statistik')->name('staffumum.statistik');
-
+            Route::get('/terbitkan','terbitkan')->name('staffumum.terbitkan');
+            Route::get('/statussurat','statussurat')->name('staffumum.statussurat');
+            Route::get('/jenissurat','jenissurat')->name('staffumum.jenissurat');
         });
 
         Route::prefix('tata-usaha')->controller(tatausahaController::class)->group(function () {
             Route::get('/', 'index')->name('tatausaha.dashboard');
             Route::get('/statistik','statistik')->name('tatausaha.statistik');
+            Route::get('/terbitkan','terbitkan')->name('tatausaha.terbitkan');
+            Route::get('/statussurat','statussurat')->name('tatausaha.statussurat');
+            Route::get('/jenissurat','jenissurat')->name('tatausaha.jenissurat');
         });
     });
 

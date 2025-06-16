@@ -1,3 +1,10 @@
+@props([
+    'title',
+    'subtitle',
+    'search' => false,
+    'searchPlaceholder' => 'Search...'
+])
+
 <div class="w-full h-full max-h-180 bg-[#F0F2FF] rounded-[70px]">
     <div class="pl-15 pt-8">
         <h1 class="font-medium text-[28px]">{{ $title }}</h1>
@@ -6,7 +13,7 @@
 
             @if (isset($search) && $search)
                 <div class="flex justify-end py-4 pr-5">
-                    <input type="search" id="custom-search" placeholder="Search..." class="text-black rounded-[10px] bg-[#D9DCE2] caret-black py-2 px-4">
+                    <input type="search" id="custom-search" placeholder="{{ $searchPlaceholder }}" class="text-black rounded-[10px] bg-[#D9DCE2] caret-black py-2 px-4">
                 </div>
             @endif
         </div>
