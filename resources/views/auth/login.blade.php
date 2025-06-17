@@ -14,7 +14,7 @@
     <x-form.lostpasswordform />
 
     <div class="col-6">
-        <img src="{{ asset('images/loginpreview.png') }}" alt="Login Image" class="xl:max-w-[450px] xl:h-[500px]   2xl:max-w-[616px] 2xl:h-[810px] rounded-4xl">
+        <img src="{{ asset('images/loginpreview.png') }}" alt="Login Image" class="lg:max-w[400px] lg:h-[450px]   xl:max-w-[450px] xl:h-[500px]   2xl:max-w-[616px] 2xl:h-[810px] rounded-4xl">
     </div>
 </div>
 

@@ -9,11 +9,30 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Models\Surat;
 
 class adminController extends Controller
 {
     public function index () {
-        return view('admin.index');
+
+        $suratDiterima = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+            $q->where('id_status_surat',1);
+        })->count();
+
+        $suratDitolak = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+            $q->where('id_status_surat',2);
+        })->count();
+
+        $notifikasiSurat = collect();
+
+        $columns = [
+            'nomor_surat' => "Nomor Surat",
+            'judul_surat' =>'Nama Surat', 
+            'tanggal_surat_dibuat' => 'Tanggal Terbit', 
+            'lampiran' => 'Dokumen', 
+            'tanggal_pengajuan' => 'Dibuat Pada'];
+
+        return view('admin.index',compact('columns','notifikasiSurat', 'suratDiterima', 'suratDitolak'));
     }
 
     public function kelolapengusul () {
@@ -289,6 +308,51 @@ class adminController extends Controller
         return response()->json([
             'success' => true,
             'data' => $pengusul
+        ]);
+    }
+
+    public function search(Request $request){
+        $limit = $request->input('length');
+        $start = $request->input('start');
+        $user = auth('pengusul')->id();
+    
+        $query = Surat::with(['dibuatOleh'])
+            ->whereHas('dibuatOleh.role', function ($q) {
+                $q->whereIn('role', ['mahasiswa', 'dosen']);
+            })
+            ->whereHas('pengusul', function ($q) use ($user) {
+                $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                  ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+            })
+            ->whereNotNull('nomor_surat');
+    
+        $totalData = $query->count();
+    
+        if ($search = $request->input('search.value')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_surat', 'like', "%$search%")
+                  ->orWhere('judul_surat', 'like', "%$search%");
+            });
+        }
+    
+        $filterData = $query->count();
+    
+        $data = $query->skip($start)->take($limit)->get()->map(function($item){
+            return [
+                'id' => $item->id_surat,
+                'nomor_surat' => $item->nomor_surat ?? '-',
+                'judul_surat' => $item->judul_surat ?? '-',
+                'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat ?? '-',
+                'lampiran' => $item->lampiran ?? null,
+                'tanggal_pengajuan' => $item->tanggal_pengajuan ?? '-',
+            ];
+        });
+    
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $totalData,
+            'recordsFiltered' => $filterData,
+            'data' => $data,
         ]);
     }
 

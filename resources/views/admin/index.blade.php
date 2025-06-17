@@ -1,38 +1,32 @@
 @extends('layouts.app')
 
-@include('components.alertnotif')
 
 @section('title','Dashboard Admin')
 
 @section('content')
-<x-alertnotif />
+
 <div class="flex h-screen">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
-        <main class="flex-1 bg-white p-12">
+        @include('components.alertnotif')
+        <main class="flex-1 bg-white p-4 sm:p-6 md:p-8 lg:p-12">
             @yield('content')
-            <div class="title-page flex justify-between">
-                <div class="flex justify-start">
-                    <h1 class="text-[32px] text-[#1F384C] font-medium">
-                        Dashboard
-                    </h1>
-                </div>
-                <div class="flex justify-end">
-                    
-                    <div class="flex mt-4 mr-5 bg-[#707FDD] rounded-[15px] font-medium relative h-10">
+            <div class="title-page flex flex-col md:flex-row justify-between gap-4">
+                <h1 class="text-2xl md:text-[32px] text-[#1F384C] font-medium">
+                    Dashboard
+                </h1>
+                
+                <div class="flex flex-col md:flex-row items-start md:items-center gap-3">
+                    <div class="flex bg-[#707FDD] rounded-[15px] font-medium h-10 overflow-hidden">
                         <button class="py-2 px-4 hover:cursor-pointer rounded-[15px] " id="btn-jarak">Jarak</button>
                         <button class="py-2 px-4 hover:cursor-pointer rounded-[15px] " id="btn-bulan">Bulan</button>
                         <button class="inline-block bg-[#4628A4] text-white rounded-[15px] py-2 px-4 hover:cursor-pointer" id="btn-tahun">Tahun</button>
                     </div>
-                    
-                    <div class="mt-4" id="input-container">
+                    <div class="" id="input-container">
                         <select name="year" id="year" class="bg-[#707FDD] py-2 px-4 rounded-[5px]"></select>
                     </div>
-                    
-                    
- 
                 </div>
             </div>
         
@@ -69,13 +63,14 @@
             <div class="w-full">
                 <x-datatable
                     id="surat-table"
-                    {{-- :columns="$columns" --}}
-                    {{-- ajaxUrl="{{ route('mahasiswa.search') }}" --}}
-                    :ordering="true"
+                    :columns="$columns"
+                    ajaxUrl="{{ route('admin.search') }}"
+                    :ordering="false"
                     :lengthMenu="false"
                     :pageLength="5"
                     :showEdit="false"
                     :showDelete="false"
+                    :search="true"
                 />
 
                 

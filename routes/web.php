@@ -108,6 +108,7 @@ Route::middleware(['multi-auth'])->group(function () {
     // ======================= Admin =======================
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [adminController::class, 'index'])->name('dashboard');
+        Route::get('/search', [adminController::class, 'search'])->name('search');
         Route::get('/kelola-pengusul', [adminController::class, 'kelolapengusul'])->name('kelolapengusul');
         Route::get('/jenis-surat', [adminController::class, 'jenissurat'])->name('kelolajenissurat');
         Route::post('/jenis-surat', [adminController::class, 'store'])->name('jenissurat.store');

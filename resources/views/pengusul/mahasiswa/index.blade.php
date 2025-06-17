@@ -31,7 +31,7 @@
             </div>
         
 
-            <div class="flex flex-col sm:flex-row gap-6 mt-6">
+            <div class="flex flex-col sm:flex-row lg:gap-1 gap-6 mt-6">
                 <!-- Surat Diterima -->
                 <div class="flex-1 flex flex-col items-center bg-[#F1F2F7] shadow-md shadow-blue-100 rounded-2xl py-6 mx-2">
                     <div class="w-20 h-20 rounded-full bg-gradient-to-b from-[#5A6ACF] to-blue-300 flex items-center justify-center mb-2 shadow">
