@@ -1,3 +1,19 @@
-<div>
-    <!-- Let all your things have their places; let each part of your business have its time. - Benjamin Franklin -->
+@extends('layouts.app')
+
+@include('components.alertnotif')
+
+@section('title','Dashboard Kepala Sub')
+
+@section('content')
+<x-alertnotif />
+<div class="flex h-screen">
+    @include('layouts.sidebar')
+
+    <div class="flex-1 flex flex-col">
+        @include('layouts.header')
+        <main class="flex-1 bg-white p-4 sm:p-6 md:p-8 lg:p-12">
+            @yield('content')
+        </main>
+    </div>
 </div>
+@endsection

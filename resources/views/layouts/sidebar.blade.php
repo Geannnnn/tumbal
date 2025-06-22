@@ -46,6 +46,7 @@
 
                 @case('tatausaha')
                 @case('staffumum')
+                    <x-sidebar-link route="{{ $roleRoutePrefix }}.tinjausurat" icon="fa-square-check fa-flip" label="Tinjau Surat" />
                     <x-sidebar-link route="{{ $roleRoutePrefix }}.statistik" icon="fa-chart-simple fa-bounce" label="Statistik" />
                     <x-sidebar-link route="{{ $roleRoutePrefix }}.terbitkan" icon="fa-arrow-up-wide-short fa-spin fa-spin-reverse" label="Terbitkan" />
                     <x-sidebar-link route="{{ $roleRoutePrefix }}.statussurat" icon="fa-square-check fa-flip" label="Status Surat" />
@@ -59,11 +60,14 @@
             <x-sidebar-link route="admin.dashboard" icon="fa-house" label="Beranda" />
             <x-sidebar-link route="admin.kelolapengusul" icon="fa-users" label="Kelola Pengusul" />
             <x-sidebar-link route="admin.kelolajenissurat" icon="fa-folder-open" label="Kelola Jenis Surat" />
+            <x-sidebar-link route="admin.kelolastatussurat" icon="fa-square-check fa-flip" label="Kelola Status Surat" />
         @endif
 
         {{-- Kepala Sub --}}
         @if($authRole === 'kepala_sub')
             <x-sidebar-link route="kepalasub.dashboard" icon="fa-house" label="Beranda" />
+            <x-sidebar-link route="kepalasub.statistik" icon="fa-chart-simple fa-bounce" label="Statistik" />
+            <x-sidebar-link route="kepalasub.persetujuansurat" icon="fa-square-check fa-flip" label="Persetujuan Surat" />
         @endif
 
         {{-- Umum --}}

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('id_jenis_surat')->nullable();
             $table->unsignedBigInteger('dibuat_oleh')->nullable();
             $table->string('deskripsi', 300)->nullable();
+            $table->string('tujuan_surat')->nullable();
             $table->boolean('is_draft')->default(0);
             $table->string('lampiran')->nullable();
             $table->timestamps();

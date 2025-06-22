@@ -44,7 +44,6 @@ Route::get('/logout', function () {
 Route::get('/anggota/search', [PengusulController::class, 'searchAnggota']);
 Route::get('/search-dosen', [dosenController::class, 'searchDosen'])->name('search.dosen');
 Route::delete('/surat/{id}',[SuratController::class, 'destroy'])->name('surat.destroy');
-Route::put('/surat/{id}', [SuratController::class, 'update'])->name('surat.update');
 Route::get('/pengajuan/search', [SuratController::class, 'pengajuansearch'])->name('pengajuan.search');
 Route::get('/pengaturan',[PengusulController::class,'pengaturan'])->name('settings');
 Route::post('/ubah-password', [AuthController::class, 'profileUpdatePassword'])->name('profile.update');
@@ -59,7 +58,9 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/index/data','data')->name('surat.data');
             Route::get('/pengajuan', 'pengajuan')->name('mahasiswa.pengajuansurat');
             Route::get('/search', 'search')->name('mahasiswa.search');
-            Route::get('/surat/{id}/edit', [SuratController::class, 'edit'])->name('surat.edit');
+            Route::get('/surat/{id}/edit', [SuratController::class, 'edit'])->name('mahasiswa.surat.edit');
+            Route::put('/surat/{id}', [SuratController::class, 'update'])->name('mahasiswa.surat.update');
+            Route::delete('/surat/{id}', [SuratController::class, 'destroy'])->name('mahasiswa.surat.destroy');
             Route::get('/draft/data','draftData')->name('mahasiswa.draftData');
             Route::get('/draft', 'draft')->name('mahasiswa.draft');
             Route::get('/status', 'status')->name('mahasiswa.statussurat');
@@ -75,7 +76,9 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/index/data','data')->name('surat.data');
             Route::get('/pengajuan', 'pengajuan')->name('dosen.pengajuansurat');
             Route::get('/search', 'search')->name('dosen.search');
-            Route::get('/surat/{id}/edit', [SuratController::class, 'edit'])->name('surat.edit');
+            Route::get('/surat/{id}/edit', [SuratController::class, 'edit'])->name('dosen.surat.edit');
+            Route::put('/surat/{id}', [SuratController::class, 'update'])->name('dosen.surat.update');
+            Route::delete('/surat/{id}', [SuratController::class, 'destroy'])->name('dosen.surat.destroy');
             Route::get('/draft/data','draftData')->name('dosen.draftData');
             Route::get('/draft', 'draft')->name('dosen.draft');
             Route::get('/status', 'status')->name('dosen.statussurat');
@@ -94,6 +97,9 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/terbitkan','terbitkan')->name('staffumum.terbitkan');
             Route::get('/statussurat','statussurat')->name('staffumum.statussurat');
             Route::get('/jenissurat','jenissurat')->name('staffumum.jenissurat');
+            Route::get('/tinjau-surat', 'tinjauSurat')->name('staffumum.tinjausurat');
+            Route::get('/tinjau-surat/data', 'getSuratData')->name('staffumum.tinjau.data');
+            Route::get('/surat/{id}/tinjau', 'showDetailSurat')->name('staffumum.tinjau.detail');
         });
 
         Route::prefix('tata-usaha')->controller(tatausahaController::class)->group(function () {
@@ -102,6 +108,7 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/terbitkan','terbitkan')->name('tatausaha.terbitkan');
             Route::get('/statussurat','statussurat')->name('tatausaha.statussurat');
             Route::get('/jenissurat','jenissurat')->name('tatausaha.jenissurat');
+            Route::get('/tinjau-surat','tinjauSurat')->name('tatausaha.tinjau-surat');
         });
     });
 
@@ -119,10 +126,19 @@ Route::middleware(['multi-auth'])->group(function () {
         Route::put('/pengusul/{id}', [adminController::class, 'updatePengusul'])->name('pengusul.update');
         Route::delete('/pengusul/{id}', [adminController::class, 'destroyPengusul'])->name('pengusul.destroy');
         
+        // Status Surat CRUD
+        Route::get('/status-surat', [adminController::class, 'kelolaStatusSurat'])->name('kelolastatussurat');
+        Route::post('/status-surat', [adminController::class, 'storeStatusSurat'])->name('statussurat.store');
+        Route::put('/status-surat/{id}', [adminController::class, 'updateStatusSurat'])->name('statussurat.update');
+        Route::delete('/status-surat/{id}', [adminController::class, 'destroyStatusSurat'])->name('statussurat.destroy');
     });
 
     // ======================= Kepala Sub =======================
     Route::middleware('role:kepala_sub')->prefix('kepala-sub')->controller(KepalaSubController::class)->group(function () {
         Route::get('/', 'index')->name('kepalasub.dashboard');
+        Route::get('/statistik','statistik')->name('kepalasub.statistik');
+        Route::get('/persetujuansurat','persetujuansurat')->name('kepalasub.persetujuansurat');
+        Route::get('/persetujuansurat/data','getSuratDiajukanData')->name('kepalasub.persetujuansurat.data');
+        Route::get('/surat/{id}/tinjau','tinjauSurat')->name('kepalasub.tinjau-surat');
     });
 });

@@ -14,7 +14,7 @@
             @yield('content')
 
             <div id="ajukanForm">
-                <form id="formAjukan" action="{{ route('surat.update', $surat->id_surat) }}" method="POST" enctype="multipart/form-data">
+                <form id="formAjukan" action="{{ route('mahasiswa.surat.update', $surat->id_surat) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -36,19 +36,8 @@
                                 <i class="fa-solid fa-floppy-disk pr-2"></i>Simpan Sebagai Draft
                             </button>
                             
-
-                            <button type="button" 
-                            onclick="showConfirmationAlert({
-                                formId: 'formAjukan',
-                                event: event,
-                                title: 'Ajukan Surat?',
-                                text: 'Pastikan semua data sudah benar sebelum diajukan.',
-                                confirmText: 'Ya, Ajukan!',
-                                cancelText: 'Batal'
-                                        })"
-                                        class="hover:cursor-pointer px-6 py-2 bg-[#C4CAF0] text-[#273240] font-semibold rounded-2xl hover:scale-110 duration-300 flex items-center"
-                                    >    <i class="fa-solid fa-paper-plane pr-2"></i>
-                                    Ajukan
+                            <button type="submit" name="is_draft" value="1" class="hover:cursor-pointer px-6 py-2 bg-[#C4CAF0] text-[#273240] font-semibold rounded-2xl hover:scale-110 duration-300 flex items-center">
+                                <i class="fa-solid fa-paper-plane pr-2"></i>Ajukan
                             </button>
 
                             <x-alertnotif />
@@ -101,6 +90,18 @@
                                 placeholder="Pilih Jenis Surat"
                             />
 
+                            <div id="tujuan-surat-container" class="{{ in_array($surat->jenisSurat->jenis_surat ?? '', ['Surat Tugas', 'Surat Undangan Kegiatan', 'Surat Permohonan', 'Surat Pengantar']) ? '' : 'hidden' }}">
+                                <span>Tujuan Surat</span>
+                                <textarea 
+                                    name="tujuan_surat" 
+                                    id="tujuan_surat"
+                                    class="w-full h-24 p-3 border border-gray-300 rounded-md bg-[#F0F2FF] outline-none" 
+                                    placeholder="Masukkan tujuan surat..."
+                                    maxlength="500"
+                                >{{ old('tujuan_surat', $surat->tujuan_surat) }}</textarea>
+                                <p class="text-xs text-gray-500 mt-1">*Maksimal 500 karakter</p>
+                            </div>
+
                             <span class="flex">Deskripsi<p class="text-[#6D727C]">\Max 300 huruf</p></span>
                             <textarea maxlength="300" name="deskripsi" class="w-full h-32 p-3 border border-gray-300 rounded-md bg-[#F0F2FF] outline-none" placeholder="Deskripsi Surat...">{{ old('deskripsi', $surat->deskripsi) }}</textarea>
                         </div>  
@@ -130,6 +131,70 @@
     realFile.addEventListener("change", function () {
         fileName.textContent = this.files.length > 0 ? this.files[0].name : "Belum ada file";
     });
+
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const jenisSuratSelect = document.getElementById('jenis_surat');
+        const tujuanSuratContainer = document.getElementById('tujuan-surat-container');
+        
+        // Daftar jenis surat yang memerlukan tujuan surat
+        const jenisSuratDenganTujuan = [
+            'Surat Tugas',
+            'Surat Undangan Kegiatan', 
+            'Surat Permohonan',
+            'Surat Pengantar'
+        ];
+        
+        function toggleTujuanSurat() {
+            const selectedOption = jenisSuratSelect.options[jenisSuratSelect.selectedIndex];
+            const selectedText = selectedOption.text;
+            
+            if (jenisSuratDenganTujuan.includes(selectedText)) {
+                tujuanSuratContainer.classList.remove('hidden');
+            } else {
+                tujuanSuratContainer.classList.add('hidden');
+                document.getElementById('tujuan_surat').value = '';
+            }
+        }
+        
+        // Event listener untuk perubahan pada select
+        jenisSuratSelect.addEventListener('change', toggleTujuanSurat);
+        
+        // Jalankan sekali saat halaman dimuat untuk mengecek nilai awal
+        toggleTujuanSurat();
+        
+        // Konfirmasi sebelum submit form
+        const form = document.getElementById('formAjukan');
+        form.addEventListener('submit', function(e) {
+            const submitButton = e.submitter;
+            if (submitButton && submitButton.name === 'is_draft' && submitButton.value === '1') {
+                // Jika tombol Ajukan ditekan, tampilkan konfirmasi
+                e.preventDefault();
+                
+                Swal.fire({
+                    title: 'Ajukan Surat?',
+                    text: 'Pastikan semua data sudah benar sebelum diajukan.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Ajukan!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Set nilai is_draft = 1 dan submit form
+                        const isDraftInput = document.createElement('input');
+                        isDraftInput.type = 'hidden';
+                        isDraftInput.name = 'is_draft';
+                        isDraftInput.value = '1';
+                        form.appendChild(isDraftInput);
+                        form.submit();
+                    }
+                });
+            }
+        });
+    });
+                
 </script>
 
 @endsection

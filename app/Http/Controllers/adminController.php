@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\JenisSurat;
 use App\Models\Pengusul;
+use App\Models\StatusSurat;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
@@ -265,6 +266,22 @@ class adminController extends Controller
         }
     }
 
+    public function getPengusul($id)
+    {
+        $pengusul = Pengusul::findOrFail($id);
+        return response()->json([
+            'success' => true,
+            'data' => $pengusul
+        ]);
+    }
+
+
+    public function kelolaStatusSurat()
+    {
+        $statusSurats = StatusSurat::all();
+        return view('admin.statussurat', compact('statusSurats'));
+    }
+
     public function destroyPengusul($id)
     {
         try {
@@ -283,13 +300,34 @@ class adminController extends Controller
         }
     }
 
-    public function getPengusul($id)
+    public function storeStatusSurat(Request $request)
     {
-        $pengusul = Pengusul::findOrFail($id);
-        return response()->json([
-            'success' => true,
-            'data' => $pengusul
+        $request->validate([
+            'status_surat' => 'required|string|max:255|unique:status_surat,status_surat',
         ]);
+
+        StatusSurat::create($request->all());
+
+        return redirect()->route('admin.kelolastatussurat')->with('success', 'Status surat berhasil ditambahkan.');
     }
 
+    public function updateStatusSurat(Request $request, $id)
+    {
+        $request->validate([
+            'status_surat' => 'required|string|max:255|unique:status_surat,status_surat,' . $id . ',id_status_surat',
+        ]);
+
+        $status = StatusSurat::findOrFail($id);
+        $status->update($request->all());
+
+        return redirect()->route('admin.kelolastatussurat')->with('success', 'Status surat berhasil diperbarui.');
+    }
+
+    public function destroyStatusSurat($id)
+    {
+        $status = StatusSurat::findOrFail($id);
+        // Di masa mendatang, kita bisa menambahkan pengecekan apakah status sedang digunakan
+        $status->delete();
+        return redirect()->route('admin.kelolastatussurat')->with('success', 'Status surat berhasil dihapus.');
+    }
 }

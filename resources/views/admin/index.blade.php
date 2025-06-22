@@ -37,7 +37,7 @@
             </div>
         
 
-            <div class="flex flex-col sm:flex-row gap-6 mt-6">
+            {{-- <div class="flex flex-col sm:flex-row gap-6 mt-6">
                 <!-- Surat Diterima -->
                 <div class="flex-1 flex flex-col items-center bg-[#F1F2F7] shadow-md shadow-blue-100 rounded-2xl py-6 mx-2">
                     <div class="w-20 h-20 rounded-full bg-gradient-to-b from-[#5A6ACF] to-blue-300 flex items-center justify-center mb-2 shadow">
@@ -54,7 +54,7 @@
                     <span class="text-blue-500 font-medium text-base mt-2">Surat Ditolak</span>
                     <span class="text-blue-800 font-bold text-3xl mt-1">{{ $suratDitolak }}</span>
                 </div>
-            </div>
+            </div> --}}
             
             <div class="flex pt-10">
                 <div class="flex justify-between w-full">

@@ -32,9 +32,9 @@
                 }
             },
             pageLength: 5,
-            lengthChange: false,
+            lengthChange: false, // Menyembunyikan menu panjang
             searching: false,
-            info: false,
+            info: true, // Menampilkan informasi tentang entri yang ditampilkan
             columns: [
                 { data: null, orderable: false, searchable: false },
                 @foreach($columns as $key => $label)
@@ -87,7 +87,25 @@
             ],
             order: [[3, 'desc']],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json'
+                "sEmptyTable": "Tidak ada data yang tersedia di tabel",
+                "sInfo": "Menampilkan _START_ hingga _END_ dari _TOTAL_ entri",
+                "sInfoEmpty": "Menampilkan 0 hingga 0 dari 0 entri",
+                "sInfoFiltered": "(disaring dari _MAX_ total entri)",
+                "sLengthMenu": "Tampilkan _MENU_ entri",
+                "sLoadingRecords": "Sedang memuat...",
+                "sProcessing": "Sedang memproses...",
+                "sSearch": "Cari:",
+                "sZeroRecords": "Tidak ditemukan data yang sesuai",
+                "oPaginate": {
+                    "sFirst": "Pertama",
+                    "sLast": "Terakhir",
+                    "sNext": "Selanjutnya",
+                    "sPrevious": "Sebelumnya"
+                },
+                "oAria": {
+                    "sSortAscending": ": aktifkan untuk mengurutkan kolom ascending",
+                    "sSortDescending": ": aktifkan untuk mengurutkan kolom descending"
+                }
             },
             drawCallback: function(settings) {
                 var api = this.api();
@@ -100,7 +118,7 @@
                     window.open(url, '_blank');
                 });
             },
-            dom: 'tip'
+            dom: 'tip' // Menampilkan informasi dan pagination
         });
 
         $('#custom-search').on('keyup', function () {

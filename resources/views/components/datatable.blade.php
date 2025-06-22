@@ -9,17 +9,17 @@
     'lengthMenu' => true,
     'pageLength' => 10,
     'showEdit' => false,
-    'showDelete' => false
+    'showDelete' => false,
+    'manualInit' => false
 ])
 
 <table id="{{ $id }}" class="w-full bg-transparent text-md text-left text-gray-700">
     <thead>
         <tr>
-            <th>Nomor</th>
             @foreach ($columns as $label)
                 <th>{{ $label }}</th>
             @endforeach
-            @if ($showEdit || $showDelete)
+            @if (($showEdit || $showDelete) && !array_key_exists('actions', $columns))
                 <th>Aksi</th>
             @endif
         </tr>
@@ -37,6 +37,7 @@
     }
 </style>
 
+@if(!$manualInit)
 <script>
     $(document).ready(function () {
         var table = $('#{{ $id }}').DataTable({
@@ -55,7 +56,6 @@
             ajax: '{{ $ajaxUrl }}',
             ordering: {{ $ordering ? 'true' : 'false' }},
             columns: [
-                { data: null, name: 'no', orderable: false, searchable: false },
                 @foreach ($columns as $key => $label)
                     {
                         data: '{{ $key }}',
@@ -69,10 +69,14 @@
                                     <span>Unduh</span>
                                 </a>` : '-';
                             }
+                        @elseif ($key === 'actions')
+                            render: function (data, type, row) {
+                                return data;
+                            }
                         @endif
                     },
                 @endforeach
-                @if ($showEdit || $showDelete)
+                @if (($showEdit || $showDelete) && !array_key_exists('actions', $columns))
                     {
                         data: null,
                         render: function (data, type, row) {
@@ -96,10 +100,12 @@
             lengthChange: {{ $lengthMenu ? 'true' : 'false' }},
             drawCallback: function (settings) {
                 var api = this.api();
+                if (api.column(0).data().length > 0) {
                 var pageInfo = api.page.info();
-                api.column(0).nodes().each(function (cell, i) {
+                    api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
                     cell.innerHTML = i + 1 + pageInfo.start;
                 });
+                }
             }
         });
 
@@ -116,3 +122,4 @@
         @endif
     });
 </script>
+@endif

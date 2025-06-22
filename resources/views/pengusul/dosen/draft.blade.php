@@ -24,6 +24,7 @@
                     id="datatable"
                     :ajaxUrl="route('dosen.draftData')"
                     :columns="[
+                        'no' => 'No',
                         'judul_surat' => 'Judul Surat',
                         'action' => 'Aksi'
                     ]"

@@ -40,6 +40,7 @@
                         <x-datatable
                             id="pengajuan-table"
                             :columns="[
+                                'no' => 'No',
                                 'judul_surat' => 'Judul Surat',
                                 'tanggal_pengajuan' => 'Tanggal Pengajuan',
                                 'jenis_surat' => 'Jenis Surat',

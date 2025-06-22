@@ -17,13 +17,14 @@ class SuratController extends Controller
     {
         $user = auth('pengusul')->user();
         $role = $user->role; // 'mahasiswa' atau 'dosen'
-        $isDraft = $request->input('is_draft') == 0;
+        $isDraft = $request->input('is_draft') == 0; // 0 = draft, 1 = diajukan
 
         $rules = [
             'judul_surat' => 'required|string|max:255',
             'lampiran' => 'nullable|file|mimes:pdf,jpeg,png,jpg,docx,xlsx|max:10240',
             'anggota' => 'array',
             'anggota.*' => 'exists:pengusul,id_pengusul',
+            'tujuan_surat' => 'nullable|string|max:500',
         ];
 
         if ($isDraft) {
@@ -50,23 +51,22 @@ class SuratController extends Controller
                 'tanggal_pengajuan' => now('Asia/Jakarta'),
                 'dibuat_oleh' => $user->id_pengusul,
                 'lampiran' => $lampiranPath,
-                'is_draft' => $isDraft ? 0 : 1,
+                'is_draft' => $isDraft ? 0 : 1, // 0 = draft, 1 = diajukan
                 'id_jenis_surat' => $request->filled('jenis_surat') ? $request->jenis_surat : null,
                 'deskripsi' => $request->filled('deskripsi') ? $request->deskripsi : null,
+                'tujuan_surat' => $request->filled('tujuan_surat') ? $request->tujuan_surat : null,
             ];
 
             $surat = Surat::create($dataSurat);
 
-            // Hanya insert ke riwayat_status_surat jika diajukan (is_draft == 1)
             if (!$isDraft) {
                 RiwayatStatusSurat::create([
                     'id_surat' => $surat->id_surat,
-                    'id_status_surat' => 3, // Draft (base status tracking)
+                    'id_status_surat' => 2, 
                     'tanggal_rilis' => now('Asia/Jakarta'),
                 ]);
             }
 
-            // Simpan data ketua jika diisi
             if ($request->filled('id_pengusul')) {
                 PivotPengusulSurat::create([
                     'id_surat' => $surat->id_surat,
@@ -75,7 +75,6 @@ class SuratController extends Controller
                 ]);
             }
 
-            // Simpan data anggota jika diisi
             if ($request->filled('anggota')) {
                 foreach ($request->anggota as $anggotaId) {
                     PivotPengusulSurat::create([
@@ -109,7 +108,7 @@ class SuratController extends Controller
         $userId = auth('pengusul')->id();
 
         $query = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul'])
-            ->where('is_draft', 1) // hanya surat yang diajukan
+            ->where('is_draft', 1) // hanya surat yang diajukan (is_draft = 1)
             ->where(function ($q) use ($userId) {
                 $q->whereHas('pengusul', function ($q2) use ($userId) {
                     $q2->where('pivot_pengusul_surat.id_pengusul', $userId);
@@ -141,12 +140,13 @@ class SuratController extends Controller
             ->get();
 
         $data = [];
-        foreach ($suratList as $surat) {
+        foreach ($suratList as $no => $surat) {
             $anggota = $surat->pengusul->where('pivot.id_peran_keanggotaan', 2)->pluck('nama')->join(', ');
             $ketua = $surat->pengusul->firstWhere('pivot.id_peran_keanggotaan', 1)?->nama ?? '';
             $shortDescription = \Illuminate\Support\Str::limit(strip_tags($surat->deskripsi), 50, '...');
 
             $data[] = [
+                'no' => $no,
                 'judul_surat' => $surat->judul_surat,
                 'tanggal_pengajuan' => $surat->tanggal_pengajuan ?? '-',
                 'jenis_surat' => '<div class="flex items-center gap-1 text-md">
@@ -203,13 +203,14 @@ class SuratController extends Controller
     {
         $user = auth('pengusul')->user();
         $role = $user->role;
-        $isDraft = $request->input('is_draft') == 1;
+        $isDraft = $request->input('is_draft') == 0; // 0 = draft, 1 = diajukan
 
         $rules = [
             'judul_surat' => 'required|string|max:255',
             'lampiran' => 'nullable|file|mimes:pdf,jpeg,png,jpg,docx,xlsx|max:10240',
             'anggota' => 'array',
             'anggota.*' => 'exists:pengusul,id_pengusul',
+            'tujuan_surat' => 'nullable|string|max:500',
         ];
 
         if ($isDraft) {
@@ -232,7 +233,13 @@ class SuratController extends Controller
             $surat->judul_surat = $request->judul_surat;
             $surat->id_jenis_surat = $request->filled('jenis_surat') ? $request->jenis_surat : null;
             $surat->deskripsi = $request->filled('deskripsi') ? $request->deskripsi : null;
-            $surat->is_draft = $isDraft ? 0 : 1; // 0 untuk draft, 1 untuk sudah diajukan
+            $surat->tujuan_surat = $request->filled('tujuan_surat') ? $request->tujuan_surat : null;
+            $surat->is_draft = $isDraft ? 0 : 1; // 0 = draft, 1 = diajukan
+            
+            // Update tanggal pengajuan jika surat diubah dari draft menjadi diajukan
+            if (!$isDraft && $surat->getOriginal('is_draft') == 0) {
+                $surat->tanggal_pengajuan = now('Asia/Jakarta');
+            }
 
             // Menangani lampiran
             if ($request->hasFile('lampiran')) {
@@ -245,21 +252,35 @@ class SuratController extends Controller
 
             $surat->save();
 
-            // Update status surat
-            $statusSuratId = $isDraft ? 3 : 2; 
-            DB::table('riwayat_status_surat')
-                ->where('id_surat', $surat->id_surat)
-                ->update([
-                    'id_status_surat' => $statusSuratId,
-                    'tanggal_rilis' => now()
-                ]);
+            // Update riwayat status surat
+            if (!$isDraft) { // Jika surat diajukan (is_draft = 1)
+                // Jika surat diajukan (bukan draft), cek apakah sudah ada riwayat
+                $existingRiwayat = DB::table('riwayat_status_surat')
+                    ->where('id_surat', $surat->id_surat)
+                    ->first();
+                
+                if (!$existingRiwayat) {
+                    // Jika belum ada riwayat, buat baru dengan status "Diajukan"
+                    RiwayatStatusSurat::create([
+                        'id_surat' => $surat->id_surat,
+                        'id_status_surat' => 2, // Status "Diajukan"
+                        'tanggal_rilis' => now('Asia/Jakarta'),
+                    ]);
+                } else {
+                    // Jika sudah ada, update status menjadi "Diajukan"
+                    DB::table('riwayat_status_surat')
+                        ->where('id_surat', $surat->id_surat)
+                        ->update([
+                            'id_status_surat' => 2, // Status "Diajukan"
+                            'tanggal_rilis' => now('Asia/Jakarta'),
+                        ]);
+                }
+            }
 
-            // Hapus semua relasi pengusul yang ada
             DB::table('pivot_pengusul_surat')
                 ->where('id_surat', $surat->id_surat)
                 ->delete();
 
-            // Simpan data ketua baru jika diisi
             if ($request->filled('id_pengusul')) {
                 PivotPengusulSurat::create([
                     'id_surat' => $surat->id_surat,
@@ -268,7 +289,6 @@ class SuratController extends Controller
                 ]);
             }
 
-            // Simpan data anggota baru jika diisi
             if ($request->filled('anggota')) {
                 foreach ($request->anggota as $anggotaId) {
                     PivotPengusulSurat::create([
@@ -281,7 +301,6 @@ class SuratController extends Controller
 
             DB::commit();
 
-            // Redirect sesuai role user
             $roleName = is_array($role) ? ($role['role'] ?? null) : (is_object($role) ? $role->role : $role);
             if ($isDraft) {
                 $redirectRoute = $roleName === 'Dosen' ? 'dosen.draft' : 'mahasiswa.draft';
@@ -304,16 +323,12 @@ class SuratController extends Controller
         $role = $user->role;
         DB::beginTransaction();
         try {
-            // Hapus data di tabel pivot_pengusul_surat
             DB::table('pivot_pengusul_surat')->where('id_surat', $id)->delete();
             
-            // Hapus data di tabel riwayat_status_surat
             DB::table('riwayat_status_surat')->where('id_surat', $id)->delete();
             
-            // Hapus data di tabel surat
             $surat = Surat::findOrFail($id);
             
-            // Hapus file lampiran jika ada
             if ($surat->lampiran && Storage::disk('public')->exists($surat->lampiran)) {
                 Storage::disk('public')->delete($surat->lampiran);
             }
@@ -331,5 +346,4 @@ class SuratController extends Controller
             return redirect()->route($redirectRoute)->with('error', 'Gagal menghapus surat: ' . $e->getMessage());
         }
     }
-
 }

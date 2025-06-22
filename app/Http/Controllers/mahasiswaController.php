@@ -14,11 +14,11 @@ class mahasiswaController extends Controller
 
     public function index () {
 
-        $suratDiterima = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+        $suratDiterima = Surat::where('is_draft',1)->whereHas('riwayatStatus',function($q){
             $q->where('id_status_surat',1);
         })->count();
 
-        $suratDitolak = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+        $suratDitolak = Surat::where('is_draft',1)->whereHas('riwayatStatus',function($q){
             $q->where('id_status_surat',2);
         })->count();
 
@@ -49,7 +49,7 @@ class mahasiswaController extends Controller
         ];
         
         $data = Surat::with(['dibuatOleh'])
-            ->where('is_draft',1)
+            ->where('is_draft',1) // 1 = diajukan, 0 = draft
             ->whereHas('dibuatOleh.role',function($q){
                 $q->whereIn('role',['mahasiswa','dosen']);
             })
@@ -109,17 +109,22 @@ class mahasiswaController extends Controller
     {
         // Ambil hanya draft milik user yang sedang login
         $userId = auth('pengusul')->id();
-        $surats = Surat::where('is_draft', 0)
+        $surats = Surat::where('is_draft', 0) // 0 = draft, 1 = diajukan
             ->where('dibuat_oleh', $userId)
             ->select(['id_surat','judul_surat'])
             ->get();
 
+        $surats->transform(function ($surat, $key){
+            $surat->no = $key + 1;
+            return $surat;
+        });
+
         return DataTables::of($surats)
             ->addColumn('action', function ($surat) {
                 return '
-                    <a href="' . route('surat.edit', $surat->id_surat) . '" class="py-2 px-4 rounded-[10px] bg-blue-700 text-white">Edit</a>
+                    <a href="' . route('mahasiswa.surat.edit', $surat->id_surat) . '" class="py-2 px-4 rounded-[10px] bg-blue-700 text-white">Edit</a>
                     <button onclick="hapusSurat(' . $surat->id_surat . ')" class="py-2 px-4 rounded-[10px] bg-red-700 text-white ml-2 hover:cursor-pointer">Hapus</button>
-                    <form id="form-hapus-' . $surat->id_surat . '" action="' . route('surat.destroy', $surat->id_surat) . '" method="POST" style="display: none; ">
+                    <form id="form-hapus-' . $surat->id_surat . '" action="' . route('mahasiswa.surat.destroy', $surat->id_surat) . '" method="POST" style="display: none; ">
                         ' . csrf_field() . method_field('DELETE') . '
                     </form>
                 ';
@@ -276,7 +281,7 @@ class mahasiswaController extends Controller
                 'tanggal_pengajuan' => now(),
                 'dibuat_oleh' => auth('pengusul')->id(),
                 'lampiran' => $lampiranPath,
-                'is_draft' => 0, // Draft
+                'is_draft' => 0, // 0 = draft, 1 = diajukan
                 'id_jenis_surat' => $request->filled('jenis_surat') ? $request->jenis_surat : null,
                 'deskripsi' => $request->filled('deskripsi') ? $request->deskripsi : null,
             ];

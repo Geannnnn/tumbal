@@ -80,6 +80,51 @@
                     placeholder="Pilih Jenis Surat"
                 />
 
+                <!-- Input Tujuan Surat yang muncul secara dinamis -->
+                <div id="tujuan-surat-container" class="hidden">
+                    <span>Tujuan Surat <p class="text-[#6D727C] text-xs">\Max 100 huruf</p></span>
+                    <textarea 
+                        name="tujuan_surat" 
+                        id="tujuan_surat"
+                        class="w-full h-24 p-3 border border-gray-300 rounded-md bg-[#F0F2FF] outline-none" 
+                        placeholder="Masukkan tujuan surat..."
+                        maxlength="100"
+                    ></textarea>
+                </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const jenisSuratSelect = document.getElementById('jenis_surat');
+                        const tujuanSuratContainer = document.getElementById('tujuan-surat-container');
+                        
+                        // Daftar jenis surat yang memerlukan tujuan surat
+                        const jenisSuratDenganTujuan = [
+                            'Surat Tugas',
+                            'Surat Undangan Kegiatan', 
+                            'Surat Permohonan',
+                            'Surat Pengantar'
+                        ];
+                        
+                        function toggleTujuanSurat() {
+                            const selectedOption = jenisSuratSelect.options[jenisSuratSelect.selectedIndex];
+                            const selectedText = selectedOption.text;
+                            
+                            if (jenisSuratDenganTujuan.includes(selectedText)) {
+                                tujuanSuratContainer.classList.remove('hidden');
+                            } else {
+                                tujuanSuratContainer.classList.add('hidden');
+                                document.getElementById('tujuan_surat').value = '';
+                            }
+                        }
+                        
+                        // Event listener untuk perubahan pada select
+                        jenisSuratSelect.addEventListener('change', toggleTujuanSurat);
+                        
+                        // Jalankan sekali saat halaman dimuat untuk mengecek nilai awal
+                        toggleTujuanSurat();
+                    });
+                </script>
+
                 <span class="flex">Deskripsi<p class="text-[#6D727C]">\Max 300 huruf</p></span>
                 <textarea maxlength="300" name="deskripsi" class="w-full h-32 p-3 border border-gray-300 rounded-md bg-[#F0F2FF] outline-none" placeholder="Deskripsi Surat..."></textarea>
             </div>  

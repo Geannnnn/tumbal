@@ -28,6 +28,10 @@ class DatabaseSeeder extends Seeder
         DB::table('jenis_surat')->insert([
             ['jenis_surat' => 'Surat Tugas'],
             ['jenis_surat' => 'Surat Permohonan'],
+            ['jenis_surat' => 'Surat Pengantar'],
+            ['jenis_surat' => 'Surat Undangan Kegiatan'],
+            ['jenis_surat' => 'Surat Izin Tidak Masuk'],
+            ['jenis_surat' => 'Surat Cuti Akademik'],
         ]);
 
         // Kepala Sub

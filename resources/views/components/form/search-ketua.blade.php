@@ -3,11 +3,11 @@
 <span>Ketua Pengaju</span>
 <div class="relative w-full">
     <input type="text" id="search_dosen" value="{{ $selected ? $selected->nip . ' - ' . $selected->nama : '' }}" class="bg-[#F0F2FF] py-2 px-4 rounded-lg outline-none w-full pr-10" placeholder="Cari Dosen (NIP / Nama)" autocomplete="off">
-    <button type="button" id="clear_dosen" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-600 hidden">
+    <button type="button" id="clear_dosen" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-600 {{ $selected ? '' : 'hidden' }}">
         &times;
     </button>
 </div>
-<input type="hidden" name="id_pengusul" id="id_pengusul">
+<input type="hidden" name="id_pengusul" id="id_pengusul" value="{{ $selected ? $selected->id_pengusul : '' }}">
 <div id="dosen-results" class="border bg-white rounded shadow-md mt-1 max-h-48 overflow-y-auto hidden"></div>
 
             @push('scripts')

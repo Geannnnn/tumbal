@@ -2,7 +2,7 @@
 
 @include('components.alertnotif')
 
-@section('title','Dashboard Tata Usaha')
+@section('title','Dashboard Kepala Sub')
 
 @section('content')
 <x-alertnotif />
@@ -11,9 +11,8 @@
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
-        <main class="flex-1 bg-white p-12">
+        <main class="flex-1 bg-white p-4 sm:p-6 md:p-8 lg:p-12">
             @yield('content')
-            
         </main>
     </div>
 </div>

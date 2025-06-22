@@ -9,7 +9,7 @@ class Surat extends Model
     protected $table = 'surat';
     protected $primaryKey = 'id_surat';
     public $timestamps = 'false';
-    protected $fillable = ['judul_surat', 'tanggal_pengajuan', 'id_jenis_surat', 'deskripsi','dibuat_oleh','lampiran','is_draft'];
+    protected $fillable = ['judul_surat', 'tanggal_pengajuan', 'id_jenis_surat', 'deskripsi','dibuat_oleh','lampiran','is_draft','tujuan_surat'];
     
 
     public function riwayatStatus(){
