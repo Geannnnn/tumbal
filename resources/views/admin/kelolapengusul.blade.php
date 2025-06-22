@@ -10,7 +10,7 @@
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
 
-        <main class="flex-1 bg-white p-12">
+        <main class="flex-1 bg-white p-4 sm:p-6 md:p-8 lg:p-12">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-2xl font-semibold">Kelola Pengusul</h1>

@@ -10,11 +10,30 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Models\Surat;
 
 class adminController extends Controller
 {
     public function index () {
-        return view('admin.index');
+
+        $suratDiterima = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+            $q->where('id_status_surat',1);
+        })->count();
+
+        $suratDitolak = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
+            $q->where('id_status_surat',2);
+        })->count();
+
+        $notifikasiSurat = collect();
+
+        $columns = [
+            'nomor_surat' => "Nomor Surat",
+            'judul_surat' =>'Nama Surat', 
+            'tanggal_surat_dibuat' => 'Tanggal Terbit', 
+            'lampiran' => 'Dokumen', 
+            'tanggal_pengajuan' => 'Dibuat Pada'];
+
+        return view('admin.index',compact('columns','notifikasiSurat', 'suratDiterima', 'suratDitolak'));
     }
 
     public function kelolapengusul () {
@@ -330,4 +349,5 @@ class adminController extends Controller
         $status->delete();
         return redirect()->route('admin.kelolastatussurat')->with('success', 'Status surat berhasil dihapus.');
     }
+
 }
