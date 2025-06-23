@@ -13,7 +13,7 @@
             <div class="bg-white rounded-lg shadow-md p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-2xl font-semibold">Kelola Status Surat</h1>
-                    <button id="add-status-btn" class="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition">
+                    <button id="add-status-btn" class="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition hover:scale-110 cursor-pointer duration-300">
                         <i class="fas fa-plus mr-2"></i>Tambah Status
                     </button>
                 </div>
@@ -35,11 +35,11 @@
                                     <td class="px-6 py-4">{{ $loop->iteration }}</td>
                                     <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $status->status_surat }}</td>
                                     <td class="px-6 py-4 text-center">
-                                        <button class="text-white ml-2 px-3 py-1 rounded-lg hover:cursor-pointer hover:opacity-80 bg-blue-700 hover:bg-blue-800 edit-btn" data-id="{{ $status->id_status_surat }}" data-name="{{ $status->status_surat }}">Ubah</button>
+                                        <button class="text-white ml-2 px-5 py-2 rounded-lg hover:cursor-pointer bg-blue-700 hover:bg-blue-800 edit-btn hover:scale-110 transition-all duration-300" data-id="{{ $status->id_status_surat }}" data-name="{{ $status->status_surat }}">Ubah</button>
                                         <form action="{{ route('admin.statussurat.destroy', $status->id_status_surat) }}" method="POST" class="inline-block delete-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg hover:cursor-pointer hover:opacity-80">Hapus</button>
+                                            <button type="submit" class="text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg hover:cursor-pointer hover:scale-110 transition-all duration-300">Hapus</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -67,8 +67,8 @@
                 <input type="text" name="status_surat" id="status_surat_input" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
             </div>
             <div class="mt-6 flex justify-end">
-                <button type="button" id="cancel-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg mr-2 hover:bg-gray-300">Batal</button>
-                <button type="submit" id="save-btn" class="bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-800">Simpan</button>
+                <button type="button" id="cancel-btn" class="bg-gray-200 text-gray-800 px-5 py-2 rounded-lg mr-2 hover:bg-gray-300 transition hover:scale-110 cursor-pointer">Batal</button>
+                <button type="submit" id="save-btn" class="bg-blue-700 text-white px-5 py-2 rounded-lg hover:bg-blue-800 transition hover:scale-110 cursor-pointer">Simpan</button>
             </div>
         </form>
     </div>

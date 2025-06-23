@@ -14,17 +14,33 @@ class mahasiswaController extends Controller
 
     public function index () {
 
-        $suratDiterima = Surat::where('is_draft',1)->whereHas('riwayatStatus',function($q){
-            $q->where('id_status_surat',1);
-        })->count();
+        $statusDiterima = StatusSurat::where('status_surat', 'Diterbitkan')->first();
 
-        $suratDitolak = Surat::where('is_draft',1)->whereHas('riwayatStatus',function($q){
-            $q->where('id_status_surat',2);
-        })->count();
+        if ($statusDiterima) {
+            $suratDiterima = Surat::where('is_draft', 1)
+                ->whereHas('riwayatStatus', function($q) use ($statusDiterima) {
+                $q->where('id_status_surat', $statusDiterima->id_status_surat);
+            })->count();
+        } else {
+            $suratDiterima = 0;
+        }
+
+
+        $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
+
+        if ($statusDitolak) {
+            $suratDitolak = Surat::where('is_draft', 1)
+                ->whereHas('riwayatStatus', function($q) use ($statusDitolak) {
+                    $q->where('id_status_surat', $statusDitolak->id_status_surat);
+                })->count();
+        } else {
+            $suratDitolak = 0;
+        }
 
         $notifikasiSurat = collect(); // default empty
         
         $columns = [
+            'no' => "No",
             'nomor_surat' => "Nomor Surat",
             'judul_surat' =>'Nama Surat', 
             'tanggal_surat_dibuat' => 'Tanggal Terbit', 
@@ -86,8 +102,10 @@ class mahasiswaController extends Controller
     
         $filterData = $query->count();
     
-        $data = $query->skip($start)->take($limit)->get()->map(function($item){
+        $surats = $query->skip($start)->take($limit)->get();
+        $data = $surats->map(function($item, $index) use ($start) {
             return [
+                'no' => $start + $index + 1,
                 'id' => $item->id_surat,
                 'nomor_surat' => $item->nomor_surat ?? '-',
                 'judul_surat' => $item->judul_surat ?? '-',
@@ -122,8 +140,8 @@ class mahasiswaController extends Controller
         return DataTables::of($surats)
             ->addColumn('action', function ($surat) {
                 return '
-                    <a href="' . route('mahasiswa.surat.edit', $surat->id_surat) . '" class="py-2 px-4 rounded-[10px] bg-blue-700 text-white">Edit</a>
-                    <button onclick="hapusSurat(' . $surat->id_surat . ')" class="py-2 px-4 rounded-[10px] bg-red-700 text-white ml-2 hover:cursor-pointer">Hapus</button>
+                    <a href="' . route('mahasiswa.surat.edit', $surat->id_surat) . '" class="inline-block py-2 px-4 rounded-[10px] bg-blue-700 text-white hover:cursor-pointer hover:scale-110 transition-all duration-300">Ubah</a>
+                    <button onclick="hapusSurat(' . $surat->id_surat . ')" class="py-2 px-4 rounded-[10px] bg-red-700 text-white ml-2 hover:cursor-pointer hover:scale-110 transition-all duration-300">Hapus</button>
                     <form id="form-hapus-' . $surat->id_surat . '" action="' . route('mahasiswa.surat.destroy', $surat->id_surat) . '" method="POST" style="display: none; ">
                         ' . csrf_field() . method_field('DELETE') . '
                     </form>

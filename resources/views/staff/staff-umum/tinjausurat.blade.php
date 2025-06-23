@@ -33,12 +33,11 @@
                         <input type="date" id="end_date" name="end_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                     </div>
                     <div class="md:col-span-1 flex items-end">
-                        <button id="filter-btn" class="w-full bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition">Filter</button>
+                        <button id="filter-btn" class="w-full bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition hover:scale-110 cursor-pointer">Filter</button>
                     </div>
                 </div>
 
                 <div class="overflow-x-auto">
-                    {{-- Komponen datatable hanya akan merender struktur HTML tabel --}}
                     <x-datatable
                         id="tinjau-surat-table"
                         :columns="[
@@ -64,14 +63,12 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Inisialisasi DataTable secara manual untuk kontrol penuh
     var table = $('#tinjau-surat-table').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
             url: "{{ route('staffumum.tinjau.data') }}",
             data: function (d) {
-                // Kirim nilai filter dengan setiap request AJAX
                 d.search_query = $('#search_query').val();
                 d.start_date = $('#start_date').val();
                 d.end_date = $('#end_date').val();
@@ -94,10 +91,9 @@ $(document).ready(function() {
         dom: 'rt<"flex justify-between items-center mt-4"<"text-sm text-gray-600"i><"flex"p>>'
     });
 
-    // Event listener untuk tombol filter
     $('#filter-btn').on('click', function(e) {
         e.preventDefault();
-        table.draw(); // Menggambar ulang tabel, yang akan memicu request AJAX baru dengan data filter
+        table.draw();
     });
 });
 </script>

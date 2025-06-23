@@ -108,8 +108,8 @@
                 </div>
 
                 <div class="flex space-x-4 pt-4">
-                    <button type="reset" class="flex-1 p-2 border border-[#5A67BA] text-[#5A67BA] rounded-sm hover:bg-blue-50 transition text-xs">Batal</button>
-                    <button type="submit" class="flex-1 p-2 bg-[#5A67BA] text-white rounded-sm hover:bg-blue-800 transition text-xs">Ubah Kata Sandi</button>
+                    <button type="reset" class="flex-1 p-2 border border-[#5A67BA] text-[#5A67BA] rounded-sm transition text-xs hover:cursor-pointer hover:scale-105">Batal</button>
+                    <button type="submit" class="flex-1 p-2 bg-[#5A67BA] text-white rounded-sm hover:bg-blue-800 transition text-xs hover:cursor-pointer hover:scale-105">Ubah Kata Sandi</button>
                 </div>
             </form>
 

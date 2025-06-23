@@ -18,7 +18,7 @@
 
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <div class="mb-4 flex justify-between gap-2">
-                        <button onclick="showModal('create')" class="py-2 px-4 rounded-[10px] bg-blue-700 text-white">Tambah Pengusul</button>
+                        <button onclick="showModal('create')" class="py-2 px-4 rounded-[10px] bg-blue-700 text-white hover:cursor-pointer hover:scale-105 transition-all duration-300">Tambah Pengusul</button>
                         <x-form.search name="custom-search" placeholder="Cari pengusul..." />
                     </div>
                     <table id="pengusul-table" class="w-full">
@@ -86,8 +86,8 @@ $(document).ready(function() {
                 render: function(data, type, row) {
                     return `
                         <div class="flex items-center gap-2">
-                            <button type="button" onclick="showModal('edit', ${row.id})" class="py-2 px-4 rounded-[10px] bg-blue-700 text-white">Ubah</button>
-                            <button type="button" onclick="showDeleteModal(${row.id})" class="py-2 px-4 rounded-[10px] bg-red-700 text-white">Hapus</button>
+                            <button type="button" onclick="showModal('edit', ${row.id})" class="py-2 px-4 rounded-[10px] bg-blue-700 text-white hover:cursor-pointer hover:scale-110 transition-all duration-300">Ubah</button>
+                            <button type="button" onclick="showDeleteModal(${row.id})" class="py-2 px-4 rounded-[10px] bg-red-700 text-white hover:cursor-pointer hover:scale-110 transition-all duration-300">Hapus</button>
                         </div>
                     `;
                 }

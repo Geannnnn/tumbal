@@ -100,6 +100,7 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/tinjau-surat', 'tinjauSurat')->name('staffumum.tinjausurat');
             Route::get('/tinjau-surat/data', 'getSuratData')->name('staffumum.tinjau.data');
             Route::get('/surat/{id}/tinjau', 'showDetailSurat')->name('staffumum.tinjau.detail');
+
         });
 
         Route::prefix('tata-usaha')->controller(tatausahaController::class)->group(function () {
@@ -109,6 +110,8 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/statussurat','statussurat')->name('tatausaha.statussurat');
             Route::get('/jenissurat','jenissurat')->name('tatausaha.jenissurat');
             Route::get('/tinjau-surat','tinjauSurat')->name('tatausaha.tinjau-surat');
+            Route::get('/tinjau-surat/data', 'getSuratData')->name('tatausaha.tinjau.data');
+            Route::get('/surat/{id}/tinjau', 'showDetailSurat')->name('tatausaha.tinjau.detail');
         });
     });
 

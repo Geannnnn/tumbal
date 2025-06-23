@@ -15,4 +15,5 @@ class StatusSurat extends Model
     {
         return $this->hasMany(RiwayatStatusSurat::class, 'id_status_surat');
     }
+    
 }

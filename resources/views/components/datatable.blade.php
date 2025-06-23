@@ -16,7 +16,7 @@
 <table id="{{ $id }}" class="w-full bg-transparent text-md text-left text-gray-700">
     <thead>
         <tr>
-            @foreach ($columns as $label)
+            @foreach ($columns as $key => $label)
                 <th>{{ $label }}</th>
             @endforeach
             @if (($showEdit || $showDelete) && !array_key_exists('actions', $columns))

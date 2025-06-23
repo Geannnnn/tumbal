@@ -112,11 +112,14 @@ class staffumumController extends Controller
             ->addColumn('status', function($surat) {
                 return optional($surat->statusTerakhir->statusSurat)->status_surat ?? 'Diajukan';
             })
+            ->addColumn('tujuan_surat', function($surat) {
+                return $surat->tujuan_surat ?? '-';
+            })
             ->addColumn('tanggal_pengajuan', function($surat) {
-                return Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d F Y');
+                return Carbon::parse($surat->tanggal_pengajuan)->locale('id')->translatedFormat('d F Y');
             })
             ->addColumn('actions', function ($row) {
-                return '<a href="' . route('staffumum.tinjau.detail', $row->id_surat) . '" class="bg-blue-700 text-white px-3 py-1 rounded-lg hover:bg-blue-800 transition">Tinjau</a>';
+                return '<a href="' . route('staffumum.tinjau.detail', $row->id_surat) . '" class="bg-blue-700 text-white px-3 py-1 rounded-lg hover:bg-blue-800 transition-transform duration-300 transform hover:scale-110">Tinjau</a>';
             })
             ->rawColumns(['actions'])
             ->make(true);
@@ -127,7 +130,7 @@ class staffumumController extends Controller
         $surat = Surat::with(['jenisSurat', 'dibuatOleh', 'pengusul', 'riwayatStatus.statusSurat'])
             ->findOrFail($id);
         
-        // Menggunakan view yang sama dengan kepala sub, karena desainnya generik
-        return view('kepalasub.tinjau-surat', compact('surat'));
+        return view('staff.staff-umum.detail-surat', compact('surat'));
     }
+
 }

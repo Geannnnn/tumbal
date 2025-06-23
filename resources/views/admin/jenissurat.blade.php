@@ -17,7 +17,7 @@
 
                 <div class="flex justify-between items-center mb-4 mt-14">
                 <div class="flex justify-start">
-                        <button id="btnShowModal" class="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition">Tambah Jenis Surat</button>
+                        <button id="btnShowModal" class="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition hover:scale-105 cursor-pointer">Tambah Jenis Surat</button>
                     </div>
                     <div class="flex justify-end">
                         <div class="w-64 mr-0">
@@ -47,8 +47,8 @@
                                 <td class="px-4 py-2">{{ $loop->iteration }}</td>
                                 <td class="px-4 py-2">{{ $item->jenis_surat }}</td>
                                 <td class="px-4 py-2">
-                                    <button type="button" class="text-white ml-2 px-3 py-1 rounded-lg hover:cursor-pointer hover:opacity-80 bg-blue-700 hover:bg-blue-800 btn-edit" data-id="{{ $item->id_jenis_surat }}" data-nama="{{ $item->jenis_surat }}">Ubah</button>
-                                    <button type="button" class="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg hover:cursor-pointer hover:opacity-80 btn-hapus" data-id="{{ $item->id_jenis_surat }}">Hapus</button>
+                                    <button type="button" class="text-white ml-2 px-3 py-1 rounded-lg hover:cursor-pointer bg-blue-700 hover:bg-blue-800 btn-edit hover:scale-110 transition-all duration-300" data-id="{{ $item->id_jenis_surat }}" data-nama="{{ $item->jenis_surat }}">Ubah</button>
+                                    <button type="button" class="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg hover:cursor-pointer btn-hapus hover:scale-110 transition-all duration-300" data-id="{{ $item->id_jenis_surat }}">Hapus</button>
                                     <form id="form-hapus-{{ $item->id_jenis_surat }}" action="{{ route('admin.jenissurat.destroy', $item->id_jenis_surat) }}" method="POST" style="display:none;">
                                         <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                         <input type="hidden" name="_method" value="DELETE">
@@ -76,8 +76,8 @@
                                 <input type="text" name="jenis_surat" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Masukkan jenis surat..." required>
                             </div>
                             <div class="flex justify-end gap-2 pt-2">
-                                <button type="button" id="btnCancelModal" class="py-2 px-5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">Batal</button>
-                                <button type="submit" class="py-2 px-5 rounded-lg bg-blue-700 text-white font-semibold hover:bg-blue-800 transition">Tambah</button>
+                                <button type="button" id="btnCancelModal" class="py-2 px-5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition hover:scale-110 cursor-pointer">Batal</button>
+                                <button type="submit" class="py-2 px-5 rounded-lg bg-blue-700 text-white font-semibold hover:bg-blue-800 transition hover:scale-110 cursor-pointer">Tambah</button>
                             </div>
                         </form>
                     </div>
@@ -100,8 +100,8 @@
                                 <input type="text" name="jenis_surat" id="editJenisSuratInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required>
                             </div>
                             <div class="flex justify-end gap-2 pt-2">
-                                <button type="button" id="btnCancelEditModal" class="py-2 px-5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition">Batal</button>
-                                <button type="submit" class="py-2 px-5 rounded-lg bg-blue-700 text-white font-semibold hover:bg-blue-800 transition">Simpan</button>
+                                <button type="button" id="btnCancelEditModal" class="py-2 px-5 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition hover:scale-110 cursor-pointer">Batal</button>
+                                <button type="submit" class="py-2 px-5 rounded-lg bg-blue-700 text-white font-semibold hover:bg-blue-800 transition hover:scale-110 cursor-pointer">Simpan</button>
                             </div>
                         </form>
                     </div>
