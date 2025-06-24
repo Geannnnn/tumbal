@@ -20,7 +20,7 @@
     <title>@yield('title', 'Default Title')</title>
 </head>
 <body class="bg-gray-100" style="font-family: 'Poppins', sans-serif;">
-
+    
     @yield('content')
     
     @include('components.alertnotif')

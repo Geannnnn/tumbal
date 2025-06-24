@@ -3,7 +3,7 @@
 @section('title','Pengajuan Surat')
 
 @section('content')
-<div class="flex h-screen">
+<div class="flex h-screen ml-[250px] overflow-x-hidden">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
@@ -20,12 +20,12 @@
                 </div>
         
                 {{-- Background colored --}}
-                <div class="w-full h-full max-h-180 bg-[#F0F2FF] rounded-[70px]">
+                <div class="bg-white rounded-lg shadow-md p-6">
                     
                     <div class="pl-15 pt-8">
-                        <h1 class="font-medium sm:text-[10px] md:text-[10px] lg:text-[20px]">Pengajuan Surat</h1>
+                        <h1 class="font-medium sm:text-[10px] md:text-[10px] lg:text-[25px]">Pengajuan Surat</h1>
                         <div class="flex justify-between w-full">
-                            <h1 class="text-[#6D727C] font-medium text-[24px] py-4">List Pengajuan Surat Politeknik Negeri Batam</h1>
+                            <h1 class="text-[#6D727C] font-medium text-[18px] py-4">List Pengajuan Surat Politeknik Negeri Batam</h1>
         
                             <div class="flex justify-end py-4 pr-5">
                                 <x-form.search name="" id="custom-search" placeholder="Search..." bgColor="#D9DCE2" textColor="black" class="w-full" />

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\RiwayatStatusSurat;
 use Illuminate\Http\Request;
 use App\Models\Surat;
 use Yajra\DataTables\Facades\DataTables;
@@ -119,7 +120,7 @@ class staffumumController extends Controller
                 return Carbon::parse($surat->tanggal_pengajuan)->locale('id')->translatedFormat('d F Y');
             })
             ->addColumn('actions', function ($row) {
-                return '<a href="' . route('staffumum.tinjau.detail', $row->id_surat) . '" class="bg-blue-700 text-white px-3 py-1 rounded-lg hover:bg-blue-800 transition-transform duration-300 transform hover:scale-110">Tinjau</a>';
+                return '<a href="' . route('staffumum.tinjau.detail', $row->id_surat) . '" class="inline-block bg-blue-700 text-white px-3 py-1 rounded-lg hover:bg-blue-800 transition-transform duration-300 transform hover:scale-110">Tinjau</a>';
             })
             ->rawColumns(['actions'])
             ->make(true);
@@ -133,4 +134,61 @@ class staffumumController extends Controller
         return view('staff.staff-umum.detail-surat', compact('surat'));
     }
 
+    public function tolakSurat(Request $request, $id)
+    {
+        $surat = Surat::findOrFail($id);
+
+        // Cari id_status_surat untuk "Ditolak"
+        $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
+        if (!$statusDitolak) {
+            return back()->with('error', 'Status Ditolak tidak ditemukan!');
+        }
+
+        // Tambahkan riwayat status "Ditolak"
+        $riwayat = RiwayatStatusSurat::create([
+            'id_surat' => $surat->id_surat,
+            'id_status_surat' => $statusDitolak->id_status_surat,
+            'tanggal_rilis' => now(),
+        ]);
+
+        // Simpan komentar jika ada
+        if ($request->filled('catatan')) {
+            \App\Models\KomentarSurat::create([
+                'id_riwayat_status_surat' => $riwayat->id,
+                'id_surat' => $surat->id_surat,
+                'id_user' => auth('staff')->id(),
+                'komentar' => $request->catatan,
+            ]);
+        }
+
+        return redirect()->route('staffumum.tinjausurat')->with('success', 'Surat berhasil ditolak');
+    }
+
+    public function approveSurat(Request $request, $id)
+    {
+        $surat = Surat::findOrFail($id);
+
+        $statusValidasi = StatusSurat::where('status_surat', 'Divalidasi')->first();
+        $statusMenunggu = StatusSurat::where('status_surat', 'Menunggu Persetujuan')->first();
+
+        if (!$statusValidasi || !$statusMenunggu) {
+            return back()->with('error', 'Status validasi/menunggu tidak ditemukan!');
+        }
+
+        $now = now();
+        // Tambahkan riwayat status "Divalidasi"
+        RiwayatStatusSurat::create([
+            'id_surat' => $surat->id_surat,
+            'id_status_surat' => $statusValidasi->id_status_surat,
+            'tanggal_rilis' => $now,
+        ]);
+        // Tambahkan riwayat status "Menunggu Persetujuan" dengan waktu +1 detik
+        RiwayatStatusSurat::create([
+            'id_surat' => $surat->id_surat,
+            'id_status_surat' => $statusMenunggu->id_status_surat,
+            'tanggal_rilis' => $now->copy()->addSecond(),
+        ]);
+
+        return redirect()->route('staffumum.tinjausurat')->with('success', 'Surat berhasil di-approve dan dikirim ke kepala sub.');
+    }
 }

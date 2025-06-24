@@ -4,7 +4,7 @@
 
 @section('content')
 
-<div class="flex h-screen">
+<div class="flex h-screen ml-[250px] overflow-x-hidden">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
@@ -13,7 +13,7 @@
         <main class="flex-1 bg-white p-12">
             @yield('content')
 
-            <div class="flex gap-4">
+            <div class="flex gap-4 mb-10">
                 <x-form.select
                     name="jenis_surat"
                     id="jenis_surat"
@@ -33,13 +33,14 @@
                   
             </div>
 
-            <div class="flex p-10">
-                <x-backplat 
+            <x-backplat 
                 :title="'Status Surat'"
-                :subtitle="false">
+                :subtitle="false"
+                :searchPlaceholder="'Cari status surat...'"
+                :search="true">
                 
                     <x-datatable-status 
-                        id="dosenStatusTable"
+                        id="mahasiswaStatusTable"
                         ajaxUrl="{{ route('statusSurat.data') }}"
                         :columns="[
                             'nomor_surat' => 'Nomor',
@@ -51,8 +52,7 @@
                         userRole="Dosen"
                     />
 
-                </x-backplat>
-            </div>
+            </x-backplat>
 
             
 

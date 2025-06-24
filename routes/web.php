@@ -100,7 +100,8 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/tinjau-surat', 'tinjauSurat')->name('staffumum.tinjausurat');
             Route::get('/tinjau-surat/data', 'getSuratData')->name('staffumum.tinjau.data');
             Route::get('/surat/{id}/tinjau', 'showDetailSurat')->name('staffumum.tinjau.detail');
-
+            Route::post('/surat/{id}/tolak', 'tolakSurat')->name('staffumum.surat.tolak');
+            Route::post('/surat/{id}/approve', 'approveSurat')->name('staffumum.surat.approve');
         });
 
         Route::prefix('tata-usaha')->controller(tatausahaController::class)->group(function () {

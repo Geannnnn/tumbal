@@ -19,4 +19,9 @@ class RiwayatStatusSurat extends Model
     {
         return $this->belongsTo(StatusSurat::class, 'id_status_surat', 'id_status_surat');
     }
+
+    public function komentarSurat()
+    {
+        return $this->hasMany(KomentarSurat::class, 'id_riwayat_status_surat');
+    }
 }

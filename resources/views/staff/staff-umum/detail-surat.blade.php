@@ -5,25 +5,32 @@
 @section('title','Tinjau Surat - Kepala Sub')
 
 @section('content')
-<div class="flex h-screen bg-gray-50">
+<div class="flex h-screen bg-gray-50 ml-[250px] overflow-x-hidden">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header')
         <main class="flex-1 p-4 sm:p-6 md:p-8 lg:p-10">
             <div class="container mx-auto">
-                <!-- Tombol Aksi di Atas -->
-                <div class="flex justify-end items-center gap-3 mb-6">
-                    <button type="button" onclick="setujuiSurat()" 
-                            class="px-5 py-2 text-sm font-medium text-white hover:cursor-pointer bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 transition-all duration-300 hover:scale-110">
-                        Approve
-                    </button>
-                    <button type="button" onclick="tolakSurat()" 
-                            class="px-5 py-2 text-sm font-medium text-white hover:cursor-pointer bg-rose-600 rounded-lg hover:bg-rose-700 focus:ring-4 focus:outline-none focus:ring-rose-300 transition-all duration-300 hover:scale-110">
+                <div class="flex justify-end gap-2 mb-6">
+                    <!-- Approve Form -->
+                    <form id="form-approve" action="{{ route('staffumum.surat.approve', $surat->id_surat) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit"
+                            class="cursor-pointer px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 transition-all duration-300 hover:scale-110">
+                            Approve
+                        </button>
+                    </form>
+
+                    <!-- Tolak Button (open modal) -->
+                    <button type="button" onclick="openTolakModal()"
+                        class="cursor-pointer px-5 py-2 text-sm font-medium text-white bg-rose-600 rounded-lg hover:bg-rose-700 focus:ring-4 focus:outline-none focus:ring-rose-300 transition-all duration-300 hover:scale-110">
                         Tolak
                     </button>
-                    <a href="{{ route('staffumum.tinjausurat') }}" 
-                       class="px-5 py-2 text-sm font-medium text-gray-700 hover:cursor-pointer bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-all duration-300 hover:scale-110">
+
+                    <!-- Kembali -->
+                    <a href="{{ route('staffumum.tinjausurat') }}"
+                    class="inline-block px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-all duration-300 hover:scale-110">
                         Kembali
                     </a>
                 </div>
@@ -99,6 +106,21 @@
     </div>
 </div>
 
+<!-- Modal Tolak -->
+<div id="modalTolak" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-lg font-bold mb-4">Tolak Surat</h2>
+        <form id="form-tolak" action="{{ route('staffumum.surat.tolak', $surat->id_surat) }}" method="POST">
+            @csrf
+            <textarea name="catatan" required class="w-full border rounded p-2 mb-4" rows="4" placeholder="Tulis alasan penolakan..."></textarea>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeTolakModal()" class="px-4 py-2 bg-gray-200 rounded">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded">Kirim</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function setujuiSurat() {
     if (confirm('Apakah Anda yakin ingin menyetujui surat ini?')) {
@@ -116,6 +138,14 @@ function tolakSurat() {
         alert('Surat berhasil ditolak!');
         window.location.href = '{{ route("kepalasub.persetujuansurat") }}';
     }
+}
+
+function openTolakModal() {
+    document.getElementById('modalTolak').classList.remove('hidden');
+}
+
+function closeTolakModal() {
+    document.getElementById('modalTolak').classList.add('hidden');
 }
 </script>
 @endsection 

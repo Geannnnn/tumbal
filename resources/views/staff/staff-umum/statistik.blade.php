@@ -3,7 +3,7 @@
 @section('title', 'statistik')
 
 @section('content')
-<div class="flex h-screen">
+<div class="flex h-screen ml-[250px] overflow-x-hidden">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">

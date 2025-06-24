@@ -247,7 +247,7 @@ class mahasiswaController extends Controller
         $prevStatus = null;
         foreach ($surat->riwayatStatus as $item) {
             $statusName = $item->statusSurat->status_surat ?? '-';
-            $oleh = $surat->dibuatOleh->nim ?? $surat->dibuatOleh->nip ?? '-' . ' | ' . $surat->dibuatOleh->nama;
+            $oleh = $surat->dibuatOleh->nama;
             $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y, H:i') . ' wib';
             $riwayat[] = [
                 'tanggal' => $tanggal,

@@ -21,8 +21,7 @@
 @endphp
 
 <!-- Sidebar -->
-<div class="w-[250px] bg-[#F1F2F7] shadow-lg flex flex-col p-4 min-h-screen 
-            lg:sticky lg:top-0 xl:sticky xl:top-0 2xl:sticky 2xl:top-0">
+<div class="w-[250px] bg-[#F1F2F7] shadow-lg flex flex-col p-4 fixed inset-y-0 left-0 z-30">
     <!-- Logo -->
     <div class="flex items-center">
         <img src="{{ asset('images/surat_logo.svg') }}" alt="logo" class="w-14 h-14 rounded-full mb-2 ml-2">
