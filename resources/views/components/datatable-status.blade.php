@@ -29,6 +29,9 @@
                 url: '{{ $ajaxUrl }}',
                 data: function(d) {
                     d.search.value = $('#custom-search').val();
+                    d.jenis_surat = $('#jenis_surat').val();
+                    d.status_surat = $('#status_surat').val();
+                    d.year = $('#year').val();
                 }
             },
             pageLength: 5,
@@ -79,9 +82,10 @@
                     searchable: false,
                     render: function(data, type, row) {
                         let id = row.id || row.id_surat;
-                        let baseUrl = '{{ $userRole === "Dosen" ? "dosen" : "mahasiswa" }}';
+                        let baseUrl = '{{ $userRole === "Dosen" ? "dosen" : ($userRole === "Staff Umum" ? "staff-umum" : "mahasiswa") }}';
                         let url = `/${baseUrl}/statussurat/${id}`;
-                        return `<button class=\"bg-blue-100 text-black rounded-xl px-4 py-1 font-semibold text-sm hover:bg-blue-200 transition hover:scale-110 cursor-pointer btn-detail-surat\" data-id=\"${id}\" data-url=\"${url}\">Detail</button>`;
+                        let buttonText = '{{ $userRole === "Staff Umum" ? "Tinjau" : "Detail" }}';
+                        return `<button class=\"bg-blue-100 text-black rounded-xl px-4 py-1 font-semibold text-sm hover:bg-blue-200 transition hover:scale-110 cursor-pointer btn-detail-surat\" data-id=\"${id}\" data-url=\"${url}\">${buttonText}</button>`;
                     }
                 }
             ],

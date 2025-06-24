@@ -143,12 +143,13 @@
                 <x-datatable
                     id="surat-table"
                     :columns="$columns"
-                    ajaxUrl="{{ route('mahasiswa.search') }}"
+                    ajaxUrl="{{ route('dosen.search') }}"
                     :ordering="true"
                     :lengthMenu="false"
                     :pageLength="5"
                     :showEdit="false"
                     :showDelete="false"
+                    :search="true"
                 />
             </div>
         </main>

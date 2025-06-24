@@ -96,6 +96,8 @@ Route::middleware(['multi-auth'])->group(function () {
             Route::get('/statistik','statistik')->name('staffumum.statistik');
             Route::get('/terbitkan','terbitkan')->name('staffumum.terbitkan');
             Route::get('/statussurat','statussurat')->name('staffumum.statussurat');
+            Route::get('/statussurat/data', 'getStatusSuratData')->name('staffumum.statussurat.data');
+            Route::get('/statussurat/{id}', 'showStatusSurat')->name('staffumum.statussurat.show');
             Route::get('/jenissurat','jenissurat')->name('staffumum.jenissurat');
             Route::get('/tinjau-surat', 'tinjauSurat')->name('staffumum.tinjausurat');
             Route::get('/tinjau-surat/data', 'getSuratData')->name('staffumum.tinjau.data');

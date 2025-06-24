@@ -13,13 +13,30 @@ class dosenController extends Controller
 {
     public function index () {
 
-        $suratDiterima = Surat::where('is_draft',1)->whereHas('riwayatStatus',function($q){
-            $q->where('id_status_surat',1);
-        })->count();
+        // Get status IDs
+        $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+        $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
 
-        $suratDitolak = Surat::where('is_draft',1)->whereHas('riwayatStatus',function($q){
-            $q->where('id_status_surat',2);
-        })->count();
+        // Count accepted letters (Diterbitkan status and has letter number)
+        if ($statusDiterbitkan) {
+            $suratDiterima = Surat::where('is_draft', 1)
+                ->whereNotNull('nomor_surat')
+                ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
+                    $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+                })->count();
+        } else {
+            $suratDiterima = 0;
+        }
+
+        // Count rejected letters (Ditolak status)
+        if ($statusDitolak) {
+            $suratDitolak = Surat::where('is_draft', 1)
+                ->whereHas('riwayatStatus', function($q) use ($statusDitolak) {
+                    $q->where('id_status_surat', $statusDitolak->id_status_surat);
+                })->count();
+        } else {
+            $suratDitolak = 0;
+        }
 
         $notifikasiSurat = collect(); // default empty
         
@@ -34,6 +51,66 @@ class dosenController extends Controller
         return view('pengusul.dosen.index', compact('columns','suratDiterima','suratDitolak','notifikasiSurat'));
     }
 
+    public function search(Request $request){
+        $limit = $request->input('length');
+        $start = $request->input('start');
+        $user = auth('pengusul')->id();
+    
+        // Get status ID for "Diterbitkan"
+        $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+        
+        if (!$statusDiterbitkan) {
+            return response()->json([
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+            ]);
+        }
+    
+        $query = Surat::with(['dibuatOleh'])
+            ->whereHas('dibuatOleh.role', function ($q) {
+                $q->whereIn('role', ['mahasiswa', 'dosen']);
+            })
+            ->whereHas('pengusul', function ($q) use ($user) {
+                $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                  ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+            })
+            ->whereNotNull('nomor_surat') // Only letters with letter number
+            ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
+                $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+            });
+    
+        $totalData = $query->count();
+    
+        if ($search = $request->input('search.value')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_surat', 'like', "%$search%")
+                  ->orWhere('judul_surat', 'like', "%$search%");
+            });
+        }
+    
+        $filterData = $query->count();
+    
+        $surats = $query->skip($start)->take($limit)->get();
+        $data = $surats->map(function($item, $index) use ($start) {
+            return [
+                'id' => $item->id_surat,
+                'nomor_surat' => $item->nomor_surat ?? '-',
+                'judul_surat' => $item->judul_surat ?? '-',
+                'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat ? date('d/m/Y', strtotime($item->tanggal_surat_dibuat)) : '-',
+                'lampiran' => $item->lampiran,
+                'tanggal_pengajuan' => $item->tanggal_pengajuan ? date('d/m/Y', strtotime($item->tanggal_pengajuan)) : '-',
+            ];
+        });
+    
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $totalData,
+            'recordsFiltered' => $filterData,
+            'data' => $data,
+        ]);
+    }
 
     public function pengajuan() {
 
