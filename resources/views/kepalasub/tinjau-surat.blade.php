@@ -5,7 +5,7 @@
 @section('title','Tinjau Surat - Kepala Sub')
 
 @section('content')
-<div class="flex h-screen bg-gray-50">
+<div class="flex h-screen bg-gray-50 ml-[250px] overflow-x-hidden">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
@@ -16,7 +16,7 @@
                 <div class="flex justify-end items-center gap-3 mb-6">
                     <button type="button" onclick="setujuiSurat()" 
                             class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300">
-                        Terima
+                        Setujui
                     </button>
                     <button type="button" onclick="tolakSurat()" 
                             class="px-5 py-2 text-sm font-medium text-white bg-rose-600 rounded-lg hover:bg-rose-700 focus:ring-4 focus:outline-none focus:ring-rose-300">
@@ -81,13 +81,6 @@
                             <label class="block text-sm font-medium text-gray-700">Deskripsi</label>
                             <p class="mt-1 text-sm text-gray-900">{{ $surat->deskripsi ?: 'Tidak ada deskripsi' }}</p>
                         </div>
-
-                        @if($surat->tujuan_surat)
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Tujuan Surat</label>
-                            <p class="mt-1 text-sm text-gray-900">{{ $surat->tujuan_surat }}</p>
-                        </div>
-                        @endif
                     </div>
 
                     <!-- Tanda Tangan -->

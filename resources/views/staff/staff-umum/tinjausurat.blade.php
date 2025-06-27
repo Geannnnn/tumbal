@@ -85,6 +85,7 @@ $(document).ready(function() {
         ],
         ordering: false,
         lengthChange: false,
+        pageLength: 5,
         language: {
             url: "https://cdn.datatables.net/plug-ins/1.10.25/i18n/Indonesian.json"
         },

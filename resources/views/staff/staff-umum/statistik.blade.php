@@ -97,15 +97,15 @@
                 <h3 class="font-semibold mb-4 text-lg">Surat Per Kategori</h3>
                 <ul class="space-y-2 divide-y divide-gray-200">
                     @forelse($suratPerKategori as $kategori)
-                        <li class="flex justify-between py-1">
+                    <li class="flex justify-between py-1">
                             <span>{{ $kategori['nama'] }}</span>
                             <span>{{ $kategori['count'] }} – Surat</span>
-                        </li>
+                    </li>
                     @empty
-                        <li class="flex justify-between py-1">
+                    <li class="flex justify-between py-1">
                             <span>Tidak ada data</span>
-                            <span>0 – Surat</span>
-                        </li>
+                        <span>0 – Surat</span>
+                    </li>
                     @endforelse
                 </ul>
             </div>
@@ -115,15 +115,15 @@
                 <h3 class="font-semibold mb-4 text-lg">Status Surat</h3>
                 <ul class="space-y-2 divide-y divide-gray-200">
                     @forelse($statusSurat as $status)
-                        <li class="flex justify-between py-1">
+                    <li class="flex justify-between py-1">
                             <span>{{ $status['nama'] }}</span>
                             <span>{{ $status['count'] }} – Surat</span>
-                        </li>
+                    </li>
                     @empty
-                        <li class="flex justify-between py-1">
+                    <li class="flex justify-between py-1">
                             <span>Tidak ada data</span>
-                            <span>0 – Surat</span>
-                        </li>
+                        <span>0 – Surat</span>
+                    </li>
                     @endforelse
                 </ul>
             </div>

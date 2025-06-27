@@ -5,8 +5,7 @@
 @section('title','Persetujuan Surat - Kepala Sub')
 
 @section('content')
-<x-alertnotif />
-<div class="flex h-screen">
+<div class="flex h-screen ml-[250px] overflow-x-hidden">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
@@ -15,13 +14,13 @@
             <div class="container mx-auto">
                 <div class="mb-6">
                     <h1 class="text-2xl font-bold text-gray-900 mb-2">Persetujuan Surat</h1>
-                    <p class="text-gray-600">Kelola surat yang diajukan untuk persetujuan</p>
+                    <p class="text-gray-600">Kelola surat yang menunggu persetujuan</p>
                 </div>
 
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <div class="mb-4">
                         <div class="flex justify-between items-center">
-                            <h2 class="text-lg font-semibold text-gray-800">Daftar Surat Diajukan</h2>
+                            <h2 class="text-lg font-semibold text-gray-800">Daftar Surat Menunggu Persetujuan</h2>
                             <div class="relative">
                                 <input type="text" id="custom-search" placeholder="Cari surat..." 
                                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -35,6 +34,7 @@
                     <x-datatable 
                         id="surat-diajukan-table"
                         :columns="[
+                            'DT_RowIndex' => 'No',
                             'judul_surat' => 'Judul Surat',
                             'jenis_surat' => 'Jenis Surat', 
                             'pengusul' => 'Pengusul',

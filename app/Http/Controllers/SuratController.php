@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\JenisSurat;
 use App\Models\PivotPengusulSurat;
 use App\Models\RiwayatStatusSurat;
+use App\Models\StatusSurat;
 use App\Models\Surat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -254,27 +255,22 @@ class SuratController extends Controller
 
             // Update riwayat status surat
             if (!$isDraft) { // Jika surat diajukan (is_draft = 1)
-                // Jika surat diajukan (bukan draft), cek apakah sudah ada riwayat
-                $existingRiwayat = DB::table('riwayat_status_surat')
-                    ->where('id_surat', $surat->id_surat)
+                $lastRiwayat = RiwayatStatusSurat::where('id_surat', $surat->id_surat)
+                    ->orderBy('tanggal_rilis', 'desc')
+                    ->orderBy('id_riwayat_status_surat', 'desc')
                     ->first();
-                
-                if (!$existingRiwayat) {
-                    // Jika belum ada riwayat, buat baru dengan status "Diajukan"
+                $statusDraft = StatusSurat::where('status_surat', 'Draft')->first();
+                $statusDiajukan = StatusSurat::where('status_surat', 'Diajukan')->first();
+
+                // Tambahkan status Diajukan HANYA jika status terakhir adalah Draft
+                if ($lastRiwayat && $statusDraft && $statusDiajukan && $lastRiwayat->id_status_surat == $statusDraft->id_status_surat) {
                     RiwayatStatusSurat::create([
                         'id_surat' => $surat->id_surat,
-                        'id_status_surat' => 2, // Status "Diajukan"
+                        'id_status_surat' => $statusDiajukan->id_status_surat,
                         'tanggal_rilis' => now('Asia/Jakarta'),
                     ]);
-                } else {
-                    // Jika sudah ada, update status menjadi "Diajukan"
-                    DB::table('riwayat_status_surat')
-                        ->where('id_surat', $surat->id_surat)
-                        ->update([
-                            'id_status_surat' => 2, // Status "Diajukan"
-                            'tanggal_rilis' => now('Asia/Jakarta'),
-                        ]);
                 }
+                // Jika status terakhir sudah Diajukan, Divalidasi, Menunggu Persetujuan, Diterbitkan, Ditolak, TIDAK menambah status apapun
             }
 
             DB::table('pivot_pengusul_surat')

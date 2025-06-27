@@ -23,7 +23,7 @@ class dosenController extends Controller
                 ->whereNotNull('nomor_surat')
                 ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
                     $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
-                })->count();
+        })->count();
         } else {
             $suratDiterima = 0;
         }
@@ -33,7 +33,7 @@ class dosenController extends Controller
             $suratDitolak = Surat::where('is_draft', 1)
                 ->whereHas('riwayatStatus', function($q) use ($statusDitolak) {
                     $q->where('id_status_surat', $statusDitolak->id_status_surat);
-                })->count();
+        })->count();
         } else {
             $suratDitolak = 0;
         }

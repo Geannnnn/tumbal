@@ -178,24 +178,18 @@ class staffumumController extends Controller
         $roleDosen = RolePengusul::where('role', 'Dosen')->first();
 
         $query = Surat::with(['jenisSurat', 'dibuatOleh', 'statusTerakhir.statusSurat'])
-            ->where('is_draft', 1) // 1 = diajukan, 0 = draft
-            ->whereIn('id_jenis_surat', $jenisSuratIds) // Hanya jenis surat tertentu
+            ->where('is_draft', 1)
+            // Filter jenis surat
+            ->whereIn('id_jenis_surat', $jenisSuratIds)
+            // Filter pengusul dosen
             ->whereHas('dibuatOleh', function($q) use ($roleDosen) {
-                $q->where('id_role_pengusul', $roleDosen->id_role_pengusul); // Hanya role dosen
+                $q->where('id_role_pengusul', $roleDosen->id_role_pengusul);
             });
 
         // Filter status terakhir "Diajukan"
         if ($statusDiajukan) {
-            $query->whereHas('riwayatStatus', function($q) use ($statusDiajukan) {
+            $query->whereHas('statusTerakhir', function($q) use ($statusDiajukan) {
                 $q->where('id_status_surat', $statusDiajukan->id_status_surat);
-            })->whereDoesntHave('riwayatStatus', function($q) use ($statusDiajukan) {
-                $q->where('id_status_surat', '!=', $statusDiajukan->id_status_surat)
-                  ->whereRaw('tanggal_rilis > (
-                      SELECT MAX(tanggal_rilis) 
-                      FROM riwayat_status_surat rss2 
-                      WHERE rss2.id_surat = riwayat_status_surat.id_surat 
-                      AND rss2.id_status_surat = ?
-                  )', [$statusDiajukan->id_status_surat]);
             });
         }
 
@@ -260,14 +254,12 @@ class staffumumController extends Controller
             return back()->with('error', 'Status Ditolak tidak ditemukan!');
         }
 
-        // Tambahkan riwayat status "Ditolak"
         $riwayat = RiwayatStatusSurat::create([
             'id_surat' => $surat->id_surat,
             'id_status_surat' => $statusDitolak->id_status_surat,
             'tanggal_rilis' => now(),
         ]);
 
-        // Simpan komentar jika ada
         if ($request->filled('catatan')) {
             \App\Models\KomentarSurat::create([
                 'id_riwayat_status_surat' => $riwayat->id,
@@ -284,26 +276,36 @@ class staffumumController extends Controller
     {
         $surat = Surat::findOrFail($id);
 
+        $statusDiajukan = StatusSurat::where('status_surat', 'Diajukan')->first();
         $statusValidasi = StatusSurat::where('status_surat', 'Divalidasi')->first();
         $statusMenunggu = StatusSurat::where('status_surat', 'Menunggu Persetujuan')->first();
 
-        if (!$statusValidasi || !$statusMenunggu) {
-            return back()->with('error', 'Status validasi/menunggu tidak ditemukan!');
+        if (!$statusDiajukan || !$statusValidasi || !$statusMenunggu) {
+            return back()->with('error', 'Status diajukan/validasi/menunggu tidak ditemukan!');
         }
 
-        $now = now();
-        // Tambahkan riwayat status "Divalidasi"
-        RiwayatStatusSurat::create([
-            'id_surat' => $surat->id_surat,
-            'id_status_surat' => $statusValidasi->id_status_surat,
-            'tanggal_rilis' => $now,
-        ]);
-        // Tambahkan riwayat status "Menunggu Persetujuan" dengan waktu +1 detik
-        RiwayatStatusSurat::create([
-            'id_surat' => $surat->id_surat,
-            'id_status_surat' => $statusMenunggu->id_status_surat,
-            'tanggal_rilis' => $now->copy()->addSecond(),
-        ]);
+        // Ambil status terakhir surat
+        $lastRiwayat = $surat->riwayatStatus()->latest('tanggal_rilis')->first();
+        $now = $lastRiwayat ? Carbon::parse($lastRiwayat->tanggal_rilis)->addSecond() : now();
+
+        // Jika status terakhir adalah Diajukan, lanjutkan ke Divalidasi dan Menunggu Persetujuan
+        if ($lastRiwayat && $lastRiwayat->id_status_surat == $statusDiajukan->id_status_surat) {
+            // Tambahkan riwayat status "Divalidasi"
+            RiwayatStatusSurat::create([
+                'id_surat' => $surat->id_surat,
+                'id_status_surat' => $statusValidasi->id_status_surat,
+                'tanggal_rilis' => $now,
+            ]);
+            // Tambahkan riwayat status "Menunggu Persetujuan" dengan waktu +1 detik
+            RiwayatStatusSurat::create([
+                'id_surat' => $surat->id_surat,
+                'id_status_surat' => $statusMenunggu->id_status_surat,
+                'tanggal_rilis' => $now->copy()->addSecond(),
+            ]);
+        } else {
+            // Jika status terakhir bukan Diajukan, jangan lanjutkan atau sesuaikan dengan kebutuhan
+            return back()->with('error', 'Status surat tidak valid untuk di-approve.');
+        }
 
         return redirect()->route('staffumum.tinjausurat')->with('success', 'Surat berhasil di-approve dan dikirim ke kepala sub.');
     }

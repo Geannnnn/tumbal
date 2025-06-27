@@ -7,7 +7,7 @@
     'paging' => true,
     'info' => true,
     'lengthMenu' => true,
-    'pageLength' => 10,
+    'pageLength' => 5,
     'showEdit' => false,
     'showDelete' => false,
     'manualInit' => false
@@ -53,7 +53,18 @@
             },
             processing: true,
             serverSide: true,
-            ajax: '{{ $ajaxUrl }}',
+            ajax: {
+                url: '{{ $ajaxUrl }}',
+                data: function(d) {
+                    // Add custom filter parameters
+                    d.filter_type = window.currentFilterType || 'tahun';
+                    d.year = document.getElementById('year')?.value || new Date().getFullYear();
+                    d.month = document.getElementById('month')?.value;
+                    d.start_date = document.getElementById('start-date')?.value;
+                    d.end_date = document.getElementById('end-date')?.value;
+                    d.search.value = $('#custom-search').val();
+                }
+            },
             ordering: {{ $ordering ? 'true' : 'false' }},
             columns: [
                 @foreach ($columns as $key => $label)
@@ -108,6 +119,9 @@
                 }
             }
         });
+
+        // Make table globally accessible
+        window.suratTable = table;
 
         @if ($search)
         $('#custom-search').on('keyup', function () {

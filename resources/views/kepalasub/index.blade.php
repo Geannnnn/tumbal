@@ -2,11 +2,10 @@
 
 @include('components.alertnotif')
 
-@section('title','Dashboard Admin')
+@section('title','Dashboard Kepala Sub')
 
 @section('content')
-<x-alertnotif />
-<div class="flex h-screen">
+<div class="flex h-screen ml-[250px] overflow-x-hidden">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
@@ -45,7 +44,7 @@
                     </div>
                     <span class="text-[#5A6ACF] font-medium text-base mt-2">Surat Diterima</span>
                     <span class="text-blue-800 font-bold text-3xl mt-1">
-                        {{-- {{ $suratDiterima }} --}}
+                        {{ $suratDiterima }}
                     </span>
                 </div>
 
@@ -56,18 +55,18 @@
                     </div>
                     <span class="text-green-600 font-medium text-base mt-2">Surat Disetujui</span>
                     <span class="text-green-800 font-bold text-3xl mt-1">
-                        {{-- {{ $suratDisetujui }} --}}
+                        {{ $suratDisetujui }}
                     </span>
                 </div>
             
                 <!-- Surat Ditolak -->
                 <div class="flex flex-col items-center bg-[#F1F2F7] shadow-md shadow-blue-100 rounded-2xl py-6">
-                    <div class="w-20 h-20 rounded-full bg-gradient-to-b from-[#5A6ACF] to-blue-300 flex items-center justify-center mb-2 shadow">
-                        <i class="fa-solid fa-file text-white text-4xl"></i>
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-b from-red-600 to-red-300 flex items-center justify-center mb-2 shadow">
+                        <i class="fa-solid fa-file-circle-xmark text-white text-4xl"></i>
                     </div>
-                    <span class="text-blue-500 font-medium text-base mt-2">Surat Ditolak</span>
-                    <span class="text-blue-800 font-bold text-3xl mt-1">
-                        {{-- {{ $suratDitolak }} --}}
+                    <span class="text-red-600 font-medium text-base mt-2">Surat Ditolak</span>
+                    <span class="text-red-800 font-bold text-3xl mt-1">
+                        {{ $suratDitolak }}
                     </span>
                 </div>
             </div>
@@ -75,7 +74,7 @@
             <div class="flex pt-10">
                 <div class="flex justify-between w-full">
                     <div class="flex justify-start">
-                        <h1 class="font-semibold text-[22px]">Riwayat Dokumen</h1>
+                        <h1 class="font-semibold text-[22px]">Surat Menunggu Persetujuan</h1>
                     </div>
                     <div class="flex justify-end mt-4">
                         <input type="search" name="" id="custom-search" class="text-black rounded-[10px] bg-[#D9DCE2] caret-black py-2 px-4" placeholder="Cari Surat...">
@@ -85,13 +84,14 @@
             <div class="w-full">
                 <x-datatable
                     id="surat-table"
-                    {{-- :columns="$columns" --}}
-                    {{-- ajaxUrl="{{ route('mahasiswa.search') }}" --}}
+                    :columns="$columns"
+                    ajaxUrl="{{ route('kepalasub.dashboard.data') }}"
                     :ordering="true"
                     :lengthMenu="false"
                     :pageLength="5"
                     :showEdit="false"
                     :showDelete="false"
+                    :search="true"
                 />
 
                 
@@ -107,6 +107,7 @@
     const btnBulan = document.getElementById('btn-bulan');
     const btnTahun = document.getElementById('btn-tahun');
     const inputContainer = document.getElementById('input-container');
+    let currentFilterType = 'tahun';
 
    
     function setActiveButton(button) {
@@ -121,12 +122,15 @@
         inputContainer.innerHTML = ""; 
 
         if (buttonId === 'btn-jarak') {
-            
+            currentFilterType = 'jarak';
+            window.currentFilterType = 'jarak';
             inputContainer.innerHTML = `
                 <input type="date" name="start-date" id="start-date" class="bg-[#707FDD] py-2 px-4 rounded-[5px]" />
                 <input type="date" name="end-date" id="end-date" class="bg-[#707FDD] py-2 px-4 rounded-[5px]" />
             `;
         } else if (buttonId === 'btn-bulan') {
+            currentFilterType = 'bulan';
+            window.currentFilterType = 'bulan';
             const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             const monthSelect = document.createElement("select");
             monthSelect.name = "month";
@@ -140,6 +144,8 @@
             });
             inputContainer.appendChild(monthSelect);
         } else if (buttonId === 'btn-tahun') {
+            currentFilterType = 'tahun';
+            window.currentFilterType = 'tahun';
             const startYear = 2000;
             const endYear = new Date().getFullYear();
 
@@ -164,17 +170,33 @@
     btnJarak.addEventListener('click', function() {
         setActiveButton(btnJarak);
         updateInputField('btn-jarak');
+        reloadDataTable();
     });
 
     btnBulan.addEventListener('click', function() {
         setActiveButton(btnBulan);
         updateInputField('btn-bulan');
+        reloadDataTable();
     });
 
     btnTahun.addEventListener('click', function() {
         setActiveButton(btnTahun);
         updateInputField('btn-tahun');
+        reloadDataTable();
     });
+
+    // Add event listeners for filter inputs
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('#year, #month, #start-date, #end-date')) {
+            reloadDataTable();
+        }
+    });
+
+    function reloadDataTable() {
+        if (window.suratTable) {
+            window.suratTable.ajax.reload();
+        }
+    }
 </script>
 
 @endpush
