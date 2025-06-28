@@ -13,32 +13,26 @@ class dosenController extends Controller
 {
     public function index () {
 
-        // Get status IDs
-        $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
-        $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
+         // Surat Diterima = surat yang sudah memiliki nomor surat dan status "Diterbitkan"
+         $suratDiterima = Surat::where('is_draft', 1)
+         ->whereNotNull('nomor_surat')
+         ->whereHas('riwayatStatus', function($q) {
+             $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+             if ($statusDiterbitkan) {
+                 $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+             }
+         })->count();
 
-        // Count accepted letters (Diterbitkan status and has letter number)
-        if ($statusDiterbitkan) {
-            $suratDiterima = Surat::where('is_draft', 1)
-                ->whereNotNull('nomor_surat')
-                ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
-                    $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
-        })->count();
-        } else {
-            $suratDiterima = 0;
-        }
-
-        // Count rejected letters (Ditolak status)
-        if ($statusDitolak) {
-            $suratDitolak = Surat::where('is_draft', 1)
-                ->whereHas('riwayatStatus', function($q) use ($statusDitolak) {
+        // Surat Ditolak = surat dengan status "Ditolak"
+        $suratDitolak = Surat::where('is_draft', 1)
+            ->whereHas('riwayatStatus', function($q) {
+                $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
+                if ($statusDitolak) {
                     $q->where('id_status_surat', $statusDitolak->id_status_surat);
-        })->count();
-        } else {
-            $suratDitolak = 0;
-        }
+                }
+            })->count();
 
-        $notifikasiSurat = collect(); // default empty
+        $notifikasiSurat = collect();
         
         $columns = [
             'nomor_surat' => "Nomor Surat",
@@ -67,18 +61,18 @@ class dosenController extends Controller
                 'data' => [],
             ]);
         }
-    
+
         $query = Surat::with(['dibuatOleh'])
-            ->whereHas('dibuatOleh.role', function ($q) {
-                $q->whereIn('role', ['mahasiswa', 'dosen']);
-            })
-            ->whereHas('pengusul', function ($q) use ($user) {
-                $q->where('pivot_pengusul_surat.id_pengusul', $user)
-                  ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
-            })
-            ->whereNotNull('nomor_surat') // Only letters with letter number
+            ->whereNotNull('nomor_surat')
             ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
                 $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+            })
+            ->where(function($q) use ($user) {
+                $q->where('dibuat_oleh', $user)
+                  ->orWhereHas('pengusul', function($q2) use ($user) {
+                      $q2->where('pivot_pengusul_surat.id_pengusul', $user)
+                         ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                  });
             });
     
         $totalData = $query->count();
@@ -279,12 +273,39 @@ class dosenController extends Controller
             $statusName = $item->statusSurat->status_surat ?? '-';
             $oleh = $surat->dibuatOleh->nim ?? $surat->dibuatOleh->nip ?? '-' . ' | ' . $surat->dibuatOleh->nama;
             $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y, H:i') . ' wib';
+            
+            // Tentukan warna berdasarkan status
+            $warna = 'bg-purple-500'; // default
+            switch (strtolower($statusName)) {
+                case 'draft':
+                    $warna = 'bg-purple-600';
+                    break;
+                case 'diajukan':
+                    $warna = 'bg-orange-500';
+                    break;
+                case 'divalidasi':
+                    $warna = 'bg-blue-500';
+                    break;
+                case 'menunggu persetujuan':
+                    $warna = 'bg-yellow-500';
+                    break;
+                case 'menunggu penerbitan':
+                    $warna = 'bg-lime-500';
+                    break;
+                case 'diterbitkan':
+                    $warna = 'bg-green-600';
+                    break;
+                case 'ditolak':
+                    $warna = 'bg-red-600';
+                    break;
+            }
+            
             $riwayat[] = [
                 'tanggal' => $tanggal,
                 'dari' => $prevStatus ? $prevStatus : 'Draft',
                 'ke' => $statusName,
                 'oleh' => $oleh,
-                'warna' => 'bg-purple-500',
+                'warna' => $warna,
             ];
             $prevStatus = $statusName;
         }

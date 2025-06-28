@@ -30,8 +30,7 @@ class Surat extends Model
     public function statusTerakhir()
     {
         return $this->hasOne(RiwayatStatusSurat::class, 'id_surat')
-            ->orderByDesc('tanggal_rilis')
-            ->orderByDesc('id');
+        ->latestOfMany('tanggal_rilis');
     }
 }
 

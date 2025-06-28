@@ -18,7 +18,7 @@
                             class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300">
                         Setujui
                     </button>
-                    <button type="button" onclick="tolakSurat()" 
+                    <button type="button" onclick="openTolakModal()" 
                             class="px-5 py-2 text-sm font-medium text-white bg-rose-600 rounded-lg hover:bg-rose-700 focus:ring-4 focus:outline-none focus:ring-rose-300">
                         Tolak
                     </button>
@@ -97,23 +97,103 @@
     </div>
 </div>
 
+<!-- Modal Tolak Surat -->
+<div id="modalTolak" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md relative">
+        <button onclick="closeTolakModal()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700">&times;</button>
+        <h3 class="text-lg font-semibold mb-4">Tolak Surat</h3>
+        <form id="formTolak" onsubmit="submitTolak(event)">
+            <label for="komentar" class="block text-sm font-medium text-gray-700 mb-1">Komentar Penolakan</label>
+            <textarea id="komentar" name="komentar" rows="3" class="w-full border border-gray-300 rounded-lg p-2 mb-4" required></textarea>
+            <div class="flex justify-end gap-2">
+                <button type="button" onclick="closeTolakModal()" class="px-4 py-2 bg-gray-200 rounded-lg text-gray-700">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700">Kirim</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function setujuiSurat() {
-    if (confirm('Apakah Anda yakin ingin menyetujui surat ini?')) {
-        // Implementasi logika persetujuan
-        // Anda bisa menambahkan form submit di sini jika perlu
-        alert('Surat berhasil disetujui!');
-        window.location.href = '{{ route("kepalasub.persetujuansurat") }}';
-    }
+    Swal.fire({
+        title: 'Setujui Surat?',
+        text: 'Surat akan diteruskan ke proses penerbitan.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Setujui',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{{ url('kepala-sub/surat/' . $surat->id_surat . '/approve') }}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.fire({
+                    icon: data.success ? 'success' : 'error',
+                    title: data.success ? 'Berhasil' : 'Gagal',
+                    text: data.message,
+                }).then(() => {
+                    if (data.success) window.location.href = '{{ route('kepalasub.persetujuansurat') }}';
+                });
+            })
+            .catch(() => {
+                Swal.fire('Gagal', 'Terjadi kesalahan server', 'error');
+            });
+        }
+    });
 }
 
-function tolakSurat() {
-    if (confirm('Apakah Anda yakin ingin menolak surat ini?')) {
-        // Implementasi logika penolakan
-        // Anda bisa menambahkan form submit di sini jika perlu
-        alert('Surat berhasil ditolak!');
-        window.location.href = '{{ route("kepalasub.persetujuansurat") }}';
-    }
+function openTolakModal() {
+    document.getElementById('modalTolak').classList.remove('hidden');
+}
+function closeTolakModal() {
+    document.getElementById('modalTolak').classList.add('hidden');
+}
+function submitTolak(e) {
+    e.preventDefault();
+    const komentar = document.getElementById('komentar').value;
+    Swal.fire({
+        title: 'Tolak Surat?',
+        text: 'Surat akan ditolak dan komentar akan dikirim.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Tolak',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`{{ url('kepala-sub/surat/' . $surat->id_surat . '/reject') }}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ komentar })
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.fire({
+                    icon: data.success ? 'success' : 'error',
+                    title: data.success ? 'Berhasil' : 'Gagal',
+                    text: data.message,
+                }).then(() => {
+                    if (data.success) window.location.href = '{{ route('kepalasub.persetujuansurat') }}';
+                });
+            })
+            .catch(() => {
+                Swal.fire('Gagal', 'Terjadi kesalahan server', 'error');
+            });
+        }
+    });
 }
 </script>
 @endsection 

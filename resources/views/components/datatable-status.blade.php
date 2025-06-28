@@ -52,21 +52,33 @@
                             let badgeClass = 'bg-gray-100 text-gray-700';
                             let dotClass = 'bg-gray-400';
                             switch (data.toLowerCase()) {
+                                case 'draft':
+                                    badgeClass = 'bg-purple-100 text-purple-700';
+                                    dotClass = 'bg-purple-600';
+                                    break;
                                 case 'diajukan':
                                     badgeClass = 'bg-orange-100 text-orange-700';
-                                    dotClass = 'bg-orange-400';
+                                    dotClass = 'bg-orange-500';
                                     break;
-                                case 'disetujui':
+                                case 'divalidasi':
+                                    badgeClass = 'bg-blue-100 text-blue-700';
+                                    dotClass = 'bg-blue-500';
+                                    break;
+                                case 'menunggu persetujuan':
+                                    badgeClass = 'bg-yellow-100 text-yellow-700';
+                                    dotClass = 'bg-yellow-500';
+                                    break;
+                                case 'menunggu penerbitan':
+                                    badgeClass = 'bg-lime-100 text-lime-700';
+                                    dotClass = 'bg-lime-500';
+                                    break;
+                                case 'diterbitkan':
                                     badgeClass = 'bg-green-100 text-green-700';
-                                    dotClass = 'bg-green-400';
+                                    dotClass = 'bg-green-600';
                                     break;
                                 case 'ditolak':
                                     badgeClass = 'bg-red-100 text-red-700';
-                                    dotClass = 'bg-red-400';
-                                    break;
-                                case 'draft':
-                                    badgeClass = 'bg-gray-100 text-gray-700';
-                                    dotClass = 'bg-gray-400';
+                                    dotClass = 'bg-red-600';
                                     break;
                             }
                             dot = `<span class=\"w-2.5 h-2.5 rounded-full mr-2 ${dotClass} inline-block\"></span>`;

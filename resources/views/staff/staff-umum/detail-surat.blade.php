@@ -16,7 +16,8 @@
                     <!-- Approve Form -->
                     <form id="form-approve" action="{{ route('staffumum.surat.approve', $surat->id_surat) }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit"
+                        <button type="button"
+                            onclick="approveSurat(event)"
                             class="cursor-pointer px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 transition-all duration-300 hover:scale-110">
                             Approve
                         </button>
@@ -122,13 +123,22 @@
 </div>
 
 <script>
-function setujuiSurat() {
-    if (confirm('Apakah Anda yakin ingin menyetujui surat ini?')) {
-        // Implementasi logika persetujuan
-        // Anda bisa menambahkan form submit di sini jika perlu
-        alert('Surat berhasil disetujui!');
-        window.location.href = '{{ route("kepalasub.persetujuansurat") }}';
-    }
+function approveSurat(e) {
+    e.preventDefault();
+    Swal.fire({
+        title: 'Setujui Surat?',
+        text: 'Surat akan diteruskan ke Kepala Sub untuk proses selanjutnya.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Setujui',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('form-approve').submit();
+        }
+    });
 }
 
 function tolakSurat() {

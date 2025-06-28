@@ -346,23 +346,18 @@ class KepalaSubController extends Controller
     public function approveSurat(Request $request, $id) {
         try {
             $surat = Surat::findOrFail($id);
-            
-            // Get status IDs
-            $statusDisetujui = StatusSurat::where('status_surat', 'Disetujui')->first();
-            
-            if (!$statusDisetujui) {
-                return response()->json(['success' => false, 'message' => 'Status Disetujui tidak ditemukan']);
+            $statusMenungguPenerbitan = StatusSurat::where('status_surat', 'Menunggu Penerbitan')->first();
+            if (!$statusMenungguPenerbitan) {
+                return response()->json(['success' => false, 'message' => 'Status Menunggu Penerbitan tidak ditemukan']);
             }
-
-            // Add new status history
+            // Tambahkan riwayat status baru
             RiwayatStatusSurat::create([
                 'id_surat' => $surat->id_surat,
-                'id_status_surat' => $statusDisetujui->id_status_surat,
+                'id_status_surat' => $statusMenungguPenerbitan->id_status_surat,
                 'tanggal_rilis' => now(),
                 'keterangan' => 'Disetujui oleh Kepala Sub'
             ]);
-
-            return response()->json(['success' => true, 'message' => 'Surat berhasil disetujui']);
+            return response()->json(['success' => true, 'message' => 'Surat berhasil disetujui dan menunggu penerbitan']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
@@ -371,22 +366,26 @@ class KepalaSubController extends Controller
     public function rejectSurat(Request $request, $id) {
         try {
             $surat = Surat::findOrFail($id);
-            
-            // Get status IDs
             $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
-            
             if (!$statusDitolak) {
                 return response()->json(['success' => false, 'message' => 'Status Ditolak tidak ditemukan']);
             }
-
-            // Add new status history
-            RiwayatStatusSurat::create([
+            // Tambahkan riwayat status baru
+            $riwayat = RiwayatStatusSurat::create([
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusDitolak->id_status_surat,
                 'tanggal_rilis' => now(),
                 'keterangan' => 'Ditolak oleh Kepala Sub'
             ]);
-
+            // Simpan komentar jika ada
+            if ($request->filled('komentar')) {
+                \App\Models\KomentarSurat::create([
+                    'id_riwayat_status_surat' => $riwayat->id,
+                    'id_surat' => $surat->id_surat,
+                    'id_user' => auth('kepala_sub')->id(),
+                    'komentar' => $request->komentar,
+                ]);
+            }
             return response()->json(['success' => true, 'message' => 'Surat berhasil ditolak']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);

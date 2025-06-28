@@ -168,30 +168,18 @@ class staffumumController extends Controller
 
     public function getSuratData(Request $request)
     {
-        // Ambil ID status "Diajukan"
         $statusDiajukan = StatusSurat::where('status_surat', 'Diajukan')->first();
-        
-        // Ambil ID jenis surat yang diinginkan
         $jenisSuratIds = JenisSurat::whereIn('jenis_surat', ['Surat Tugas', 'Surat Undangan Kegiatan'])->pluck('id_jenis_surat');
-        
-        // Ambil ID role dosen
         $roleDosen = RolePengusul::where('role', 'Dosen')->first();
 
         $query = Surat::with(['jenisSurat', 'dibuatOleh', 'statusTerakhir.statusSurat'])
-            ->where('is_draft', 1)
-            // Filter jenis surat
             ->whereIn('id_jenis_surat', $jenisSuratIds)
-            // Filter pengusul dosen
             ->whereHas('dibuatOleh', function($q) use ($roleDosen) {
                 $q->where('id_role_pengusul', $roleDosen->id_role_pengusul);
-            });
-
-        // Filter status terakhir "Diajukan"
-        if ($statusDiajukan) {
-            $query->whereHas('statusTerakhir', function($q) use ($statusDiajukan) {
+            })
+            ->whereHas('statusTerakhir', function($q) use ($statusDiajukan) {
                 $q->where('id_status_surat', $statusDiajukan->id_status_surat);
             });
-        }
 
         // Filter Rentang Tanggal
         if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -200,14 +188,14 @@ class staffumumController extends Controller
             $query->whereBetween('tanggal_pengajuan', [$startDate, $endDate]);
         }
 
-        // Filter Pencarian Umum (Judul, Ketua, Anggota)
+        // Filter search query
         if ($request->filled('search_query')) {
-            $searchQuery = $request->search_query;
-            $query->where(function ($q) use ($searchQuery) {
-                $q->where('judul_surat', 'like', "%{$searchQuery}%")
-                    ->orWhereHas('pengusul', function ($pengusulQuery) use ($searchQuery) {
-                        $pengusulQuery->where('nama', 'like', "%{$searchQuery}%");
-                    });
+            $search = $request->search_query;
+            $query->where(function($q) use ($search) {
+                $q->where('judul_surat', 'like', "%$search%")
+                  ->orWhereHas('pengusul', function($q2) use ($search) {
+                      $q2->where('nama', 'like', "%$search%");
+                  });
             });
         }
 
@@ -322,12 +310,39 @@ class staffumumController extends Controller
             $statusName = $item->statusSurat->status_surat ?? '-';
             $oleh = $surat->dibuatOleh->nim ?? $surat->dibuatOleh->nip ?? '-' . ' | ' . $surat->dibuatOleh->nama;
             $tanggal = Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y, H:i') . ' wib';
+            
+            // Tentukan warna berdasarkan status
+            $warna = 'bg-purple-500'; // default
+            switch (strtolower($statusName)) {
+                case 'draft':
+                    $warna = 'bg-purple-600';
+                    break;
+                case 'diajukan':
+                    $warna = 'bg-orange-500';
+                    break;
+                case 'divalidasi':
+                    $warna = 'bg-blue-500';
+                    break;
+                case 'menunggu persetujuan':
+                    $warna = 'bg-yellow-500';
+                    break;
+                case 'menunggu penerbitan':
+                    $warna = 'bg-lime-500';
+                    break;
+                case 'diterbitkan':
+                    $warna = 'bg-green-600';
+                    break;
+                case 'ditolak':
+                    $warna = 'bg-red-600';
+                    break;
+            }
+            
             $riwayat[] = [
                 'tanggal' => $tanggal,
                 'dari' => $prevStatus ? $prevStatus : 'Draft',
                 'ke' => $statusName,
                 'oleh' => $oleh,
-                'warna' => 'bg-purple-500',
+                'warna' => $warna,
             ];
             $prevStatus = $statusName;
         }

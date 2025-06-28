@@ -24,13 +24,13 @@
                             <li class="relative flex min-h-[64px]">
                                 <!-- Garis atas (jika bukan item pertama) -->
                                 @if($i > 0)
-                                    <span class="absolute left-0 top-0 w-1 h-1/2 bg-purple-300"></span>
+                                    <span class="absolute left-0 top-0 w-1 h-1/2 {{ str_replace('bg-', 'bg-', $riwayat[$i-1]['warna']) }} opacity-30"></span>
                                 @endif
                                 <!-- Bulatan -->
-                                <span class="z-10 w-5 h-5 rounded-full bg-purple-500 border-4 border-white shadow-lg absolute left-0 top-1/2 -translate-y-1/2"></span>
+                                <span class="z-10 w-5 h-5 rounded-full {{ $item['warna'] }} border-4 border-white shadow-lg absolute left-0 top-1/2 -translate-y-1/2"></span>
                                 <!-- Garis bawah (jika bukan item terakhir) -->
                                 @if($i < $count - 1)
-                                    <span class="absolute left-0 bottom-0 w-1 h-1/2 bg-purple-300"></span>
+                                    <span class="absolute left-0 bottom-0 w-1 h-1/2 {{ $item['warna'] }} opacity-30"></span>
                                 @endif
                                 <div class="ml-10">
                                     <p class="text-sm text-gray-500 mb-1">

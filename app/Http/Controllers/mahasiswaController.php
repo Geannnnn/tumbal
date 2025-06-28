@@ -249,12 +249,39 @@ class mahasiswaController extends Controller
             $statusName = $item->statusSurat->status_surat ?? '-';
             $oleh = $surat->dibuatOleh->nama;
             $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y, H:i') . ' wib';
+            
+            // Tentukan warna berdasarkan status
+            $warna = 'bg-purple-500'; // default
+            switch (strtolower($statusName)) {
+                case 'draft':
+                    $warna = 'bg-purple-600';
+                    break;
+                case 'diajukan':
+                    $warna = 'bg-orange-500';
+                    break;
+                case 'divalidasi':
+                    $warna = 'bg-blue-500';
+                    break;
+                case 'menunggu persetujuan':
+                    $warna = 'bg-yellow-500';
+                    break;
+                case 'menunggu penerbitan':
+                    $warna = 'bg-lime-500';
+                    break;
+                case 'diterbitkan':
+                    $warna = 'bg-green-600';
+                    break;
+                case 'ditolak':
+                    $warna = 'bg-red-600';
+                    break;
+            }
+            
             $riwayat[] = [
                 'tanggal' => $tanggal,
                 'dari' => $prevStatus ? $prevStatus : 'Draft',
                 'ke' => $statusName,
                 'oleh' => $oleh,
-                'warna' => 'bg-purple-500',
+                'warna' => $warna,
             ];
             $prevStatus = $statusName;
         }
