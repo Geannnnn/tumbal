@@ -34,6 +34,13 @@ return new class extends Migration
             $table->foreign('id_status_surat')->references('id_status_surat')->on('status_surat')->onDelete('restrict')->onUpdate('restrict');
             $table->foreign('id_surat')->references('id_surat')->on('surat');
         });
+
+        // Tambahkan foreign key ke tabel komentar_surat
+        Schema::table('komentar_surat', function (Blueprint $table) {
+            $table->foreign('id_riwayat_status_surat')->references('id_riwayat_status_surat')->on('riwayat_status_surat');
+            $table->foreign('id_surat')->references('id_surat')->on('surat');
+            $table->foreign('id_user')->references('id')->on('users'); // sesuaikan dengan tabel user/staff anda
+        });
     }
 
     /**
@@ -60,6 +67,12 @@ return new class extends Migration
 
         Schema::table('pengusul', function (Blueprint $table) {
             $table->dropForeign(['id_role_pengusul']);
+        });
+
+        Schema::table('komentar_surat', function (Blueprint $table) {
+            $table->dropForeign(['id_riwayat_status_surat']);
+            $table->dropForeign(['id_surat']);
+            $table->dropForeign(['id_user']);
         });
     }
 };

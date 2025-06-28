@@ -14,8 +14,8 @@ return new class extends Migration {
             $table->text('komentar');
             $table->timestamps();
 
-            $table->foreign('id_riwayat_status_surat')->references('id')->on('riwayat_status_surat')->onDelete('cascade');
-            $table->foreign('id_surat')->references('id_surat')->on('surat')->onDelete('cascade');
+            // $table->foreign('id_riwayat_status_surat')->references('id')->on('riwayat_status_surat')->onDelete('cascade');
+            // $table->foreign('id_surat')->references('id_surat')->on('surat')->onDelete('cascade');
             // $table->foreign('id_user')->references('id')->on('users'); // sesuaikan dengan tabel user/staff anda
         });
     }
