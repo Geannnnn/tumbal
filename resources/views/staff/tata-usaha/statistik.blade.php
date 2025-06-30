@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'statistik')
+@section('title', 'Statistik - Tata Usaha')
 
 @section('content')
-<div class="flex h-screen">
+<div class="flex h-screen ml-[250px] overflow-x-hidden">
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
@@ -17,45 +17,56 @@
         <h2 class="text-xl font-semibold mb-6">Rekapitulasi dan Statistik</h2>
 
         <!-- Filter -->
-        <div class="flex flex-wrap gap-4 mb-6">
-            <select class="px-4 py-2 rounded-md bg-[#F0F2FF] text-gray-700">
-                <option disabled selected>Tahun</option>
-                <option>2027</option>
-                <option>2026</option>
-                <option>2025</option>
-                <option>2024</option>
-                <option>2023</option>
+        <form method="GET" action="{{ route('tatausaha.statistik') }}" class="flex flex-wrap gap-4 mb-6">
+            <select name="year" class="px-4 py-2 rounded-md bg-[#F0F2FF] text-gray-700">
+                <option value="">Pilih Tahun</option>
+                @for($i = date('Y'); $i >= 2020; $i--)
+                    <option value="{{ $i }}" {{ $year == $i ? 'selected' : '' }}>{{ $i }}</option>
+                @endfor
             </select>
             
-            <select class="px-4 py-2 rounded-md bg-[#F0F2FF] text-gray-700">
-                <option disabled selected>Bulan</option>
-                <option>Januari</option>
-                <option>Februari</option>
-                <option>Maret</option>
-                <option>April</option>
-                <option>Mei</option>
-                <option>Juni</option>
-                <option>Juli</option>
-                <option>Agustus</option>
-                <option>September</option>
-                <option>Oktober</option>
-                <option>November</option>
-                <option>Desember</option>
+            <select name="month" class="px-4 py-2 rounded-md bg-[#F0F2FF] text-gray-700">
+                <option value="">Pilih Bulan</option>
+                <option value="1" {{ $month == 1 ? 'selected' : '' }}>Januari</option>
+                <option value="2" {{ $month == 2 ? 'selected' : '' }}>Februari</option>
+                <option value="3" {{ $month == 3 ? 'selected' : '' }}>Maret</option>
+                <option value="4" {{ $month == 4 ? 'selected' : '' }}>April</option>
+                <option value="5" {{ $month == 5 ? 'selected' : '' }}>Mei</option>
+                <option value="6" {{ $month == 6 ? 'selected' : '' }}>Juni</option>
+                <option value="7" {{ $month == 7 ? 'selected' : '' }}>Juli</option>
+                <option value="8" {{ $month == 8 ? 'selected' : '' }}>Agustus</option>
+                <option value="9" {{ $month == 9 ? 'selected' : '' }}>September</option>
+                <option value="10" {{ $month == 10 ? 'selected' : '' }}>Oktober</option>
+                <option value="11" {{ $month == 11 ? 'selected' : '' }}>November</option>
+                <option value="12" {{ $month == 12 ? 'selected' : '' }}>Desember</option>
             </select>
-            <input type="date" class="px-4 py-2 rounded-md bg-[#F0F2FF] text-gray-700" />
+            
+            <input type="date" name="start_date" value="{{ $startDate }}" class="px-4 py-2 rounded-md bg-[#F0F2FF] text-gray-700" placeholder="Tanggal Mulai" />
             <span class="self-center">-</span>
-            <input type="date" class="px-4 py-2 rounded-md bg-[#F0F2FF] text-gray-700" />
-        </div>
+            <input type="date" name="end_date" value="{{ $endDate }}" class="px-4 py-2 rounded-md bg-[#F0F2FF] text-gray-700" placeholder="Tanggal Akhir" />
+            
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                Filter
+            </button>
+            
+            <a href="{{ route('tatausaha.statistik') }}" class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
+                Reset
+            </a>
+        </form>
 
         <!-- Surat -->
         <div class="flex flex-wrap gap-4 mb-6">
             <div class="bg-[#F0F2FF] shadow-lg px-6 py-4 rounded-xl text-center flex-1">
                 <div class="text-gray-500">Surat Diterima</div>
-                <div class="text-2xl font-bold">4</div>
+                <div class="text-2xl font-bold">{{ $suratDiterima }}</div>
             </div>
             <div class="bg-[#F0F2FF] shadow-lg px-6 py-4 rounded-xl text-center flex-1">
                 <div class="text-gray-500">Surat Diterbitkan</div>
-                <div class="text-2xl font-bold">18</div>
+                <div class="text-2xl font-bold">{{ $suratDiterbitkan }}</div>
+            </div>
+            <div class="bg-[#F0F2FF] shadow-lg px-6 py-4 rounded-xl text-center flex-1">
+                <div class="text-gray-500">Surat Ditolak</div>
+                <div class="text-2xl font-bold">{{ $suratDitolak }}</div>
             </div>
         </div>
 
@@ -65,17 +76,17 @@
             <!-- Bar Chart -->
             <div class="bg-white shadow-lg rounded-2xl p-4">
                 <div class="flex justify-between mb-2">
-                    <span class="font-semibold">Bar</span>
+                    <span class="font-semibold">Statistik Bulanan</span>
                 </div>
-                <canvas id="barChart" class="h-35"></canvas> <!-- mengubah ukuran visual-->
+                <canvas id="barChart" class="h-35"></canvas>
             </div>
 
             <!-- Pie Chart -->
             <div class="bg-white shadow-lg rounded-2xl p-3">
                 <div class="flex justify-between mb-1">
-                    <span class="font-semibold">Pie</span>
+                    <span class="font-semibold">Status Surat</span>
                 </div>
-                <canvas id="pieChart" class="h-130 w-130 mx-auto"></canvas> <!-- mengubah ukuran visual -->
+                <canvas id="pieChart" class="h-130 w-130 mx-auto"></canvas>
             </div>  
         </div>
 
@@ -85,18 +96,17 @@
             <div class="rounded-2xl p-5 h-full">
                 <h3 class="font-semibold mb-4 text-lg">Surat Per Kategori</h3>
                 <ul class="space-y-2 divide-y divide-gray-200">
+                    @forelse($suratPerKategori as $kategori)
                     <li class="flex justify-between py-1">
-                        <span>Surat Tugas</span>
+                            <span>{{ $kategori['nama'] }}</span>
+                            <span>{{ $kategori['count'] }} – Surat</span>
+                    </li>
+                    @empty
+                    <li class="flex justify-between py-1">
+                            <span>Tidak ada data</span>
                         <span>0 – Surat</span>
                     </li>
-                    <li class="flex justify-between py-1">
-                        <span>Surat Magang</span>
-                        <span>0 – Surat</span>
-                    </li>
-                    <li class="flex justify-between py-1">
-                        <span>Surat Lainnya</span>
-                        <span>0 – Surat</span>
-                    </li>
+                    @endforelse
                 </ul>
             </div>
 
@@ -104,18 +114,17 @@
             <div class="rounded-2xl p-5 h-full">
                 <h3 class="font-semibold mb-4 text-lg">Status Surat</h3>
                 <ul class="space-y-2 divide-y divide-gray-200">
+                    @forelse($statusSurat as $status)
                     <li class="flex justify-between py-1">
-                        <span>Ajukan</span>
+                            <span>{{ $status['nama'] }}</span>
+                            <span>{{ $status['count'] }} – Surat</span>
+                    </li>
+                    @empty
+                    <li class="flex justify-between py-1">
+                            <span>Tidak ada data</span>
                         <span>0 – Surat</span>
                     </li>
-                    <li class="flex justify-between py-1">
-                        <span>Diproses</span>
-                        <span>0 – Surat</span>
-                    </li>
-                    <li class="flex justify-between py-1">
-                        <span>Disetujui</span>
-                        <span>0 – Surat</span>
-                    </li>
+                    @endforelse
                 </ul>
             </div>
         </div>
@@ -124,13 +133,14 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+    // Bar Chart
     new Chart(document.getElementById('barChart'), {
         type: 'bar',
         data: {
             labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
             datasets: [
                 {
-                    data: [20, 17, 32, 20, 14, 11, 15, 30, 25, 19, 12, 28],
+                    data: @json($monthlyData),
                     backgroundColor: 'rgba(99, 102, 241, 0.6)',
                     borderRadius: 6
                 }
@@ -141,7 +151,7 @@
             maintainAspectRatio: true,
             plugins: {
                 legend: {
-                    display: false // mematikan label di atas chart
+                    display: false
                 }
             },
             scales: {
@@ -156,10 +166,10 @@
     new Chart(document.getElementById('pieChart'), {
         type: 'pie',
         data: {
-            labels: ['Diajukan', 'Diproses', 'Disetujui'],
+            labels: @json(array_keys($pieChartData)),
             datasets: [{
-                data: [4, 4, 39],
-                backgroundColor: ['#6366f1', '#fbbf24', '#34d399']
+                data: @json(array_values($pieChartData)),
+                backgroundColor: ['#6366f1', '#fbbf24', '#34d399', '#ef4444']
             }]
         },
         options: {

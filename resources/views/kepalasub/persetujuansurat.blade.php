@@ -34,13 +34,13 @@
                     <x-datatable 
                         id="surat-diajukan-table"
                         :columns="[
-                            'DT_RowIndex' => 'No',
-                            'judul_surat' => 'Judul Surat',
-                            'jenis_surat' => 'Jenis Surat', 
-                            'pengusul' => 'Pengusul',
-                            'tanggal_pengajuan' => 'Tanggal Pengajuan',
-                            'status' => 'Status',
-                            'actions' => 'Aksi'
+                            ['data' => 'DT_RowIndex', 'name' => 'DT_RowIndex', 'title' => 'No'],
+                            ['data' => 'judul_surat', 'name' => 'judul_surat', 'title' => 'Judul Surat'],
+                            ['data' => 'jenis_surat', 'name' => 'jenis_surat', 'title' => 'Jenis Surat'], 
+                            ['data' => 'pengusul', 'name' => 'pengusul', 'title' => 'Pengusul'],
+                            ['data' => 'tanggal_pengajuan', 'name' => 'tanggal_pengajuan', 'title' => 'Tanggal Pengajuan'],
+                            ['data' => 'status', 'name' => 'status', 'title' => 'Status'],
+                            ['data' => 'actions', 'name' => 'actions', 'title' => 'Aksi']
                         ]"
                         ajax-url="{{ route('kepalasub.persetujuansurat.data') }}"
                         :search="true"

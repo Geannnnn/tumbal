@@ -34,7 +34,7 @@
                                 @endif
                                 <div class="ml-10">
                                     <p class="text-sm text-gray-500 mb-1">
-                                        {{ \Carbon\Carbon::parse($item['tanggal'])->translatedFormat('d F Y, H:i') }} WIB
+                                        {{ $item['tanggal'] }} WIB
                                     </p>
                                     <p class="text-base font-medium text-gray-700">Status berubah dari {{ $item['dari'] }} menjadi {{ $item['ke'] }}.</p>
                                     <p class="text-sm text-gray-500">oleh {{ $item['oleh'] }}</p>

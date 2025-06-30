@@ -9,6 +9,7 @@ use App\Models\RiwayatStatusSurat;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Helpers\PengusulHelper;
 
 class KepalaSubController extends Controller
 {
@@ -146,7 +147,7 @@ class KepalaSubController extends Controller
                 'judul_surat' => $item->judul_surat ?? '-',
                 'tanggal_pengajuan' => $item->tanggal_pengajuan ? date('d/m/Y', strtotime($item->tanggal_pengajuan)) : '-',
                 'jenis_surat' => $item->jenisSurat ? $item->jenisSurat->jenis_surat : '-',
-                'pengusul' => $item->dibuatOleh ? $item->dibuatOleh->nama : '-',
+                'pengusul' => $item->dibuat_oleh ? PengusulHelper::getNamaPengusul($item->dibuat_oleh) : '-',
                 'lampiran' => $item->lampiran ?? '-',
                 'status' => $currentStatus ? $currentStatus->statusSurat->status_surat : '-'
             ];
@@ -319,7 +320,7 @@ class KepalaSubController extends Controller
                 return $surat->jenisSurat ? $surat->jenisSurat->jenis_surat : '-';
             })
             ->addColumn('pengusul', function($surat) {
-                return $surat->dibuatOleh ? $surat->dibuatOleh->nama : '-';
+                return $surat->dibuat_oleh ? PengusulHelper::getNamaPengusul($surat->dibuat_oleh) : '-';
             })
             ->addColumn('tanggal_pengajuan', function($surat) {
                 return date('d/m/Y', strtotime($surat->tanggal_pengajuan));
@@ -391,4 +392,4 @@ class KepalaSubController extends Controller
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
     }
-}
+} 

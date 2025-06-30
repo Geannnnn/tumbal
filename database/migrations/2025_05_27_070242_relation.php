@@ -37,7 +37,7 @@ return new class extends Migration
 
         // Tambahkan foreign key ke tabel komentar_surat
         Schema::table('komentar_surat', function (Blueprint $table) {
-            $table->foreign('id_riwayat_status_surat')->references('id_riwayat_status_surat')->on('riwayat_status_surat');
+            $table->foreign('id')->references('id')->on('riwayat_status_surat');
             $table->foreign('id_surat')->references('id_surat')->on('surat');
             $table->foreign('id_user')->references('id')->on('users'); // sesuaikan dengan tabel user/staff anda
         });

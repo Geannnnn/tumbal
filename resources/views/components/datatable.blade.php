@@ -13,13 +13,29 @@
     'manualInit' => false
 ])
 
+@php
+    // Normalize columns format
+    $normalizedColumns = [];
+    foreach ($columns as $key => $column) {
+        if (is_array($column)) {
+            // Format: ['data' => 'field', 'name' => 'field', 'title' => 'Label']
+            $dataKey = $column['data'] ?? $key;
+            $title = $column['title'] ?? $column['name'] ?? $dataKey;
+            $normalizedColumns[$dataKey] = $title;
+        } else {
+            // Format: 'field' => 'Label'
+            $normalizedColumns[$key] = $column;
+        }
+    }
+@endphp
+
 <table id="{{ $id }}" class="w-full bg-transparent text-md text-left text-gray-700">
     <thead>
         <tr>
-            @foreach ($columns as $key => $label)
+            @foreach ($normalizedColumns as $key => $label)
                 <th>{{ $label }}</th>
             @endforeach
-            @if (($showEdit || $showDelete) && !array_key_exists('actions', $columns))
+            @if (($showEdit || $showDelete) && !array_key_exists('actions', $normalizedColumns))
                 <th>Aksi</th>
             @endif
         </tr>
@@ -62,12 +78,17 @@
                     d.month = document.getElementById('month')?.value;
                     d.start_date = document.getElementById('start-date')?.value;
                     d.end_date = document.getElementById('end-date')?.value;
-                    d.search.value = $('#custom-search').val();
+                    
+                    // Handle search value safely
+                    var searchValue = $('#custom-search').val();
+                    if (searchValue && searchValue.trim() !== '') {
+                        d.search = { value: searchValue };
+                    }
                 }
             },
             ordering: {{ $ordering ? 'true' : 'false' }},
             columns: [
-                @foreach ($columns as $key => $label)
+                @foreach ($normalizedColumns as $key => $label)
                     {
                         data: '{{ $key }}',
                         name: '{{ $key }}',
@@ -87,7 +108,7 @@
                         @endif
                     },
                 @endforeach
-                @if (($showEdit || $showDelete) && !array_key_exists('actions', $columns))
+                @if (($showEdit || $showDelete) && !array_key_exists('actions', $normalizedColumns))
                     {
                         data: null,
                         render: function (data, type, row) {

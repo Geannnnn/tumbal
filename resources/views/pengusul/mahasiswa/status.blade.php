@@ -14,22 +14,35 @@
             @yield('content')
 
             <div class="flex gap-4 mb-10">
-                <x-form.select
-                    name="jenis_surat"
-                    id="jenis_surat"
-                    :options="$jenisSurat"
-                    placeholder="Jenis Surat"
+                <div class="relative">
+                    <x-form.select
+                        name="jenis_surat"
+                        id="jenis_surat"
+                        :options="$jenisSurat"
+                        placeholder="Jenis Surat"
+                    />
+                    <button type="button" id="reset-jenis-surat" class="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="relative">
+                    <x-form.select
+                        name="status_surat"
+                        id="status_surat"
+                        :options="$StatusSurat"
+                        placeholder="Status Surat"
+                    />
+                    <button type="button" id="reset-status-surat" class="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
 
-                />
-                <x-form.select
-                    name="status_surat"
-                    id="status_surat"
-                    :options="$StatusSurat"
-                    placeholder="Status Surat"
-
-                />
-
-                <x-yearselect name="year" id="year" :start="2000" />
+                <div class="relative">
+                    <x-yearselect name="year" id="year" :start="2000" />
+                    <button type="button" id="reset-year" class="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                    </button>
+                </div>
                   
             </div>
 
@@ -55,5 +68,54 @@
         </main>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        // Handle filter changes
+        $('#jenis_surat, #status_surat, #year').on('change', function() {
+            updateResetButtons();
+            $('#mahasiswaStatusTable').DataTable().ajax.reload();
+        });
+
+        // Handle reset buttons
+        $('#reset-jenis-surat').on('click', function() {
+            $('#jenis_surat').val('').trigger('change');
+        });
+
+        $('#reset-status-surat').on('click', function() {
+            $('#status_surat').val('').trigger('change');
+        });
+
+        $('#reset-year').on('click', function() {
+            $('#year').val('').trigger('change');
+        });
+
+        // Function to show/hide reset buttons based on selected values
+        function updateResetButtons() {
+            if ($('#jenis_surat').val()) {
+                $('#reset-jenis-surat').removeClass('hidden');
+            } else {
+                $('#reset-jenis-surat').addClass('hidden');
+            }
+
+            if ($('#status_surat').val()) {
+                $('#reset-status-surat').removeClass('hidden');
+            } else {
+                $('#reset-status-surat').addClass('hidden');
+            }
+
+            if ($('#year').val()) {
+                $('#reset-year').removeClass('hidden');
+            } else {
+                $('#reset-year').addClass('hidden');
+            }
+        }
+
+        // Initialize reset buttons on page load
+        updateResetButtons();
+    });
+</script>
+@endpush
 
 @endsection

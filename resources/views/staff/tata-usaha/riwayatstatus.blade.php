@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title','Status Surat')
+@section('title','Riwayat Status Surat - Tata Usaha')
 
 @section('content')
 
@@ -46,10 +46,10 @@
                     </ol>
                 </div>
                 <div class="flex justify-end mt-8">
-                    <button class="bg-blue-100 text-black rounded-xl px-4 py-1 font-semibold text-sm hover:bg-blue-200 transition">Update</button>
+                    <a href="{{ route('tatausaha.statussurat') }}" class="bg-blue-100 text-black rounded-xl px-4 py-1 font-semibold text-sm hover:bg-blue-200 transition">Kembali</a>
                 </div>
             </div>
         </main>
     </div>
 </div>
-@endsection
+@endsection 

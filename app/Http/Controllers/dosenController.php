@@ -8,6 +8,8 @@ use App\Models\StatusSurat;
 use App\Models\Surat;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\DB;
+use App\Helpers\PengusulHelper;
 
 class dosenController extends Controller
 {
@@ -127,7 +129,7 @@ class dosenController extends Controller
             ->orderBy('tanggal_pengajuan','desc')
             ->get();
 
-        $jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat')->toArray();
+        $jenisSurat = collect(DB::select('CALL sp_GetJenisSuratForSelect()'))->pluck('jenis_surat', 'id_jenis_surat')->toArray();
         return view('pengusul.dosen.pengajuansurat', compact('jenisSurat','columns','data'));
     }
 
@@ -165,7 +167,7 @@ class dosenController extends Controller
 }
 
     public function status() {
-        $jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat')->toArray();
+        $jenisSurat = collect(DB::select('CALL sp_GetJenisSuratForSelect()'))->pluck('jenis_surat', 'id_jenis_surat')->toArray();
         $StatusSurat = StatusSurat::pluck('status_surat', 'id_status_surat')->toArray();
         
         return view('pengusul.dosen.status',compact('jenisSurat','StatusSurat'));
@@ -271,8 +273,8 @@ class dosenController extends Controller
         $prevStatus = null;
         foreach ($surat->riwayatStatus as $item) {
             $statusName = $item->statusSurat->status_surat ?? '-';
-            $oleh = $surat->dibuatOleh->nim ?? $surat->dibuatOleh->nip ?? '-' . ' | ' . $surat->dibuatOleh->nama;
-            $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y, H:i') . ' wib';
+            $oleh = PengusulHelper::getNamaPengusul($surat->dibuat_oleh);
+            $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y H:i');
             
             // Tentukan warna berdasarkan status
             $warna = 'bg-purple-500'; // default

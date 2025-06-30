@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Models\Surat;
+use Illuminate\Support\Facades\DB;
 
 class adminController extends Controller
 {
@@ -118,7 +119,7 @@ class adminController extends Controller
     }
 
     public function jenissurat () {
-        $jsdata = JenisSurat::all();
+        $jsdata = DB::select('CALL sp_GetAllJenisSurat()');
         return view('admin.jenissurat', compact('jsdata'));
     }
 

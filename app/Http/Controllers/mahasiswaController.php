@@ -6,33 +6,52 @@ use App\Models\JenisSurat;
 use App\Models\StatusSurat;
 use App\Models\Surat;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
+use App\Models\Pengusul;
+use App\Models\RiwayatStatusSurat;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use App\Helpers\PengusulHelper;
 
 class mahasiswaController extends Controller
 {   
 
     public function index () {
-
+        $user = auth('pengusul')->id();
         $statusDiterima = StatusSurat::where('status_surat', 'Diterbitkan')->first();
 
         if ($statusDiterima) {
             $suratDiterima = Surat::where('is_draft', 1)
+                ->whereNotNull('nomor_surat')
+                ->whereYear('tanggal_surat_dibuat', date('Y')) // Default tahun saat ini
                 ->whereHas('riwayatStatus', function($q) use ($statusDiterima) {
-                $q->where('id_status_surat', $statusDiterima->id_status_surat);
-            })->count();
+                    $q->where('id_status_surat', $statusDiterima->id_status_surat);
+                })
+                ->whereHas('pengusul', function ($q) use ($user) {
+                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                })
+                ->count();
         } else {
             $suratDiterima = 0;
         }
-
 
         $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
 
         if ($statusDitolak) {
             $suratDitolak = Surat::where('is_draft', 1)
+                ->whereNotNull('nomor_surat')
+                ->whereYear('tanggal_surat_dibuat', date('Y')) // Default tahun saat ini
                 ->whereHas('riwayatStatus', function($q) use ($statusDitolak) {
                     $q->where('id_status_surat', $statusDitolak->id_status_surat);
-                })->count();
+                })
+                ->whereHas('pengusul', function ($q) use ($user) {
+                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                })
+                ->count();
         } else {
             $suratDitolak = 0;
         }
@@ -46,7 +65,6 @@ class mahasiswaController extends Controller
             'tanggal_surat_dibuat' => 'Tanggal Terbit', 
             'lampiran' => 'Dokumen', 
             'tanggal_pengajuan' => 'Dibuat Pada'];
-
 
         return view('pengusul.mahasiswa.index', compact('columns','suratDiterima','suratDitolak','notifikasiSurat'));
     }
@@ -72,55 +90,95 @@ class mahasiswaController extends Controller
             ->orderBy('tanggal_pengajuan','desc')
             ->get();
 
-        $jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat')->toArray();
+        $jenisSurat = collect(DB::select('CALL sp_GetJenisSuratForSelect()'))->pluck('jenis_surat', 'id_jenis_surat')->toArray();
         return view('pengusul.mahasiswa.pengajuansurat', compact('jenisSurat','columns','data'));
     }
 
-    public function search(Request $request){
-        $limit = $request->input('length');
-        $start = $request->input('start');
-        $user = auth('pengusul')->id();
-    
-        $query = Surat::with(['dibuatOleh'])
-            ->whereHas('dibuatOleh.role', function ($q) {
-                $q->whereIn('role', ['mahasiswa', 'dosen']);
-            })
-            ->whereHas('pengusul', function ($q) use ($user) {
-                $q->where('pivot_pengusul_surat.id_pengusul', $user)
-                  ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
-            })
-            ->whereNotNull('nomor_surat');
-    
-        $totalData = $query->count();
-    
-        if ($search = $request->input('search.value')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nomor_surat', 'like', "%$search%")
-                  ->orWhere('judul_surat', 'like', "%$search%");
+    public function search(Request $request) {
+        try {
+            $user = auth('pengusul')->id();
+            
+            // Get status Diterbitkan
+            $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+            
+            if (!$statusDiterbitkan) {
+                return response()->json([
+                    'error' => 'Status Diterbitkan tidak ditemukan'
+                ], 404);
+            }
+
+            $query = Surat::with([
+                'dibuatOleh', 
+                'jenisSurat', 
+                'pengusul', 
+                'statusTerakhir.statusSurat'
+            ])
+                ->whereNotNull('nomor_surat')
+                ->where('is_draft', 1) // Surat yang sudah diterbitkan (bukan draft)
+                ->whereHas('pengusul', function ($q) use ($user) {
+                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                })
+                ->whereHas('statusTerakhir', function($q) use ($statusDiterbitkan) {
+                    $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+                });
+
+            // Apply filters
+            $filterType = $request->get('filter_type', 'tahun');
+            
+            if ($filterType === 'tahun') {
+                $year = $request->get('year', date('Y')); // Default to current year
+                if ($year) {
+                    $query->whereYear('tanggal_surat_dibuat', $year);
+                }
+            } elseif ($filterType === 'bulan') {
+                $month = $request->get('month');
+                if ($month) {
+                    $query->whereMonth('tanggal_surat_dibuat', $month);
+                }
+            } elseif ($filterType === 'jarak') {
+                $startDate = $request->get('start_date');
+                $endDate = $request->get('end_date');
+                if ($startDate && $endDate) {
+                    $query->whereBetween('tanggal_surat_dibuat', [$startDate, $endDate]);
+                }
+            }
+
+            $surat = $query->get();
+
+            // Transform data for DataTables
+            $data = $surat->map(function ($item) {
+                return [
+                    'id_surat' => $item->id_surat,
+                    'judul_surat' => $item->judul_surat,
+                    'nomor_surat' => $item->nomor_surat,
+                    'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat ? date('d/m/Y', strtotime($item->tanggal_surat_dibuat)) : '-',
+                    'jenis_surat' => $item->jenisSurat ? $item->jenisSurat->jenis_surat : '-',
+                    'status' => $item->statusTerakhir && $item->statusTerakhir->statusSurat 
+                        ? $item->statusTerakhir->statusSurat->status_surat 
+                        : '-'
+                ];
             });
+
+            return response()->json([
+                'draw' => $request->get('draw'),
+                'recordsTotal' => $surat->count(),
+                'recordsFiltered' => $surat->count(),
+                'data' => $data
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in mahasiswa search: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage(),
+                'draw' => $request->get('draw'),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => []
+            ], 500);
         }
-    
-        $filterData = $query->count();
-    
-        $surats = $query->skip($start)->take($limit)->get();
-        $data = $surats->map(function($item, $index) use ($start) {
-            return [
-                'no' => $start + $index + 1,
-                'id' => $item->id_surat,
-                'nomor_surat' => $item->nomor_surat ?? '-',
-                'judul_surat' => $item->judul_surat ?? '-',
-                'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat ?? '-',
-                'lampiran' => $item->lampiran ?? null,
-                'tanggal_pengajuan' => $item->tanggal_pengajuan ?? '-',
-            ];
-        });
-    
-        return response()->json([
-            'draw' => intval($request->input('draw')),
-            'recordsTotal' => $totalData,
-            'recordsFiltered' => $filterData,
-            'data' => $data,
-        ]);
     }
 
     public function draftData()
@@ -158,7 +216,7 @@ class mahasiswaController extends Controller
 
     public function status() {
 
-        $jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat')->toArray();
+        $jenisSurat = collect(DB::select('CALL sp_GetJenisSuratForSelect()'))->pluck('jenis_surat', 'id_jenis_surat')->toArray();
         $StatusSurat = StatusSurat::pluck('status_surat', 'id_status_surat')->toArray();
         
         return view('pengusul.mahasiswa.status',compact('jenisSurat','StatusSurat'));
@@ -247,8 +305,8 @@ class mahasiswaController extends Controller
         $prevStatus = null;
         foreach ($surat->riwayatStatus as $item) {
             $statusName = $item->statusSurat->status_surat ?? '-';
-            $oleh = $surat->dibuatOleh->nama;
-            $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y, H:i') . ' wib';
+            $oleh = PengusulHelper::getNamaPengusul($surat->dibuat_oleh);
+            $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y H:i');
             
             // Tentukan warna berdasarkan status
             $warna = 'bg-purple-500'; // default
@@ -369,5 +427,202 @@ class mahasiswaController extends Controller
             return back()->withInput()->with('error', 'Gagal menyimpan surat: ' . $e->getMessage());
         }
         }
+
+    public function getFilteredStatistics(Request $request) {
+        try {
+            $user = auth('pengusul')->id();
+            
+            // Get status Diterbitkan and Ditolak
+            $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+            $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
+            
+            if (!$statusDiterbitkan || !$statusDitolak) {
+                return response()->json([
+                    'error' => 'Status tidak ditemukan'
+                ], 404);
+            }
+
+            $baseQuery = Surat::with([
+                'dibuatOleh', 
+                'jenisSurat', 
+                'pengusul', 
+                'statusTerakhir.statusSurat'
+            ])
+                ->whereNotNull('nomor_surat')
+                ->where('is_draft', 1)
+                ->whereHas('pengusul', function ($q) use ($user) {
+                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                });
+
+            // Apply filters
+            $filterType = $request->get('filter_type', 'tahun');
+            
+            if ($filterType === 'tahun') {
+                $year = $request->get('year', date('Y')); // Default to current year
+                if ($year) {
+                    $baseQuery->whereYear('tanggal_surat_dibuat', $year);
+                }
+            } elseif ($filterType === 'bulan') {
+                $month = $request->get('month');
+                if ($month) {
+                    $baseQuery->whereMonth('tanggal_surat_dibuat', $month);
+                }
+            } elseif ($filterType === 'jarak') {
+                $startDate = $request->get('start_date');
+                $endDate = $request->get('end_date');
+                if ($startDate && $endDate) {
+                    $baseQuery->whereBetween('tanggal_surat_dibuat', [$startDate, $endDate]);
+                }
+            }
+
+            // Count surat diterima
+            $suratDiterima = (clone $baseQuery)
+                ->whereHas('statusTerakhir', function($q) use ($statusDiterbitkan) {
+                    $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+                })
+                ->count();
+
+            // Count surat ditolak
+            $suratDitolak = (clone $baseQuery)
+                ->whereHas('statusTerakhir', function($q) use ($statusDitolak) {
+                    $q->where('id_status_surat', $statusDitolak->id_status_surat);
+                })
+                ->count();
+
+            return response()->json([
+                'suratDiterima' => $suratDiterima,
+                'suratDitolak' => $suratDitolak
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in getFilteredStatistics: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Terjadi kesalahan: ' . $e->getMessage(),
+                'suratDiterima' => 0,
+                'suratDitolak' => 0
+            ], 500);
+        }
+    }
+
+    public function testData() {
+        try {
+            $user = auth('pengusul')->id();
+            
+            // Test 1: Cek user yang login
+            $userData = auth('pengusul')->user();
+            
+            // Test 2: Cek status Diterbitkan
+            $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+            
+            // Test 3: Cek semua surat yang dimiliki user
+            $allSurat = Surat::with(['dibuatOleh', 'riwayatStatus.statusSurat', 'pengusul'])
+                ->whereHas('pengusul', function ($q) use ($user) {
+                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                })
+                ->get();
+            
+            // Test 4: Cek surat dengan nomor_surat
+            $suratWithNomor = Surat::with(['dibuatOleh', 'riwayatStatus.statusSurat', 'pengusul'])
+                ->whereNotNull('nomor_surat')
+                ->whereHas('pengusul', function ($q) use ($user) {
+                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                })
+                ->get();
+            
+            // Test 5: Cek surat dengan status Diterbitkan
+            $suratDiterbitkan = Surat::with(['dibuatOleh', 'riwayatStatus.statusSurat', 'pengusul'])
+                ->whereNotNull('nomor_surat')
+                ->where('is_draft', 1)
+                ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
+                    $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+                })
+                ->whereHas('pengusul', function ($q) use ($user) {
+                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                })
+                ->get();
+            
+            // Test 6: Cek surat tahun 2025
+            $surat2025 = Surat::with(['dibuatOleh', 'riwayatStatus.statusSurat', 'pengusul'])
+                ->whereNotNull('nomor_surat')
+                ->where('is_draft', 1)
+                ->whereYear('tanggal_surat_dibuat', 2025)
+                ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
+                    $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+                })
+                ->whereHas('pengusul', function ($q) use ($user) {
+                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
+                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                })
+                ->get();
+            
+            return response()->json([
+                'user_id' => $user,
+                'user_data' => $userData,
+                'status_diterbitkan' => $statusDiterbitkan,
+                'all_surat_count' => $allSurat->count(),
+                'all_surat' => $allSurat->map(function($item) {
+                    return [
+                        'id_surat' => $item->id_surat,
+                        'judul_surat' => $item->judul_surat,
+                        'nomor_surat' => $item->nomor_surat,
+                        'is_draft' => $item->is_draft,
+                        'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat,
+                        'dibuat_oleh' => $item->dibuat_oleh,
+                        'riwayat_status' => $item->riwayatStatus->map(function($rs) {
+                            return [
+                                'id_status' => $rs->id_status_surat,
+                                'status_name' => $rs->statusSurat->status_surat ?? 'N/A',
+                                'tanggal_rilis' => $rs->tanggal_rilis
+                            ];
+                        }),
+                        'pengusul' => $item->pengusul->map(function($p) {
+                            return [
+                                'id_pengusul' => $p->id_pengusul,
+                                'nama' => $p->nama,
+                                'peran' => $p->pivot->id_peran_keanggotaan
+                            ];
+                        })
+                    ];
+                }),
+                'surat_with_nomor_count' => $suratWithNomor->count(),
+                'surat_diterbitkan_count' => $suratDiterbitkan->count(),
+                'surat_2025_count' => $surat2025->count(),
+                'surat_2025' => $surat2025->map(function($item) {
+                    return [
+                        'id_surat' => $item->id_surat,
+                        'judul_surat' => $item->judul_surat,
+                        'nomor_surat' => $item->nomor_surat,
+                        'is_draft' => $item->is_draft,
+                        'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat,
+                        'dibuat_oleh' => $item->dibuat_oleh,
+                        'riwayat_status' => $item->riwayatStatus->map(function($rs) {
+                            return [
+                                'id_status' => $rs->id_status_surat,
+                                'status_name' => $rs->statusSurat->status_surat ?? 'N/A',
+                                'tanggal_rilis' => $rs->tanggal_rilis
+                            ];
+                        }),
+                        'pengusul' => $item->pengusul->map(function($p) {
+                            return [
+                                'id_pengusul' => $p->id_pengusul,
+                                'nama' => $p->nama,
+                                'peran' => $p->pivot->id_peran_keanggotaan
+                            ];
+                        })
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
+    }
 }
+
 

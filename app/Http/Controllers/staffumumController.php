@@ -10,6 +10,8 @@ use Carbon\Carbon;
 use App\Models\StatusSurat;
 use App\Models\JenisSurat;
 use App\Models\RolePengusul;
+use Illuminate\Support\Facades\DB;
+use App\Helpers\PengusulHelper;
 
 class staffumumController extends Controller
 {
@@ -158,7 +160,50 @@ class staffumumController extends Controller
 
     public function jenissurat()
     {
-        return view('staff.staff-umum.jenissurat');
+        $jsdata = DB::select('CALL sp_GetAllJenisSurat()');
+        return view('staff.staff-umum.jenissurat', compact('jsdata'));
+    }
+
+    public function storeJenisSurat(Request $request)
+    {
+        $request->validate([
+            'jenis_surat' => 'required|string|max:255',
+        ]);
+
+        JenisSurat::create([
+            'jenis_surat' => $request->jenis_surat,
+        ]);
+
+        return redirect()->back()->with('success', 'Jenis surat berhasil ditambahkan.');
+    }
+
+    public function updateJenisSurat(Request $request, $id)
+    {
+        $request->validate([
+            'jenis_surat' => 'required|string|max:255',
+        ]);
+
+        try {
+            JenisSurat::where('id_jenis_surat', $id)->update([
+                'jenis_surat' => $request->jenis_surat,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jenis surat berhasil diperbarui'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui jenis surat: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroyJenisSurat($id)
+    {
+        JenisSurat::destroy($id);
+        return redirect()->back()->with('success', 'Jenis surat berhasil dihapus.');
     }
 
     public function tinjauSurat()
@@ -206,7 +251,7 @@ class staffumumController extends Controller
             })
             ->addColumn('ketua', function ($surat) {
                 $ketua = $surat->pengusul()->wherePivot('id_peran_keanggotaan', 1)->first(); 
-                return optional($ketua)->nama ?? '-';
+                return optional($ketua) ? PengusulHelper::getNamaPengusul($ketua->id_pengusul) : '-';
             })
             ->addColumn('status', function($surat) {
                 return optional($surat->statusTerakhir->statusSurat)->status_surat ?? 'Diajukan';
@@ -308,8 +353,8 @@ class staffumumController extends Controller
         $prevStatus = null;
         foreach ($surat->riwayatStatus as $item) {
             $statusName = $item->statusSurat->status_surat ?? '-';
-            $oleh = $surat->dibuatOleh->nim ?? $surat->dibuatOleh->nip ?? '-' . ' | ' . $surat->dibuatOleh->nama;
-            $tanggal = Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y, H:i') . ' wib';
+            $oleh = PengusulHelper::getNamaPengusul($surat->dibuat_oleh);
+            $tanggal = Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y H:i');
             
             // Tentukan warna berdasarkan status
             $warna = 'bg-purple-500'; // default

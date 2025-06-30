@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Surat;
+use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Set Carbon locale to Indonesian
+        Carbon::setLocale('id');
+        
         View::composer('*', function ($view) {
             $rolePengusul = Auth::guard('pengusul')->check() ? Auth::guard('pengusul')->user()->id_role_pengusul : null;
             $staffRole = Auth::guard('staff')->check() ? Auth::guard('staff')->user()->role : null;

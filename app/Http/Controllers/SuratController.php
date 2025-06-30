@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Helpers\PengusulHelper;
 
 class SuratController extends Controller
 {
@@ -153,7 +154,7 @@ class SuratController extends Controller
                 'jenis_surat' => '<div class="flex items-center gap-1 text-md">
                     <span>' . e($surat->jenisSurat->jenis_surat ?? '-') . '</span>
                  </div>',
-                'dibuat_oleh' => $surat->dibuatOleh->nama ?? '-',
+                'dibuat_oleh' => PengusulHelper::getNamaPengusul($surat->dibuat_oleh),
                 'ketua' => $ketua,
                 'anggota' => $anggota,
                 'lampiran' => $surat->lampiran ?? null,
@@ -178,7 +179,7 @@ class SuratController extends Controller
             $query->select('pengusul.id_pengusul', 'pengusul.nama', 'pengusul.nim', 'pengusul.nip', 'pivot_pengusul_surat.id_peran_keanggotaan');
         }])->findOrFail($id);
 
-        $jenisSurat = JenisSurat::pluck('jenis_surat', 'id_jenis_surat');
+        $jenisSurat = collect(DB::select('CALL sp_GetJenisSuratForSelect()'))->pluck('jenis_surat', 'id_jenis_surat');
 
         // Ambil data ketua dan anggota yang sudah tersimpan
         $ketua = $surat->pengusul->where('pivot.id_peran_keanggotaan', 1)->first();
