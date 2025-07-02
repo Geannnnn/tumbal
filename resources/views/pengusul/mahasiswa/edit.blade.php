@@ -47,6 +47,7 @@
                     <div class="pt-8">
                         <h1 class="font-semibold text-[28px]">Pengajuan Surat</h1>
                         <h1 class="text-[#6D727C] font-medium text-[24px] py-4">List Pengajuan Surat Politeknik Negeri Batam</h1>
+                        
                     </div>
                     <hr class="border-[#DEDBDB]">
 
@@ -55,8 +56,14 @@
                             <span>Judul Surat</span>
                             <input type="text" name="judul_surat" class="bg-[#F0F2FF] py-2 px-4 rounded-lg outline-none" value="{{ old('judul_surat', $surat->judul_surat) }}">
 
-                            <x-form.search-ketua :selected="$ketua" />
-                            <x-form.search-anggota :selected="$anggota" />
+                            <!-- Input Nama Pengaju (readonly, default hidden) -->
+                            <div id="input-nama-pengaju" class="flex flex-col gap-2 hidden">
+                                <span>Nama Pengaju</span>
+                                <input type="text" name="nama_pengaju" class="bg-[#F0F2FF] py-2 px-4 rounded-lg outline-none" value="{{ $namaPengaju ?? ($surat->dibuatOleh->nama ?? '') }}" readonly>
+                            </div>
+
+                            <div id="input-ketua"><x-form.search-ketua :selected="$ketua" /></div>
+                            <div id="input-anggota"><x-form.search-anggota :selected="$anggota" /></div>
 
                             <div class="flex flex-col gap-3">
                                 <div class="mb-4 flex items-center">
@@ -136,19 +143,37 @@
     document.addEventListener('DOMContentLoaded', function() {
         const jenisSuratSelect = document.getElementById('jenis_surat');
         const tujuanSuratContainer = document.getElementById('tujuan-surat-container');
-        
+        const inputNamaPengaju = document.getElementById('input-nama-pengaju');
+        const inputKetua = document.getElementById('input-ketua');
+        const inputAnggota = document.getElementById('input-anggota');
+
+        // Daftar jenis surat personal
+        const jenisSuratPersonal = [
+            'Surat Cuti Akademik',
+            'Surat Izin Tidak Masuk'
+        ];
         // Daftar jenis surat yang memerlukan tujuan surat
         const jenisSuratDenganTujuan = [
             'Surat Tugas',
-            'Surat Undangan Kegiatan', 
+            'Surat Undangan Kegiatan',
             'Surat Permohonan',
             'Surat Pengantar'
         ];
-        
-        function toggleTujuanSurat() {
+
+        function toggleInputs() {
             const selectedOption = jenisSuratSelect.options[jenisSuratSelect.selectedIndex];
-            const selectedText = selectedOption.text;
-            
+            const selectedText = selectedOption ? selectedOption.text : '';
+            // Toggle input personal
+            if (jenisSuratPersonal.includes(selectedText)) {
+                inputNamaPengaju.classList.remove('hidden');
+                inputKetua.classList.add('hidden');
+                inputAnggota.classList.add('hidden');
+            } else {
+                inputNamaPengaju.classList.add('hidden');
+                inputKetua.classList.remove('hidden');
+                inputAnggota.classList.remove('hidden');
+            }
+            // Toggle tujuan surat
             if (jenisSuratDenganTujuan.includes(selectedText)) {
                 tujuanSuratContainer.classList.remove('hidden');
             } else {
@@ -156,12 +181,8 @@
                 document.getElementById('tujuan_surat').value = '';
             }
         }
-        
-        // Event listener untuk perubahan pada select
-        jenisSuratSelect.addEventListener('change', toggleTujuanSurat);
-        
-        // Jalankan sekali saat halaman dimuat untuk mengecek nilai awal
-        toggleTujuanSurat();
+        jenisSuratSelect.addEventListener('change', toggleInputs);
+        toggleInputs(); // jalankan saat load
         
         // Konfirmasi sebelum submit form
         const form = document.getElementById('formAjukan');

@@ -61,7 +61,7 @@
                 </div>
             </div>
 
-            <x-pengajuan-surat :jenisSurat="$jenisSurat" />
+            <x-pengajuan-surat :jenisSurat="$jenisSurat" :namaPengaju="$namaPengaju" />
 
         
 

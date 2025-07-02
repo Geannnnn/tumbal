@@ -347,17 +347,38 @@ class KepalaSubController extends Controller
     public function approveSurat(Request $request, $id) {
         try {
             $surat = Surat::findOrFail($id);
+
+            // Get status IDs
+            $statusDisetujui = StatusSurat::where('status_surat', 'Disetujui')->first();
             $statusMenungguPenerbitan = StatusSurat::where('status_surat', 'Menunggu Penerbitan')->first();
-            if (!$statusMenungguPenerbitan) {
-                return response()->json(['success' => false, 'message' => 'Status Menunggu Penerbitan tidak ditemukan']);
+
+            if (!$statusDisetujui || !$statusMenungguPenerbitan) {
+                return response()->json(['success' => false, 'message' => 'Status tidak ditemukan']);
             }
-            // Tambahkan riwayat status baru
+
+            // Ambil tanggal_rilis terakhir dari riwayat status surat ini
+            $lastRiwayat = RiwayatStatusSurat::where('id_surat', $surat->id_surat)
+                ->orderBy('tanggal_rilis', 'desc')
+                ->first();
+
+            $baseTime = $lastRiwayat ? Carbon::parse($lastRiwayat->tanggal_rilis) : now();
+
+            // Step 1: Add "Disetujui" status (+1 detik dari status terakhir)
+            RiwayatStatusSurat::create([
+                'id_surat' => $surat->id_surat,
+                'id_status_surat' => $statusDisetujui->id_status_surat,
+                'tanggal_rilis' => $baseTime->copy()->addSecond(1),
+                'keterangan' => 'Disetujui oleh Kepala Sub'
+            ]);
+
+            // Step 2: Add "Menunggu Penerbitan" status (+2 detik dari status terakhir)
             RiwayatStatusSurat::create([
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusMenungguPenerbitan->id_status_surat,
-                'tanggal_rilis' => now(),
-                'keterangan' => 'Disetujui oleh Kepala Sub'
+                'tanggal_rilis' => $baseTime->copy()->addSecond(2),
+                'keterangan' => 'Menunggu penerbitan oleh Staff'
             ]);
+
             return response()->json(['success' => true, 'message' => 'Surat berhasil disetujui dan menunggu penerbitan']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);

@@ -98,7 +98,7 @@
                             render: function (data, type, row) {
                                 return data ? `<a href="/storage/${data}" target="_blank" class="flex items-center gap-2 text-blue-800 hover:underline">
                                     <i class="fa-solid fa-cloud-arrow-up text-gray-500"></i>
-                                    <span>Unduh</span>
+                                    <span>Lampiran</span>
                                 </a>` : '-';
                             }
                         @elseif ($key === 'actions')

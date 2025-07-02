@@ -15,22 +15,16 @@ class CreateFunctionGetNamaPengusul extends Migration
     public function up()
     {
         DB::unprepared('
-            DELIMITER $$
-            
             CREATE FUNCTION GetNamaPengusul(p_id_pengusul INT)
             RETURNS VARCHAR(255)
             DETERMINISTIC
             BEGIN
                 DECLARE nama_pengusul VARCHAR(255);
-                
                 SELECT nama INTO nama_pengusul 
                 FROM pengusul
                 WHERE id_pengusul = p_id_pengusul;
-                
                 RETURN COALESCE(nama_pengusul, "-");
-            END $$
-            
-            DELIMITER ;
+            END;
         ');
     }
 

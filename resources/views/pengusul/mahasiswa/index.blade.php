@@ -17,7 +17,7 @@
                     Dashboard
                 </h1>
                 
-                <div class="flex flex-col md:flex-row items-start md:items-center gap-3">
+                {{-- <div class="flex flex-col md:flex-row items-start md:items-center gap-3">
                     <div class="flex bg-[#707FDD] rounded-[15px] font-medium h-10 overflow-hidden">
                         <button class="py-2 px-4 hover:cursor-pointer rounded-[15px] " id="btn-jarak">Jarak</button>
                         <button class="py-2 px-4 hover:cursor-pointer rounded-[15px] " id="btn-bulan">Bulan</button>
@@ -29,7 +29,7 @@
                     <button id="btn-reset" class="bg-red-500 text-white py-2 px-4 rounded-[5px] hover:bg-red-600 transition-colors">
                         Reset Filter
                     </button>
-                </div>
+                </div> --}}
             </div>
         
 
@@ -65,7 +65,7 @@
             <div class="w-full">
                 <x-datatable
                     id="surat-table"
-                    :columns="$columns"
+                    :columns="array_merge($columns, ['aksi' => 'Aksi'])"
                     ajaxUrl="{{ route('mahasiswa.search') }}"
                     :ordering="false"
                     :lengthMenu="false"
@@ -80,7 +80,7 @@
 </div>
 @push('scripts')
     
-<script>
+{{-- <script>
     // Global variables for datatable component
     window.currentFilterType = 'tahun';
     window.currentYear = '2025'; // Set default to 2025
@@ -323,7 +323,7 @@
             }
         }, 200);
     });
-</script>
+</script> --}}
 
 @endpush
 

@@ -107,7 +107,7 @@
                         });
                     </script>
                     
-                </div>
+                </div> --}}
             </div>
             <div class="flex flex-col sm:flex-row gap-6 mt-6">
                 <!-- Surat Diterima -->
@@ -138,13 +138,12 @@
                     </div>
                 </div>
             </div>
-
             <div class="w-full">
                 <x-datatable
                     id="surat-table"
-                    :columns="$columns"
+                    :columns="array_merge($columns, ['aksi' => 'Aksi'])"
                     ajaxUrl="{{ route('dosen.search') }}"
-                    :ordering="true"
+                    :ordering="false"
                     :lengthMenu="false"
                     :pageLength="5"
                     :showEdit="false"

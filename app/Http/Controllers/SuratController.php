@@ -21,24 +21,29 @@ class SuratController extends Controller
         $role = $user->role; // 'mahasiswa' atau 'dosen'
         $isDraft = $request->input('is_draft') == 0; // 0 = draft, 1 = diajukan
 
+        // Deteksi jenis surat personal
+        $jenisSuratId = $request->jenis_surat;
+        $jenisSurat = $jenisSuratId ? JenisSurat::find($jenisSuratId) : null;
+        $personalSurat = $jenisSurat && in_array($jenisSurat->jenis_surat, ['Surat Cuti Akademik', 'Surat Izin Tidak Masuk']);
+
         $rules = [
             'judul_surat' => 'required|string|max:255',
             'lampiran' => 'nullable|file|mimes:pdf,jpeg,png,jpg,docx,xlsx|max:10240',
-            'anggota' => 'array',
-            'anggota.*' => 'exists:pengusul,id_pengusul',
             'tujuan_surat' => 'nullable|string|max:500',
         ];
-
+        if (!$personalSurat) {
+            $rules['anggota'] = 'array';
+            $rules['anggota.*'] = 'exists:pengusul,id_pengusul';
+        }
         if ($isDraft) {
-            $rules['id_pengusul'] = 'nullable|exists:pengusul,id_pengusul';
+            $rules['id_pengusul'] = $personalSurat ? 'nullable' : 'nullable|exists:pengusul,id_pengusul';
             $rules['jenis_surat'] = 'nullable|exists:jenis_surat,id_jenis_surat';
             $rules['deskripsi'] = 'nullable|string|max:300';
         } else {
-            $rules['id_pengusul'] = 'required|exists:pengusul,id_pengusul';
+            $rules['id_pengusul'] = $personalSurat ? 'nullable' : 'required|exists:pengusul,id_pengusul';
             $rules['jenis_surat'] = 'required|exists:jenis_surat,id_jenis_surat';
             $rules['deskripsi'] = 'required|string|max:300';
         }
-
         $request->validate($rules);
 
         DB::beginTransaction();
@@ -69,21 +74,23 @@ class SuratController extends Controller
                 ]);
             }
 
-            if ($request->filled('id_pengusul')) {
-                PivotPengusulSurat::create([
-                    'id_surat' => $surat->id_surat,
-                    'id_pengusul' => $request->id_pengusul,
-                    'id_peran_keanggotaan' => 1,
-                ]);
-            }
-
-            if ($request->filled('anggota')) {
-                foreach ($request->anggota as $anggotaId) {
+            // Simpan ketua/anggota hanya jika bukan personal
+            if (!$personalSurat) {
+                if ($request->filled('id_pengusul')) {
                     PivotPengusulSurat::create([
                         'id_surat' => $surat->id_surat,
-                        'id_pengusul' => $anggotaId,
-                        'id_peran_keanggotaan' => 2,
+                        'id_pengusul' => $request->id_pengusul,
+                        'id_peran_keanggotaan' => 1,
                     ]);
+                }
+                if ($request->filled('anggota')) {
+                    foreach ($request->anggota as $anggotaId) {
+                        PivotPengusulSurat::create([
+                            'id_surat' => $surat->id_surat,
+                            'id_pengusul' => $anggotaId,
+                            'id_peran_keanggotaan' => 2,
+                        ]);
+                    }
                 }
             }
 
@@ -207,24 +214,29 @@ class SuratController extends Controller
         $role = $user->role;
         $isDraft = $request->input('is_draft') == 0; // 0 = draft, 1 = diajukan
 
+        // Deteksi jenis surat personal
+        $jenisSuratId = $request->jenis_surat;
+        $jenisSurat = $jenisSuratId ? JenisSurat::find($jenisSuratId) : null;
+        $personalSurat = $jenisSurat && in_array($jenisSurat->jenis_surat, ['Surat Cuti Akademik', 'Surat Izin Tidak Masuk']);
+
         $rules = [
             'judul_surat' => 'required|string|max:255',
             'lampiran' => 'nullable|file|mimes:pdf,jpeg,png,jpg,docx,xlsx|max:10240',
-            'anggota' => 'array',
-            'anggota.*' => 'exists:pengusul,id_pengusul',
             'tujuan_surat' => 'nullable|string|max:500',
         ];
-
+        if (!$personalSurat) {
+            $rules['anggota'] = 'array';
+            $rules['anggota.*'] = 'exists:pengusul,id_pengusul';
+        }
         if ($isDraft) {
-            $rules['id_pengusul'] = 'nullable|exists:pengusul,id_pengusul';
+            $rules['id_pengusul'] = $personalSurat ? 'nullable' : 'nullable|exists:pengusul,id_pengusul';
             $rules['jenis_surat'] = 'nullable|exists:jenis_surat,id_jenis_surat';
             $rules['deskripsi'] = 'nullable|string|max:300';
         } else {
-            $rules['id_pengusul'] = 'required|exists:pengusul,id_pengusul';
+            $rules['id_pengusul'] = $personalSurat ? 'nullable' : 'required|exists:pengusul,id_pengusul';
             $rules['jenis_surat'] = 'required|exists:jenis_surat,id_jenis_surat';
             $rules['deskripsi'] = 'required|string|max:300';
         }
-
         $request->validate($rules);
 
         DB::beginTransaction();
@@ -278,21 +290,23 @@ class SuratController extends Controller
                 ->where('id_surat', $surat->id_surat)
                 ->delete();
 
-            if ($request->filled('id_pengusul')) {
-                PivotPengusulSurat::create([
-                    'id_surat' => $surat->id_surat,
-                    'id_pengusul' => $request->id_pengusul,
-                    'id_peran_keanggotaan' => 1,
-                ]);
-            }
-
-            if ($request->filled('anggota')) {
-                foreach ($request->anggota as $anggotaId) {
+            // Simpan ketua/anggota hanya jika bukan personal
+            if (!$personalSurat) {
+                if ($request->filled('id_pengusul')) {
                     PivotPengusulSurat::create([
                         'id_surat' => $surat->id_surat,
-                        'id_pengusul' => $anggotaId,
-                        'id_peran_keanggotaan' => 2,
+                        'id_pengusul' => $request->id_pengusul,
+                        'id_peran_keanggotaan' => 1,
                     ]);
+                }
+                if ($request->filled('anggota')) {
+                    foreach ($request->anggota as $anggotaId) {
+                        PivotPengusulSurat::create([
+                            'id_surat' => $surat->id_surat,
+                            'id_pengusul' => $anggotaId,
+                            'id_peran_keanggotaan' => 2,
+                        ]);
+                    }
                 }
             }
 

@@ -14,36 +14,46 @@ use App\Helpers\PengusulHelper;
 class dosenController extends Controller
 {
     public function index () {
+        $user = auth('pengusul')->id();
+        $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
 
-         // Surat Diterima = surat yang sudah memiliki nomor surat dan status "Diterbitkan"
-         $suratDiterima = Surat::where('is_draft', 1)
-         ->whereNotNull('nomor_surat')
-         ->whereHas('riwayatStatus', function($q) {
-             $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
-             if ($statusDiterbitkan) {
-                 $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
-             }
-         })->count();
+        $suratDiterima = Surat::where('is_draft', 1)
+            ->whereNotNull('nomor_surat')
+            ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
+                $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+            })
+            ->where(function($q) use ($user) {
+                $q->where('dibuat_oleh', $user)
+                  ->orWhereHas('pengusul', function($q2) use ($user) {
+                      $q2->where('pivot_pengusul_surat.id_pengusul', $user)
+                         ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                  });
+            })
+            ->count();
 
-        // Surat Ditolak = surat dengan status "Ditolak"
         $suratDitolak = Surat::where('is_draft', 1)
+            ->whereNotNull('nomor_surat')
             ->whereHas('riwayatStatus', function($q) {
-                $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
-                if ($statusDitolak) {
-                    $q->where('id_status_surat', $statusDitolak->id_status_surat);
-                }
-            })->count();
+                $q->where('id_status_surat', StatusSurat::where('status_surat', 'Ditolak')->first()->id_status_surat);
+            })
+            ->where(function($q) use ($user) {
+                $q->where('dibuat_oleh', $user)
+                  ->orWhereHas('pengusul', function($q2) use ($user) {
+                      $q2->where('pivot_pengusul_surat.id_pengusul', $user)
+                         ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                  });
+            })
+            ->count();
 
         $notifikasiSurat = collect();
-        
         $columns = [
             'nomor_surat' => "Nomor Surat",
             'judul_surat' =>'Nama Surat', 
             'tanggal_surat_dibuat' => 'Tanggal Terbit', 
             'lampiran' => 'Dokumen', 
-            'tanggal_pengajuan' => 'Dibuat Pada'];
-
-
+            'tanggal_pengajuan' => 'Dibuat Pada',
+            'aksi' => 'Aksi',
+        ];
         return view('pengusul.dosen.index', compact('columns','suratDiterima','suratDitolak','notifikasiSurat'));
     }
 
@@ -51,10 +61,7 @@ class dosenController extends Controller
         $limit = $request->input('length');
         $start = $request->input('start');
         $user = auth('pengusul')->id();
-    
-        // Get status ID for "Diterbitkan"
         $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
-        
         if (!$statusDiterbitkan) {
             return response()->json([
                 'draw' => intval($request->input('draw')),
@@ -63,7 +70,6 @@ class dosenController extends Controller
                 'data' => [],
             ]);
         }
-
         $query = Surat::with(['dibuatOleh'])
             ->whereNotNull('nomor_surat')
             ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
@@ -76,18 +82,7 @@ class dosenController extends Controller
                          ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
                   });
             });
-    
         $totalData = $query->count();
-    
-        if ($search = $request->input('search.value')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nomor_surat', 'like', "%$search%")
-                  ->orWhere('judul_surat', 'like', "%$search%");
-            });
-        }
-    
-        $filterData = $query->count();
-    
         $surats = $query->skip($start)->take($limit)->get();
         $data = $surats->map(function($item, $index) use ($start) {
             return [
@@ -97,19 +92,18 @@ class dosenController extends Controller
                 'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat ? date('d/m/Y', strtotime($item->tanggal_surat_dibuat)) : '-',
                 'lampiran' => $item->lampiran,
                 'tanggal_pengajuan' => $item->tanggal_pengajuan ? date('d/m/Y', strtotime($item->tanggal_pengajuan)) : '-',
+                'aksi' => '<a href="' . route('dosen.surat.downloadPdf', $item->id_surat) . '" class="btn btn-success" target="_blank">Unduh PDF</a>'
             ];
         });
-    
         return response()->json([
             'draw' => intval($request->input('draw')),
             'recordsTotal' => $totalData,
-            'recordsFiltered' => $filterData,
+            'recordsFiltered' => $totalData,
             'data' => $data,
         ]);
     }
 
     public function pengajuan() {
-
         $columns = [
             'judul_surat' => 'Judul Surat',
             'tanggal_pengajuan' => 'Tanggal Pengajuan',
@@ -120,7 +114,6 @@ class dosenController extends Controller
             'lampiran' => 'Dokumen',
             'deskripsi' => 'Deskripsi',
         ];
-        
         $data = Surat::with(['dibuatOleh'])
             ->where('is_draft',1)
             ->whereHas('dibuatOleh.role',function($q){
@@ -128,9 +121,11 @@ class dosenController extends Controller
             })
             ->orderBy('tanggal_pengajuan','desc')
             ->get();
-
-        $jenisSurat = collect(DB::select('CALL sp_GetJenisSuratForSelect()'))->pluck('jenis_surat', 'id_jenis_surat')->toArray();
-        return view('pengusul.dosen.pengajuansurat', compact('jenisSurat','columns','data'));
+        $jenisSurat = JenisSurat::whereIn('jenis_surat', ['Surat Tugas', 'Surat Undangan Kegiatan', 'Surat Izin Tidak Masuk'])
+            ->pluck('jenis_surat', 'id_jenis_surat')
+            ->toArray();
+        $namaPengaju = auth('pengusul')->user() ? auth('pengusul')->user()->nama : '';
+        return view('pengusul.dosen.pengajuansurat', compact('jenisSurat','columns','data','namaPengaju'));
     }
 
     public function draft() {
@@ -315,5 +310,37 @@ class dosenController extends Controller
         return view('pengusul.dosen.riwayatstatus', [
             'riwayat' => $riwayat
         ]);
+    }
+
+    public function dataTable(Request $request)
+    {
+        $user = auth('pengusul')->id();
+        $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+        $query = Surat::with(['jenisSurat', 'dibuatOleh'])
+            ->where('is_draft', 1)
+            ->whereNotNull('nomor_surat')
+            ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
+                $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+            })
+            ->where(function($q) use ($user) {
+                $q->where('dibuat_oleh', $user)
+                  ->orWhereHas('pengusul', function($q2) use ($user) {
+                      $q2->where('pivot_pengusul_surat.id_pengusul', $user)
+                         ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                  });
+            });
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('unduh_pdf', function($row) {
+                return '<a href="' . route('dosen.surat.pdf', $row->id_surat) . '" target="_blank" class="inline-block bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-800">Unduh PDF</a>';
+            })
+            ->rawColumns(['unduh_pdf'])
+            ->make(true);
+    }
+
+    public function downloadPdf($id)
+    {
+        // Dummy, implementasi PDF akan dibuat setelah ini
+        return 'PDF';
     }
 }

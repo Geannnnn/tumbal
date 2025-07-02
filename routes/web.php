@@ -76,7 +76,7 @@ Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
             Route::get('/status/data', 'getStatusSuratData')->name('statusSurat.data');
             Route::get('/setting', 'setting')->name('mahasiswa.setting');
             Route::get('/statussurat/{id}', 'showStatusSurat')->name('mahasiswa.statussurat.show');
-
+            Route::get('/surat/{id}/download', 'downloadPdf')->name('mahasiswa.surat.downloadPdf');
         });
 
         // Dosen
@@ -117,6 +117,10 @@ Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
             Route::get('/surat/{id}/tinjau', 'showDetailSurat')->name('staffumum.tinjau.detail');
             Route::post('/surat/{id}/tolak', 'tolakSurat')->name('staffumum.surat.tolak');
             Route::post('/surat/{id}/approve', 'approveSurat')->name('staffumum.surat.approve');
+            Route::get('/terbitkan/data', 'getTerbitkanData')->name('staffumum.terbitkan.data');
+            Route::get('/terbitkan/{id}/detail', 'terbitkanDetail')->name('staffumum.terbitkan.detail');
+            Route::post('/terbitkan/{id}/terbitkan', 'terbitkanSurat')->name('staffumum.terbitkan.surat');
+            Route::post('/terbitkan/{id}/tolak', 'tolakSurat')->name('staffumum.terbitkan.tolak');
         });
 
         Route::prefix('tata-usaha')->controller(tatausahaController::class)->group(function () {
@@ -176,3 +180,4 @@ Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
         Route::get('/surat/{id}/tinjau','tinjauSurat')->name('kepalasub.tinjau-surat');
     });
 });
+

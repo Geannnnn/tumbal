@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\JenisSurat;
+use App\Models\PivotPengusulSurat;
 use App\Models\StatusSurat;
 use App\Models\Surat;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use App\Models\RiwayatStatusSurat;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\PengusulHelper;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class mahasiswaController extends Controller
 {   
@@ -70,7 +72,6 @@ class mahasiswaController extends Controller
     }
 
     public function pengajuan() {
-
         $columns = [
             'judul_surat' => 'Judul Surat',
             'tanggal_pengajuan' => 'Tanggal Pengajuan',
@@ -81,32 +82,29 @@ class mahasiswaController extends Controller
             'lampiran' => 'Dokumen',
             'deskripsi' => 'Deskripsi',
         ];
-        
         $data = Surat::with(['dibuatOleh'])
-            ->where('is_draft',1) // 1 = diajukan, 0 = draft
+            ->where('is_draft',1)
             ->whereHas('dibuatOleh.role',function($q){
                 $q->whereIn('role',['mahasiswa','dosen']);
             })
             ->orderBy('tanggal_pengajuan','desc')
             ->get();
-
-        $jenisSurat = collect(DB::select('CALL sp_GetJenisSuratForSelect()'))->pluck('jenis_surat', 'id_jenis_surat')->toArray();
-        return view('pengusul.mahasiswa.pengajuansurat', compact('jenisSurat','columns','data'));
+        $jenisSurat = JenisSurat::whereIn('jenis_surat', ['Surat Cuti Akademik', 'Surat Pengantar', 'Surat Permohonan'])
+            ->pluck('jenis_surat', 'id_jenis_surat')
+            ->toArray();
+        $namaPengaju = auth('pengusul')->user() ? auth('pengusul')->user()->nama : '';
+        return view('pengusul.mahasiswa.pengajuansurat', compact('jenisSurat','columns','data','namaPengaju'));
     }
 
     public function search(Request $request) {
         try {
             $user = auth('pengusul')->id();
-            
-            // Get status Diterbitkan
             $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
-            
             if (!$statusDiterbitkan) {
                 return response()->json([
                     'error' => 'Status Diterbitkan tidak ditemukan'
                 ], 404);
             }
-
             $query = Surat::with([
                 'dibuatOleh', 
                 'jenisSurat', 
@@ -114,7 +112,7 @@ class mahasiswaController extends Controller
                 'statusTerakhir.statusSurat'
             ])
                 ->whereNotNull('nomor_surat')
-                ->where('is_draft', 1) // Surat yang sudah diterbitkan (bukan draft)
+                ->where('is_draft', 1)
                 ->whereHas('pengusul', function ($q) use ($user) {
                     $q->where('pivot_pengusul_surat.id_pengusul', $user)
                       ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
@@ -122,55 +120,28 @@ class mahasiswaController extends Controller
                 ->whereHas('statusTerakhir', function($q) use ($statusDiterbitkan) {
                     $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
                 });
-
-            // Apply filters
-            $filterType = $request->get('filter_type', 'tahun');
-            
-            if ($filterType === 'tahun') {
-                $year = $request->get('year', date('Y')); // Default to current year
-                if ($year) {
-                    $query->whereYear('tanggal_surat_dibuat', $year);
-                }
-            } elseif ($filterType === 'bulan') {
-                $month = $request->get('month');
-                if ($month) {
-                    $query->whereMonth('tanggal_surat_dibuat', $month);
-                }
-            } elseif ($filterType === 'jarak') {
-                $startDate = $request->get('start_date');
-                $endDate = $request->get('end_date');
-                if ($startDate && $endDate) {
-                    $query->whereBetween('tanggal_surat_dibuat', [$startDate, $endDate]);
-                }
-            }
-
             $surat = $query->get();
-
-            // Transform data for DataTables
             $data = $surat->map(function ($item) {
                 return [
-                    'id_surat' => $item->id_surat,
-                    'judul_surat' => $item->judul_surat,
+                    'no' => $item->no,
                     'nomor_surat' => $item->nomor_surat,
+                    'judul_surat' => $item->judul_surat,
                     'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat ? date('d/m/Y', strtotime($item->tanggal_surat_dibuat)) : '-',
                     'jenis_surat' => $item->jenisSurat ? $item->jenisSurat->jenis_surat : '-',
-                    'status' => $item->statusTerakhir && $item->statusTerakhir->statusSurat 
-                        ? $item->statusTerakhir->statusSurat->status_surat 
-                        : '-'
+                    'lampiran' => $item->lampiran,
+                    'tanggal_pengajuan' => $item->tanggal_pengajuan ? date('d/m/Y', strtotime($item->tanggal_pengajuan)) : '-',
+                    'aksi' => '<a href="' . route('mahasiswa.surat.downloadPdf', $item->id_surat) . '" class="btn btn-success" target="_blank">Unduh PDF</a>'
                 ];
             });
-
             return response()->json([
                 'draw' => $request->get('draw'),
                 'recordsTotal' => $surat->count(),
                 'recordsFiltered' => $surat->count(),
                 'data' => $data
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error in mahasiswa search: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
-            
             return response()->json([
                 'error' => 'Terjadi kesalahan: ' . $e->getMessage(),
                 'draw' => $request->get('draw'),
@@ -392,7 +363,7 @@ class mahasiswaController extends Controller
             $surat = Surat::create($dataSurat);
 
             // Simpan riwayat status awal Draft (id_status_surat = 3)
-            \App\Models\RiwayatStatusSurat::create([
+            RiwayatStatusSurat::create([
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => 3, // Draft
                 'tanggal_rilis' => now(),
@@ -400,7 +371,7 @@ class mahasiswaController extends Controller
 
             // Simpan data ketua jika diisi
             if ($request->filled('id_pengusul')) {
-                \App\Models\PivotPengusulSurat::create([
+                PivotPengusulSurat::create([
                     'id_surat' => $surat->id_surat,
                     'id_pengusul' => $request->id_pengusul,
                     'id_peran_keanggotaan' => 1,
@@ -410,7 +381,7 @@ class mahasiswaController extends Controller
             // Simpan data anggota jika diisi
             if ($request->filled('anggota')) {
                 foreach ($request->anggota as $anggotaId) {
-                    \App\Models\PivotPengusulSurat::create([
+                    PivotPengusulSurat::create([
                         'id_surat' => $surat->id_surat,
                         'id_pengusul' => $anggotaId,
                         'id_peran_keanggotaan' => 2,
@@ -623,6 +594,22 @@ class mahasiswaController extends Controller
             ], 500);
         }
     }
+
+    public function downloadPdf($id)
+    {
+        $surat = Surat::with(['dibuatOleh', 'jenisSurat', 'statusTerakhir.statusSurat'])->findOrFail($id);
+        $tanggalSurat = $surat->tanggal_surat_dibuat ? Carbon::parse($surat->tanggal_surat_dibuat)->translatedFormat('d F Y') : '-';
+        $tanggalPengajuan = $surat->tanggal_pengajuan ? Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d F Y') : '-';
+        $today = Carbon::now()->translatedFormat('d F Y');
+        $pdf = Pdf::loadView('pdf.surat', [
+            'surat' => $surat,
+            'tanggalSurat' => $tanggalSurat,
+            'tanggalPengajuan' => $tanggalPengajuan,
+            'today' => $today
+        ]);
+        return $pdf->stream('surat-'.$id.'.pdf');
+    }
+
 }
 
 

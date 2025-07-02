@@ -94,7 +94,11 @@
                     searchable: false,
                     render: function(data, type, row) {
                         let id = row.id || row.id_surat;
-                        let baseUrl = '{{ $userRole === "Dosen" ? "dosen" : ($userRole === "Staff Umum" ? "staff-umum" : "mahasiswa") }}';
+                        let baseUrl = '{{ 
+                            $userRole === "Dosen" ? "dosen" : 
+                            ($userRole === "Staff Umum" ? "staff-umum" : 
+                            ($userRole === "Tata Usaha" ? "tata-usaha" : "mahasiswa")) 
+                        }}';
                         let url = `/${baseUrl}/statussurat/${id}`;
                         let buttonText = '{{ $userRole === "Staff Umum" ? "Tinjau" : "Detail" }}';
                         return `<button class=\"bg-blue-100 text-black rounded-xl px-4 py-1 font-semibold text-sm hover:bg-blue-200 transition hover:scale-110 cursor-pointer btn-detail-surat\" data-id=\"${id}\" data-url=\"${url}\">${buttonText}</button>`;
