@@ -95,6 +95,7 @@ Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
             Route::get('/status/data', 'getStatusSuratData')->name('statusSurat.data');
             Route::get('/setting', 'setting')->name('dosen.setting');
             Route::get('/statussurat/{id}', 'showStatusSurat')->name('dosen.statussurat.show');
+            Route::get('/surat/{id}/download', 'downloadPdf')->name('dosen.surat.downloadPdf');
         });
     });
 

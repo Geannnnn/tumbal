@@ -607,7 +607,8 @@ class mahasiswaController extends Controller
             'tanggalPengajuan' => $tanggalPengajuan,
             'today' => $today
         ]);
-        return $pdf->stream('surat-'.$id.'.pdf');
+        $filename = $surat->nomor_surat ? ($surat->nomor_surat.'-'.$surat->id_surat.'.pdf') : ('surat-'.$id.'.pdf');
+        return $pdf->stream($filename);
     }
 
 }

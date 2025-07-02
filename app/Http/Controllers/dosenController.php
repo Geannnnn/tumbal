@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\PengusulHelper;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Carbon;
 
 class dosenController extends Controller
 {
@@ -47,12 +49,12 @@ class dosenController extends Controller
 
         $notifikasiSurat = collect();
         $columns = [
+            'no' => "No",
             'nomor_surat' => "Nomor Surat",
             'judul_surat' =>'Nama Surat', 
             'tanggal_surat_dibuat' => 'Tanggal Terbit', 
             'lampiran' => 'Dokumen', 
             'tanggal_pengajuan' => 'Dibuat Pada',
-            'aksi' => 'Aksi',
         ];
         return view('pengusul.dosen.index', compact('columns','suratDiterima','suratDitolak','notifikasiSurat'));
     }
@@ -86,7 +88,7 @@ class dosenController extends Controller
         $surats = $query->skip($start)->take($limit)->get();
         $data = $surats->map(function($item, $index) use ($start) {
             return [
-                'id' => $item->id_surat,
+                'no' => $index + $start + 1,
                 'nomor_surat' => $item->nomor_surat ?? '-',
                 'judul_surat' => $item->judul_surat ?? '-',
                 'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat ? date('d/m/Y', strtotime($item->tanggal_surat_dibuat)) : '-',
@@ -269,7 +271,7 @@ class dosenController extends Controller
         foreach ($surat->riwayatStatus as $item) {
             $statusName = $item->statusSurat->status_surat ?? '-';
             $oleh = PengusulHelper::getNamaPengusul($surat->dibuat_oleh);
-            $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y H:i');
+            $tanggal = Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y H:i');
             
             // Tentukan warna berdasarkan status
             $warna = 'bg-purple-500'; // default
@@ -312,35 +314,19 @@ class dosenController extends Controller
         ]);
     }
 
-    public function dataTable(Request $request)
-    {
-        $user = auth('pengusul')->id();
-        $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
-        $query = Surat::with(['jenisSurat', 'dibuatOleh'])
-            ->where('is_draft', 1)
-            ->whereNotNull('nomor_surat')
-            ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
-                $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
-            })
-            ->where(function($q) use ($user) {
-                $q->where('dibuat_oleh', $user)
-                  ->orWhereHas('pengusul', function($q2) use ($user) {
-                      $q2->where('pivot_pengusul_surat.id_pengusul', $user)
-                         ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
-                  });
-            });
-        return DataTables::of($query)
-            ->addIndexColumn()
-            ->addColumn('unduh_pdf', function($row) {
-                return '<a href="' . route('dosen.surat.pdf', $row->id_surat) . '" target="_blank" class="inline-block bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-800">Unduh PDF</a>';
-            })
-            ->rawColumns(['unduh_pdf'])
-            ->make(true);
-    }
-
     public function downloadPdf($id)
     {
-        // Dummy, implementasi PDF akan dibuat setelah ini
-        return 'PDF';
+        $surat = Surat::with(['dibuatOleh', 'jenisSurat', 'statusTerakhir.statusSurat'])->findOrFail($id);
+        $tanggalSurat = $surat->tanggal_surat_dibuat ? Carbon::parse($surat->tanggal_surat_dibuat)->translatedFormat('d F Y') : '-';
+        $tanggalPengajuan = $surat->tanggal_pengajuan ? Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d F Y') : '-';
+        $today = Carbon::now()->translatedFormat('d F Y');
+        $pdf = Pdf::loadView('pdf.surat', [
+            'surat' => $surat,
+            'tanggalSurat' => $tanggalSurat,
+            'tanggalPengajuan' => $tanggalPengajuan,
+            'today' => $today
+        ]);
+        $filename = $surat->nomor_surat ? ($surat->nomor_surat.'-'.$surat->id_surat.'.pdf') : ('surat-'.$id.'.pdf');
+        return $pdf->stream($filename);
     }
 }
