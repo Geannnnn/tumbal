@@ -113,9 +113,12 @@ class mahasiswaController extends Controller
             ])
                 ->whereNotNull('nomor_surat')
                 ->where('is_draft', 1)
-                ->whereHas('pengusul', function ($q) use ($user) {
-                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
-                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                ->where(function($q) use ($user) {
+                    $q->where('dibuat_oleh', $user)
+                      ->orWhereHas('pengusul', function ($q2) use ($user) {
+                          $q2->where('pivot_pengusul_surat.id_pengusul', $user)
+                             ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                      });
                 })
                 ->whereHas('statusTerakhir', function($q) use ($statusDiterbitkan) {
                     $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
@@ -421,10 +424,7 @@ class mahasiswaController extends Controller
             ])
                 ->whereNotNull('nomor_surat')
                 ->where('is_draft', 1)
-                ->whereHas('pengusul', function ($q) use ($user) {
-                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
-                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
-                });
+                ->where('dibuat_oleh', $user);
 
             // Apply filters
             $filterType = $request->get('filter_type', 'tahun');

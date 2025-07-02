@@ -175,6 +175,46 @@ class staffumumController extends Controller
             'endDate'
         ));
     }
+    
+    public function approveSurat(Request $request, $id)
+    {
+        $surat = Surat::findOrFail($id);
+
+        $statusDiajukan = StatusSurat::where('status_surat', 'Diajukan')->first();
+        $statusValidasi = StatusSurat::where('status_surat', 'Divalidasi')->first();
+        $statusMenunggu = StatusSurat::where('status_surat', 'Menunggu Persetujuan')->first();
+
+        if (!$statusDiajukan || !$statusValidasi || !$statusMenunggu) {
+            return back()->with('error', 'Status diajukan/validasi/menunggu tidak ditemukan!');
+        }
+
+        // Ambil status terakhir surat
+        $lastRiwayat = $surat->riwayatStatus()->latest('tanggal_rilis')->first();
+        $now = $lastRiwayat ? Carbon::parse($lastRiwayat->tanggal_rilis)->addSecond() : now();
+
+        // Jika status terakhir adalah Diajukan, lanjutkan ke Divalidasi dan Menunggu Persetujuan
+        if ($lastRiwayat && $lastRiwayat->id_status_surat == $statusDiajukan->id_status_surat) {
+            // Tambahkan riwayat status "Divalidasi"
+            RiwayatStatusSurat::create([
+                'id_surat' => $surat->id_surat,
+                'id_status_surat' => $statusValidasi->id_status_surat,
+                'tanggal_rilis' => $now,
+                'komentar' => $request->komentar,
+            ]);
+            // Tambahkan riwayat status "Menunggu Persetujuan" dengan waktu +1 detik
+            RiwayatStatusSurat::create([
+                'id_surat' => $surat->id_surat,
+                'id_status_surat' => $statusMenunggu->id_status_surat,
+                'tanggal_rilis' => $now->copy()->addSecond(),
+            ]);
+        } else {
+            // Jika status terakhir bukan Diajukan, jangan lanjutkan atau sesuaikan dengan kebutuhan
+            return back()->with('error', 'Status surat tidak valid untuk di-approve.');
+        }
+
+        return redirect()->route('staffumum.tinjausurat')->with('success', 'Surat berhasil di-approve dan dikirim ke kepala sub.');
+        return redirect()->route('staffumum.terbitkan')->with('success', 'Surat berhasil ditolak!');
+    }
 
     public function terbitkan()
     {
@@ -386,11 +426,11 @@ class staffumumController extends Controller
         if (!$statusDitolak) {
             return back()->with('error', 'Status Ditolak tidak ditemukan!');
         }
-        $lastRiwayat = \App\Models\RiwayatStatusSurat::where('id_surat', $surat->id_surat)
+        $lastRiwayat = RiwayatStatusSurat::where('id_surat', $surat->id_surat)
             ->orderBy('tanggal_rilis', 'desc')
             ->first();
-        $baseTime = $lastRiwayat ? \Carbon\Carbon::parse($lastRiwayat->tanggal_rilis) : now();
-        $riwayat = \App\Models\RiwayatStatusSurat::create([
+        $baseTime = $lastRiwayat ? Carbon::parse($lastRiwayat->tanggal_rilis) : now();
+        $riwayat = RiwayatStatusSurat::create([
             'id_surat' => $surat->id_surat,
             'id_status_surat' => $statusDitolak->id_status_surat,
             'tanggal_rilis' => $baseTime->copy()->addSecond(1),
