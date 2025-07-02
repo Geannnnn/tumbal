@@ -100,6 +100,7 @@ class DatabaseSeeder extends Seeder
             ['status_surat' => 'Menunggu Persetujuan'],
             ['status_surat' => 'Menunggu Penerbitan'],
             ['status_surat' => 'Divalidasi'],
+            ['status_surat' => 'Disetujui'],
         ]);
     }
 }
