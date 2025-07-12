@@ -9,7 +9,7 @@
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
-        @include('layouts.header')
+        @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
         <main class="flex-1 p-4 sm:p-6 md:p-8 lg:p-10">
             <div class="container mx-auto">
                 <div class="flex justify-end gap-2 mb-6">
@@ -51,7 +51,7 @@
                         </div>
                         <div class="grid grid-cols-12">
                             <span class="col-span-3 font-medium">Tanggal Pengajuan</span>
-                            <span class="col-span-9">: {{ \Carbon\Carbon::parse($surat->tanggal_pengajuan)->locale('id')->translatedFormat('d F Y') }}</span>
+                            <span class="col-span-9">: {{ \Carbon\Carbon::parse($surat->tanggal_pengajuan)->locale('id')->translatedFormat('d-m-Y') }}</span>
                         </div>
                         <div class="grid grid-cols-12">
                             <span class="col-span-3 font-medium">Dari</span>
@@ -96,9 +96,8 @@
                     <!-- Tanda Tangan -->
                     <div class="flex justify-end">
                         <div class="text-center">
-                            <p class="mb-16">Batam, {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y') }}</p>
-                            <p class="font-semibold">( ....................................... )</p>
-                            <p>Kepala Sub Bagian</p>
+                            <p class="mb-24">Batam, {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d-m-Y') }}</p>
+                            <p class="font-semibold">( Kepala Sub Bagian )</p>
                         </div>
                     </div>
                 </div>
@@ -113,7 +112,7 @@
         <h2 class="text-lg font-bold mb-4">Tolak Surat</h2>
         <form id="form-tolak" action="{{ route('staffumum.surat.tolak', $surat->id_surat) }}" method="POST">
             @csrf
-            <textarea name="catatan" required class="w-full border rounded p-2 mb-4" rows="4" placeholder="Tulis alasan penolakan..."></textarea>
+            <textarea name="komentar" required class="w-full border rounded p-2 mb-4" rows="4" placeholder="Tulis alasan penolakan..."></textarea>
             <div class="flex justify-end gap-2">
                 <button type="button" onclick="closeTolakModal()" class="px-4 py-2 bg-gray-200 rounded">Batal</button>
                 <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded">Kirim</button>

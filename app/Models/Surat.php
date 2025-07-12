@@ -32,5 +32,9 @@ class Surat extends Model
         return $this->hasOne(RiwayatStatusSurat::class, 'id_surat')
         ->latestOfMany('tanggal_rilis');
     }
+    public function komentarSurat()
+    {
+        return $this->hasMany(KomentarSurat::class, 'id_surat');    
+    }
 }
 

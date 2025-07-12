@@ -4,12 +4,13 @@
     <p class="mt-5 text-gray-500">Login untuk mengakses akun Anda.</p>
 
     <div class="mt-5 relative mb-6">
-        <label for="username" class="absolute -top-3 left-4 bg-none px-2 text-gray-600 font-medium">Username</label>
-        <input type="text" id="username" name="identity" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300">
-    </div>
+    <label for="username" class="absolute -top-2 left-3 px-1 text-sm text-gray-600 font-medium bg-gray-100 z-10">Username</label>
+    <input type="text" id="username" name="identity" 
+        class="w-full p-3 pt-5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300">
+</div>
 
     <div class="mt-5 relative mb-6">
-        <label for="password" class="absolute -top-3 left-4 bg-none px-2 text-gray-600 font-medium">Password</label>
+        <label for="password" class="absolute -top-3 left-4 bg-none px-2 text-gray-600 bg-gray-100 font-medium">Password</label>
         <input type="password" id="password" name="password" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-300">
         <span id="eye-icon" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer">
             <i class="fa-solid fa-eye"></i>

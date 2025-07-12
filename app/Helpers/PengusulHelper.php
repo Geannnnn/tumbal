@@ -3,6 +3,9 @@
 namespace App\Helpers;
 
 use Illuminate\Support\Facades\DB;
+use App\Models\Pengusul;
+use App\Models\Staff;
+use App\Models\KepalaSub;
 
 class PengusulHelper
 {
@@ -19,12 +22,15 @@ class PengusulHelper
         }
         
         try {
-            $result = DB::select("SELECT GetNamaPengusul(?) as nama", [$id_pengusul]);
-            return $result[0]->nama ?? '-';
-        } catch (\Exception $e) {
-            // Fallback to direct query if function doesn't exist
+            // Fallback to direct query to get complete information
             $pengusul = DB::table('pengusul')->where('id_pengusul', $id_pengusul)->first();
-            return $pengusul ? $pengusul->nama : '-';
+            if ($pengusul) {
+                $identifier = $pengusul->nim ? "NIM: {$pengusul->nim}" : ($pengusul->nip ? "NIP: {$pengusul->nip}" : '');
+                return $identifier ? "{$pengusul->nama} ({$identifier})" : $pengusul->nama;
+            }
+            return '-';
+        } catch (\Exception $e) {
+            return '-';
         }
     }
 
@@ -63,6 +69,50 @@ class PengusulHelper
                 ->toArray();
             
             return $pengusul;
+        }
+    }
+
+    /**
+     * Get nama user berdasarkan tipe dan ID
+     *
+     * @param int $id_user
+     * @param string $tipe_user
+     * @return string
+     */
+    public static function getNamaUserByTipe($id_user, $tipe_user)
+    {
+        if (!$id_user || !$tipe_user) {
+            return '-';
+        }
+
+        try {
+            switch ($tipe_user) {
+                case 'pengusul':
+                    $pengusul = Pengusul::find($id_user);
+                    if ($pengusul) {
+                        $identifier = $pengusul->nim ? "| {$pengusul->nim}" : ($pengusul->nip ? "| {$pengusul->nip}" : '');
+                        return $identifier ? "{$pengusul->nama} {$identifier}" : $pengusul->nama;
+                    }
+                    return '-';
+                case 'staff':
+                    $staff = Staff::find($id_user);
+                    if ($staff) {
+                        $identifier = $staff->nip ? "| {$staff->nip}" : '';
+                        return $identifier ? "{$staff->nama} {$identifier}" : $staff->nama;
+                    }
+                    return '-';
+                case 'kepala_sub':
+                    $kepalaSub = KepalaSub::find($id_user);
+                    if ($kepalaSub) {
+                        $identifier = $kepalaSub->nip ? "| {$kepalaSub->nip}" : '';
+                        return $identifier ? "{$kepalaSub->nama} {$identifier}" : $kepalaSub->nama;
+                    }
+                    return '-';
+                default:
+                    return '-';
+            }
+        } catch (\Exception $e) {
+            return '-';
         }
     }
 } 

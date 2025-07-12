@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccessController;
 use App\Http\Controllers\adminController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DirekturController;
 use App\Http\Controllers\dosenController;
 use App\Http\Controllers\KepalaSubController;
 use App\Http\Controllers\mahasiswaController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\tatausahaController;
 use App\Http\Controllers\testController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NotifikasiController;
 
 
 Route::get('/', function () {
@@ -54,7 +56,7 @@ Route::delete('/surat/{id}',[SuratController::class, 'destroy'])->name('surat.de
 Route::get('/pengajuan/search', [SuratController::class, 'pengajuansearch'])->name('pengajuan.search');
 Route::get('/pengaturan',[PengusulController::class,'pengaturan'])->name('settings');
 Route::post('/ubah-password', [AuthController::class, 'profileUpdatePassword'])->name('profile.update');
-
+Route::post('/notifikasi/mark-read/{id}', [NotifikasiController::class, 'markRead'])->name('notifikasi.markRead');
 
 Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
     // ======================= Pengusul =======================
@@ -66,7 +68,6 @@ Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
             Route::get('/pengajuan', 'pengajuan')->name('mahasiswa.pengajuansurat');
             Route::get('/search', 'search')->name('mahasiswa.search');
             Route::post('/statistics', 'getFilteredStatistics')->name('mahasiswa.statistics');
-            Route::get('/test-data', 'testData')->name('mahasiswa.testData');
             Route::get('/surat/{id}/edit', [SuratController::class, 'edit'])->name('mahasiswa.surat.edit');
             Route::put('/surat/{id}', [SuratController::class, 'update'])->name('mahasiswa.surat.update');
             Route::delete('/surat/{id}', [SuratController::class, 'destroy'])->name('mahasiswa.surat.destroy');
@@ -179,6 +180,26 @@ Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
         Route::get('/persetujuansurat','persetujuansurat')->name('kepalasub.persetujuansurat');
         Route::get('/persetujuansurat/data','getSuratDiajukanData')->name('kepalasub.persetujuansurat.data');
         Route::get('/surat/{id}/tinjau','tinjauSurat')->name('kepalasub.tinjau-surat');
+        Route::get('/riwayat-persetujuan', 'riwayatPersetujuan')->name('kepalasub.riwayat-persetujuan');
+        Route::get('/riwayat-persetujuan/data',  'riwayatPersetujuanData')->name('kepala-sub.riwayat-persetujuan.data');
+
+
+    });
+
+    // ======================= Direktur =======================
+    Route::middleware('role:direktur')->prefix('direktur')->controller(DirekturController::class)->group(function () {
+        Route::get('/', 'index')->name('direktur.dashboard');
+        Route::get('/dashboard/data', 'getDashboardData')->name('direktur.dashboard.data');
+        Route::post('/surat/{id}/approve', 'approveSurat')->name('direktur.approve');
+        Route::post('/surat/{id}/reject', 'rejectSurat')->name('direktur.reject');
+        Route::get('/statistik','statistik')->name('direktur.statistik');
+        Route::get('/persetujuansurat','persetujuansurat')->name('direktur.persetujuansurat');
+        Route::get('/persetujuansurat/data','getSuratDiajukanData')->name('direktur.persetujuansurat.data');
+        Route::get('/surat/{id}/tinjau','tinjauSurat')->name('direktur.tinjau-surat');
+        Route::get('/riwayat-persetujuan', 'riwayatPersetujuan')->name('direktur.riwayat-persetujuan');
+        Route::get('/riwayat-persetujuan/data',  'riwayatPersetujuanData')->name('direktur.riwayat-persetujuan.data');
     });
 });
+
+
 

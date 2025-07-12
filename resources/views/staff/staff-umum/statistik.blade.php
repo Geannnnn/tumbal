@@ -7,7 +7,7 @@
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
-        @include('layouts.header')
+        @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
         
         <main class="flex-1 bg-white">
             @yield('content')

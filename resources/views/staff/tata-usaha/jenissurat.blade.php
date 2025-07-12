@@ -9,20 +9,23 @@
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
-        @include('layouts.header')
-        <main class="flex-1 bg-white p-12">
-            @yield('content')
-            <div class="p-6">
-                <div class="mb-4">
-                    <h1 class="text-2xl font-semibold">Kelola Jenis Surat</h1>
+        @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
+        <main class="flex-1 bg-gray-50 p-6">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="title-page flex justify-between">
+                    <div class="flex justify-start">
+                        <h1 class="text-[32px] text-[#1F384C] font-medium">
+                            Kelola Jenis Surat
+                        </h1>
+                    </div>
                 </div>
 
-                <div class="flex justify-between items-center mb-4 mt-14">
-                <div class="flex justify-start">
+                <div class="flex justify-between items-center mb-4 mt-6">
+                    <div class="flex justify-start">
                         <button id="btnShowModal" class="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition hover:scale-105 cursor-pointer">Tambah Jenis Surat</button>
                     </div>
                     <div class="flex justify-end">
-                        <div class="w-64 mr-0">
+                        <div class="w-64">
                             <x-form.search 
                                 id="searchJenisSurat"
                                 name="search"
@@ -108,201 +111,202 @@
                         </form>
                     </div>
                 </div>
-             </div>
-            @push('scripts')
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                console.log('DOM Content Loaded');
-
-                if ($.fn.DataTable.isDataTable('#jenis-surat-table')) {
-                    $('#jenis-surat-table').DataTable().destroy();
-                }
-
-                const table = $('#jenis-surat-table').DataTable({
-                    language: {
-                        paginate: {
-                            previous: 'Sebelumnya',
-                            next: 'Selanjutnya'
-                        },
-                        info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
-                        infoEmpty: 'Menampilkan 0 sampai 0 dari 0 data',
-                        infoFiltered: '(difilter dari _MAX_ total data)',
-                        zeroRecords: 'Tidak ada data yang cocok'
-                    },
-                    dom: 'rt<"flex justify-between items-center mt-4"<"text-sm text-gray-600"i><"flex"p>>',
-                    pageLength: 5,
-                    ordering: false,
-                    responsive: true,
-                    processing: true,
-                    searching: true,
-                    lengthChange: false,
-                    order: [[0, 'desc']],
-                    drawCallback: function() {
-                        attachEventListeners();
-                    }
-                });
-
-                const searchInput = document.getElementById('searchJenisSurat');
-                if (searchInput) {
-                    searchInput.addEventListener('keyup', function() {
-                        table.search(this.value).draw();
-                    });
-
-                    searchInput.addEventListener('input', function() {
-                        if (this.value === '') {
-                            table.search('').draw();
-                        }
-                    });
-                }
-
-                function attachEventListeners() {
-                    document.addEventListener('click', function(e) {
-                        if (e.target && e.target.classList.contains('btn-edit')) {
-                            const id = e.target.getAttribute('data-id');
-                            const nama = e.target.getAttribute('data-nama');
-                            
-                            // Set nilai ke form edit
-                            const editIdInput = document.getElementById('editJenisSuratInput');
-                            const modalEdit = document.getElementById('modalEdit');
-                            const formEdit = document.getElementById('formEditJenisSurat');
-                            
-                            if (editIdInput && modalEdit && formEdit) {
-                                editIdInput.value = nama;
-                                formEdit.action = `/tata-usaha/jenis-surat/${id}`;
-                                modalEdit.classList.remove('hidden');
-                            } else {
-                                console.error('Elemen form edit tidak ditemukan');
-                            }
-                        }
-                    });
-
-                    // Event listener untuk tombol hapus
-                    document.querySelectorAll('.btn-hapus').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const id = this.getAttribute('data-id');
-                            Swal.fire({
-                                title: 'Apakah Anda yakin?',
-                                text: "Data yang dihapus tidak dapat dikembalikan!",
-                                icon: 'warning',
-                                showCancelButton: true,
-                                confirmButtonColor: '#3085d6',
-                                cancelButtonColor: '#d33',
-                                confirmButtonText: 'Ya, hapus!',
-                                cancelButtonText: 'Batal'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    document.getElementById('form-hapus-' + id).submit();
-                                }
-                            });
-                        });
-                    });
-                }
-
-                // Initial attachment of event listeners
-                attachEventListeners();
-
-                // Modal functionality
-                const btnShowModal = document.getElementById('btnShowModal');
-                const modalTambah = document.getElementById('modalTambah');
-                const btnCloseModal = document.getElementById('btnCloseModal');
-                const btnCancelModal = document.getElementById('btnCancelModal');
-
-                if (btnShowModal && modalTambah) {
-                    btnShowModal.addEventListener('click', function() {
-                        modalTambah.classList.remove('hidden');
-                    });
-                }
-
-                if (btnCloseModal && modalTambah) {
-                    btnCloseModal.addEventListener('click', function() {
-                        modalTambah.classList.add('hidden');
-                    });
-                }
-
-                if (btnCancelModal && modalTambah) {
-                    btnCancelModal.addEventListener('click', function() {
-                        modalTambah.classList.add('hidden');
-                    });
-                }
-
-                // Edit modal functionality
-                const btnCloseEditModal = document.getElementById('btnCloseEditModal');
-                const btnCancelEditModal = document.getElementById('btnCancelEditModal');
-                const modalEdit = document.getElementById('modalEdit');
-
-                if (btnCloseEditModal && modalEdit) {
-                    btnCloseEditModal.addEventListener('click', function() {
-                        modalEdit.classList.add('hidden');
-                    });
-                }
-
-                if (btnCancelEditModal && modalEdit) {
-                    btnCancelEditModal.addEventListener('click', function() {
-                        modalEdit.classList.add('hidden');
-                    });
-                }
-
-                // Close modals when clicking outside
-                window.addEventListener('click', function(e) {
-                    if (e.target === modalTambah) {
-                        modalTambah.classList.add('hidden');
-                    }
-                    if (e.target === modalEdit) {
-                        modalEdit.classList.add('hidden');
-                    }
-                });
-
-                // Form edit submission
-                const formEditJenisSurat = document.getElementById('formEditJenisSurat');
-                if (formEditJenisSurat) {
-                    formEditJenisSurat.addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        
-                        const formData = new FormData(this);
-                        const url = this.action;
-                        
-                        fetch(url, {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire({
-                                    title: 'Berhasil!',
-                                    text: data.message,
-                                    icon: 'success',
-                                    confirmButtonText: 'OK'
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire({
-                                    title: 'Error!',
-                                    text: data.message,
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            Swal.fire({
-                                title: 'Error!',
-                                text: 'Terjadi kesalahan saat memperbarui data',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
-                        });
-                    });
-                }
-            });
-            </script>
-            @endpush
+            </div>
         </main>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded');
+
+    if ($.fn.DataTable.isDataTable('#jenis-surat-table')) {
+        $('#jenis-surat-table').DataTable().destroy();
+    }
+
+    const table = $('#jenis-surat-table').DataTable({
+        language: {
+            paginate: {
+                previous: 'Sebelumnya',
+                next: 'Selanjutnya'
+            },
+            info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+            infoEmpty: 'Menampilkan 0 sampai 0 dari 0 data',
+            infoFiltered: '(difilter dari _MAX_ total data)',
+            zeroRecords: 'Tidak ada data yang cocok'
+        },
+        dom: 'rt<"flex justify-between items-center mt-4"<"text-sm text-gray-600"i><"flex"p>>',
+        pageLength: 5,
+        ordering: false,
+        responsive: true,
+        processing: true,
+        searching: true,
+        lengthChange: false,
+        order: [[0, 'desc']],
+        drawCallback: function() {
+            attachEventListeners();
+        }
+    });
+
+    const searchInput = document.getElementById('searchJenisSurat');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            table.search(this.value).draw();
+        });
+
+        searchInput.addEventListener('input', function() {
+            if (this.value === '') {
+                table.search('').draw();
+            }
+        });
+    }
+
+    function attachEventListeners() {
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('btn-edit')) {
+                const id = e.target.getAttribute('data-id');
+                const nama = e.target.getAttribute('data-nama');
+                
+                // Set nilai ke form edit
+                const editIdInput = document.getElementById('editJenisSuratInput');
+                const modalEdit = document.getElementById('modalEdit');
+                const formEdit = document.getElementById('formEditJenisSurat');
+                
+                if (editIdInput && modalEdit && formEdit) {
+                    editIdInput.value = nama;
+                    formEdit.action = `/tata-usaha/jenis-surat/${id}`;
+                    modalEdit.classList.remove('hidden');
+                } else {
+                    console.error('Elemen form edit tidak ditemukan');
+                }
+            }
+        });
+
+        // Event listener untuk tombol hapus
+        document.querySelectorAll('.btn-hapus').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                Swal.fire({
+                    title: 'Apakah Anda yakin?',
+                    text: "Data yang dihapus tidak dapat dikembalikan!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById('form-hapus-' + id).submit();
+                    }
+                });
+            });
+        });
+    }
+
+    // Initial attachment of event listeners
+    attachEventListeners();
+
+    // Modal functionality
+    const btnShowModal = document.getElementById('btnShowModal');
+    const modalTambah = document.getElementById('modalTambah');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const btnCancelModal = document.getElementById('btnCancelModal');
+
+    if (btnShowModal && modalTambah) {
+        btnShowModal.addEventListener('click', function() {
+            modalTambah.classList.remove('hidden');
+        });
+    }
+
+    if (btnCloseModal && modalTambah) {
+        btnCloseModal.addEventListener('click', function() {
+            modalTambah.classList.add('hidden');
+        });
+    }
+
+    if (btnCancelModal && modalTambah) {
+        btnCancelModal.addEventListener('click', function() {
+            modalTambah.classList.add('hidden');
+        });
+    }
+
+    // Edit modal functionality
+    const btnCloseEditModal = document.getElementById('btnCloseEditModal');
+    const btnCancelEditModal = document.getElementById('btnCancelEditModal');
+    const modalEdit = document.getElementById('modalEdit');
+
+    if (btnCloseEditModal && modalEdit) {
+        btnCloseEditModal.addEventListener('click', function() {
+            modalEdit.classList.add('hidden');
+        });
+    }
+
+    if (btnCancelEditModal && modalEdit) {
+        btnCancelEditModal.addEventListener('click', function() {
+            modalEdit.classList.add('hidden');
+        });
+    }
+
+    // Close modals when clicking outside
+    window.addEventListener('click', function(e) {
+        if (e.target === modalTambah) {
+            modalTambah.classList.add('hidden');
+        }
+        if (e.target === modalEdit) {
+            modalEdit.classList.add('hidden');
+        }
+    });
+
+    // Form edit submission
+    const formEditJenisSurat = document.getElementById('formEditJenisSurat');
+    if (formEditJenisSurat) {
+        formEditJenisSurat.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const url = this.action;
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Terjadi kesalahan saat memperbarui data',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            });
+        });
+    }
+});
+</script>
+@endpush
 @endsection

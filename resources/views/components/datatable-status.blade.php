@@ -25,6 +25,7 @@
         let table = $('#' + '{{ $id }}').DataTable({
             processing: true,
             serverSide: true,
+            ordering: false,
             ajax: {
                 url: '{{ $ajaxUrl }}',
                 data: function(d) {
@@ -107,25 +108,7 @@
             ],
             order: [[3, 'desc']],
             language: {
-                "sEmptyTable": "Tidak ada data yang tersedia di tabel",
-                "sInfo": "Menampilkan _START_ hingga _END_ dari _TOTAL_ entri",
-                "sInfoEmpty": "Menampilkan 0 hingga 0 dari 0 entri",
-                "sInfoFiltered": "(disaring dari _MAX_ total entri)",
-                "sLengthMenu": "Tampilkan _MENU_ entri",
-                "sLoadingRecords": "Sedang memuat...",
-                "sProcessing": "Sedang memproses...",
-                "sSearch": "Cari:",
-                "sZeroRecords": "Tidak ditemukan data yang sesuai",
-                "oPaginate": {
-                    "sFirst": "Pertama",
-                    "sLast": "Terakhir",
-                    "sNext": "Selanjutnya",
-                    "sPrevious": "Sebelumnya"
-                },
-                "oAria": {
-                    "sSortAscending": ": aktifkan untuk mengurutkan kolom ascending",
-                    "sSortDescending": ": aktifkan untuk mengurutkan kolom descending"
-                }
+                url: "https://cdn.datatables.net/plug-ins/1.10.25/i18n/Indonesian.json"
             },
             drawCallback: function(settings) {
                 var api = this.api();
@@ -135,13 +118,13 @@
                 $('.btn-detail-surat').off('click').on('click', function(e) {
                     e.preventDefault();
                     const url = $(this).data('url');
-                    window.open(url, '_blank');
+                    window.location.href = url;
                 });
             },
             dom: 'tip' // Menampilkan informasi dan pagination
         });
 
-        $('#custom-search').on('keyup', function () {
+        $('#custom-search').on('input', function () {
             table.ajax.reload();  
         });
     });

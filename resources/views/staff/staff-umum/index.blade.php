@@ -10,7 +10,7 @@
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
-        @include('layouts.header')
+        @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
         <main class="flex-1 bg-white p-12">
             @yield('content')
             <div class="title-page flex justify-between">

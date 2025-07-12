@@ -9,9 +9,9 @@ use App\Models\StatusSurat;
 use App\Models\Surat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Helpers\PengusulHelper;
+use Illuminate\Support\Str;
 
 class SuratController extends Controller
 {
@@ -50,7 +50,15 @@ class SuratController extends Controller
         try {
             $lampiranPath = null;
             if ($request->hasFile('lampiran')) {
-                $lampiranPath = $request->file('lampiran')->store('lampiran', 'public');
+                $file = $request->file('lampiran');
+                $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $extension = $file->getClientOriginalExtension();
+                $timestamp = now()->format('Ymd_His');
+                $fileName = Str::slug($originalName) . '_' . $timestamp . '.' . $extension;
+            
+                $file->storeAs('lampiran', $fileName, 'public');
+            
+                $lampiranPath = 'lampiran/' . $fileName;
             }
 
             $dataSurat = [
@@ -71,6 +79,9 @@ class SuratController extends Controller
                     'id_surat' => $surat->id_surat,
                     'id_status_surat' => 2, 
                     'tanggal_rilis' => now('Asia/Jakarta'),
+                    'keterangan' => 'Diajukan oleh Pengusul',
+                    'diubah_oleh' => $user->id_pengusul,
+                    'diubah_oleh_tipe' => 'pengusul',
                 ]);
             }
 
@@ -152,7 +163,7 @@ class SuratController extends Controller
         foreach ($suratList as $no => $surat) {
             $anggota = $surat->pengusul->where('pivot.id_peran_keanggotaan', 2)->pluck('nama')->join(', ');
             $ketua = $surat->pengusul->firstWhere('pivot.id_peran_keanggotaan', 1)?->nama ?? '';
-            $shortDescription = \Illuminate\Support\Str::limit(strip_tags($surat->deskripsi), 50, '...');
+            $shortDescription = Str::limit(strip_tags($surat->deskripsi), 50, '...');
 
             $data[] = [
                 'no' => $no,
@@ -161,9 +172,9 @@ class SuratController extends Controller
                 'jenis_surat' => '<div class="flex items-center gap-1 text-md">
                     <span>' . e($surat->jenisSurat->jenis_surat ?? '-') . '</span>
                  </div>',
-                'dibuat_oleh' => PengusulHelper::getNamaPengusul($surat->dibuat_oleh),
-                'ketua' => $ketua,
-                'anggota' => $anggota,
+                'dibuat_oleh' => $surat->dibuatOleh ? $surat->dibuatOleh->nama : '-',
+                'ketua' => $ketua ? $ketua : '-',
+                'anggota' => $anggota ? $anggota : '-',
                 'lampiran' => $surat->lampiran ?? null,
                 'deskripsi' => $shortDescription,
                 'id' => $surat->id_surat
@@ -182,11 +193,28 @@ class SuratController extends Controller
     {
         $user = auth('pengusul')->user();
         $role = $user->role;
+        $roleName = is_array($role) ? ($role['role'] ?? null) : (is_object($role) ? $role->role : $role);
+        
         $surat = Surat::with(['pengusul' => function($query) {
             $query->select('pengusul.id_pengusul', 'pengusul.nama', 'pengusul.nim', 'pengusul.nip', 'pivot_pengusul_surat.id_peran_keanggotaan');
         }])->findOrFail($id);
+        
+        $namaPengaju = $surat->dibuatOleh->nama ?? null;
 
-        $jenisSurat = collect(DB::select('CALL sp_GetJenisSuratForSelect()'))->pluck('jenis_surat', 'id_jenis_surat');
+        // Filter jenis surat berdasarkan role
+        $jenisSuratQuery = collect(DB::select('CALL sp_GetJenisSuratForSelect()'));
+        
+        if ($roleName === 'Mahasiswa') {
+            // Mahasiswa hanya bisa melihat Surat Permohonan, Surat Pengantar, Surat Cuti Akademik
+            $jenisSurat = $jenisSuratQuery->filter(function($item) {
+                return in_array($item->jenis_surat, ['Surat Permohonan', 'Surat Pengantar', 'Surat Cuti Akademik']);
+            })->pluck('jenis_surat', 'id_jenis_surat');
+        } else {
+            // Dosen hanya bisa melihat Surat Tugas, Surat Undangan Kegiatan, Surat Izin Tidak Masuk
+            $jenisSurat = $jenisSuratQuery->filter(function($item) {
+                return in_array($item->jenis_surat, ['Surat Tugas', 'Surat Undangan Kegiatan', 'Surat Izin Tidak Masuk']);
+            })->pluck('jenis_surat', 'id_jenis_surat');
+        }
 
         // Ambil data ketua dan anggota yang sudah tersimpan
         $ketua = $surat->pengusul->where('pivot.id_peran_keanggotaan', 1)->first();
@@ -198,11 +226,19 @@ class SuratController extends Controller
             'jenisSurat' => $jenisSurat,
             'ketua' => $ketua,
             'anggota' => $anggota,
-            'role' => $role
+            'role' => $role,
+            'namaPengaju' => $namaPengaju,
+
+            'action' => $roleName === 'Dosen'
+            ? route('dosen.surat.update', $surat->id_surat)
+            : route('mahasiswa.surat.update', $surat->id_surat),
+
+            'routeDraft' => $roleName === 'Dosen'
+            ? route('dosen.draft')
+            : route('mahasiswa.draft'),
         ];
 
         // Tentukan view berdasarkan role
-        $roleName = is_array($role) ? ($role['role'] ?? null) : (is_object($role) ? $role->role : $role);
         $view = $roleName === 'Dosen' ? 'pengusul.dosen.edit' : 'pengusul.mahasiswa.edit';
         
         return view($view, $data);
@@ -281,6 +317,8 @@ class SuratController extends Controller
                         'id_surat' => $surat->id_surat,
                         'id_status_surat' => $statusDiajukan->id_status_surat,
                         'tanggal_rilis' => now('Asia/Jakarta'),
+                        'diubah_oleh' => $user->id_pengusul,
+                        'diubah_oleh_tipe' => 'pengusul',
                     ]);
                 }
                 // Jika status terakhir sudah Diajukan, Divalidasi, Menunggu Persetujuan, Diterbitkan, Ditolak, TIDAK menambah status apapun
@@ -326,6 +364,31 @@ class SuratController extends Controller
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal memperbarui surat: ' . $e->getMessage());
         }
+    }
+
+    public function ajukanUlang($id)
+    {
+        $user = auth('pengusul')->user();
+        $role = is_object($user->role) ? $user->role->role : $user->role;
+
+        $surat = Surat::with(['pengusul', 'jenisSurat', 'dibuatOleh'])->findOrFail($id);
+        $jenisSurat = collect(DB::select('CALL sp_GetJenisSuratForSelect()'))->pluck('jenis_surat', 'id_jenis_surat');
+
+        $ketua = $surat->pengusul->where('pivot.id_peran_keanggotaan', 1)->first();
+        $anggota = $surat->pengusul->where('pivot.id_peran_keanggotaan', 2);
+
+        $data = [
+            'surat' => $surat,
+            'jenisSurat' => $jenisSurat,
+            'ketua' => $ketua,
+            'anggota' => $anggota,
+            'namaPengaju' => $surat->dibuatOleh->nama ?? null,
+            'isMahasiswa' => $role === 'Mahasiswa',
+            'routeDraft' => $role === 'Dosen' ? route('dosen.draft') : route('mahasiswa.draft'),
+            'action' => route('pengusul.surat.update', $surat->id_surat),
+        ];
+
+        return view('pengusul.surat.ajukan-ulang', $data);
     }
 
     public function destroy($id)

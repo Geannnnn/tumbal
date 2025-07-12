@@ -14,9 +14,10 @@ class RoleMiddleware
         $staff = Auth::guard('staff')->user();
         $admin = Auth::guard('admin')->user();
         $kepalaSub = Auth::guard('kepala_sub')->user();
+        $direktur = Auth::guard('direktur')->user();
 
         // Cek jika belum login di semua guard
-        if (!$pengusul && !$staff && !$admin && !$kepalaSub) {
+        if (!$pengusul && !$staff && !$admin && !$kepalaSub && !$direktur) {
             return redirect('/login')->with('error', 'Silakan login dulu.');
         }
 
@@ -37,6 +38,11 @@ class RoleMiddleware
 
         // Role Kepala Sub
         if ($role === 'kepala_sub' && $kepalaSub) {
+            return $next($request);
+        }
+
+        // Role Direktur
+        if ($role === 'direktur' && $direktur) {
             return $next($request);
         }
 

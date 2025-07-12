@@ -12,6 +12,9 @@ use App\Models\JenisSurat;
 use App\Models\RolePengusul;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\PengusulHelper;
+use App\Models\KomentarSurat;
+use App\Notifications\SuratDiterbitkan;
+use App\Notifications\SuratDitolak;
 
 class tatausahaController extends Controller
 {
@@ -226,7 +229,7 @@ class tatausahaController extends Controller
                 return $row->dibuatOleh ? $row->dibuatOleh->nama : '-';
             })
             ->addColumn('tanggal_pengajuan', function($row) {
-                return $row->tanggal_pengajuan ? Carbon::parse($row->tanggal_pengajuan)->format('d/m/Y') : '-';
+                return $row->tanggal_pengajuan ? Carbon::parse($row->tanggal_pengajuan)->format('d-m-Y') : '-';
             })
             ->addColumn('actions', function($row) {
                 return '<a href="' . route('tatausaha.terbitkan.detail', $row->id_surat) . '" class="inline-block bg-green-700 text-white px-3 py-1 rounded-lg hover:bg-green-800 transition-transform duration-300 transform hover:scale-110">Terbitkan</a>';
@@ -324,10 +327,16 @@ class tatausahaController extends Controller
             });
 
         // Filter Rentang Tanggal
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $startDate = Carbon::parse($request->start_date)->startOfDay();
-            $endDate = Carbon::parse($request->end_date)->endOfDay();
+        if ($request->filled('periode_awal') && $request->filled('periode_akhir')) {
+            $startDate = Carbon::parse($request->periode_awal)->startOfDay();
+            $endDate = Carbon::parse($request->periode_akhir)->endOfDay();
             $query->whereBetween('tanggal_pengajuan', [$startDate, $endDate]);
+        } elseif ($request->filled('periode_awal')) {
+            $startDate = Carbon::parse($request->periode_awal)->startOfDay();
+            $query->where('tanggal_pengajuan', '>=', $startDate);
+        } elseif ($request->filled('periode_akhir')) {
+            $endDate = Carbon::parse($request->periode_akhir)->endOfDay();
+            $query->where('tanggal_pengajuan', '<=', $endDate);
         }
 
         // Filter search query
@@ -350,10 +359,10 @@ class tatausahaController extends Controller
                 return $row->jenisSurat->jenis_surat;
             })
             ->addColumn('ketua', function($row) {
-                return $row->dibuat_oleh ? PengusulHelper::getNamaPengusul($row->dibuat_oleh) : '-';
+                return $row->dibuat_oleh ? $row->dibuatOleh->nama : '-';
             })
             ->addColumn('tanggal_pengajuan', function($row) {
-                return Carbon::parse($row->tanggal_pengajuan)->format('d/m/Y');
+                return Carbon::parse($row->tanggal_pengajuan)->format('d-m-Y');
             })
             ->addColumn('status', function($row) {
                 return $row->statusTerakhir ? $row->statusTerakhir->statusSurat->status_surat : '-';
@@ -379,6 +388,10 @@ class tatausahaController extends Controller
 
     public function tolakSurat(Request $request, $id)
     {
+        $request->validate([
+            'komentar' => 'required|string|max:500'
+        ]);
+
         $surat = Surat::findOrFail($id);
 
         // Cari id_status_surat untuk "Ditolak"
@@ -386,20 +399,32 @@ class tatausahaController extends Controller
         if (!$statusDitolak) {
             return back()->with('error', 'Status Ditolak tidak ditemukan!');
         }
-
+        $lastRiwayat = RiwayatStatusSurat::where('id_surat', $surat->id_surat)
+            ->orderBy('tanggal_rilis', 'desc')
+            ->first();
+        $baseTime = $lastRiwayat ? Carbon::parse($lastRiwayat->tanggal_rilis) : now();
         $riwayat = RiwayatStatusSurat::create([
             'id_surat' => $surat->id_surat,
             'id_status_surat' => $statusDitolak->id_status_surat,
-            'tanggal_rilis' => now(),
+            'tanggal_rilis' => $baseTime->copy()->addSecond(1),
+            'keterangan' => 'Ditolak oleh Tata Usaha',
+            'diubah_oleh' => auth('staff')->user()->id_staff,
+            'diubah_oleh_tipe' => 'staff',
         ]);
 
-        if ($request->filled('catatan')) {
-            \App\Models\KomentarSurat::create([
+        if ($request->filled('komentar')) {
+            KomentarSurat::create([
                 'id_riwayat_status_surat' => $riwayat->id,
                 'id_surat' => $surat->id_surat,
                 'id_user' => auth('staff')->id(),
-                'komentar' => $request->catatan,
+                'komentar' => $request->komentar,
             ]);
+        }
+
+        $pembuat = $surat->dibuatOleh; 
+
+        if ($pembuat) {
+            $pembuat->notify(new SuratDitolak($surat));
         }
 
         return redirect()->route('tatausaha.tinjausurat')->with('success', 'Surat berhasil ditolak');
@@ -428,12 +453,16 @@ class tatausahaController extends Controller
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusValidasi->id_status_surat,
                 'tanggal_rilis' => $now,
+                'diubah_oleh' => auth('staff')->user()->id_staff,
+                'diubah_oleh_tipe' => 'staff',
             ]);
             // Tambahkan riwayat status "Menunggu Persetujuan" dengan waktu +1 detik
             RiwayatStatusSurat::create([
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusMenunggu->id_status_surat,
                 'tanggal_rilis' => $now->copy()->addSecond(),
+                'diubah_oleh' => auth('staff')->user()->id_staff,
+                'diubah_oleh_tipe' => 'staff',
             ]);
         } else {
             // Jika status terakhir bukan Diajukan, jangan lanjutkan atau sesuaikan dengan kebutuhan
@@ -446,15 +475,24 @@ class tatausahaController extends Controller
     public function showStatusSurat($id)
     {
         $surat = Surat::with(['riwayatStatus' => function($q) {
-            $q->with('statusSurat')->orderBy('tanggal_rilis', 'asc');
+            $q->with('statusSurat','komentarSurat')->orderBy('tanggal_rilis', 'asc');
         }, 'dibuatOleh'])->findOrFail($id);
 
         $riwayat = [];
         $prevStatus = null;
         foreach ($surat->riwayatStatus as $item) {
             $statusName = $item->statusSurat->status_surat ?? '-';
-            $oleh = PengusulHelper::getNamaPengusul($surat->dibuat_oleh);
-            $tanggal = Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y H:i');
+            
+            // Logika untuk menentukan siapa yang mengubah status
+            if ($item->diubah_oleh && $item->diubah_oleh_tipe) {
+                // Jika ada data diubah_oleh, gunakan itu
+                $oleh = PengusulHelper::getNamaUserByTipe($item->diubah_oleh, $item->diubah_oleh_tipe);
+            } else {
+                // Jika tidak ada data diubah_oleh, gunakan pembuat surat (untuk status awal)
+                $oleh = PengusulHelper::getNamaPengusul($surat->dibuat_oleh);
+            }
+            
+            $tanggal = Carbon::parse($item->tanggal_rilis)->translatedFormat('j-m-Y H:i');
             
             // Tentukan warna berdasarkan status
             $warna = 'bg-purple-500'; // default
@@ -488,6 +526,9 @@ class tatausahaController extends Controller
                 'ke' => $statusName,
                 'oleh' => $oleh,
                 'warna' => $warna,
+                'komentar' => strtolower($statusName) === 'ditolak' 
+                    ? optional($item->komentarSurat->first())->komentar 
+                    : null,
             ];
             $prevStatus = $statusName;
         }
@@ -543,12 +584,17 @@ class tatausahaController extends Controller
         }
 
         // Search functionality
-        if ($request->has('search') && $request->search['value'] != '') {
-            $searchValue = $request->search['value'];
+        $searchValue = $request->input('search.value', null);
+        if (!empty($searchValue)) {
             $query->where(function ($q) use ($searchValue) {
                 $q->where('judul_surat', 'like', "%{$searchValue}%")
                   ->orWhere('nomor_surat', 'like', "%{$searchValue}%");
             });
+        }
+        // Search khusus judul_surat dari input custom
+        $searchJudul = $request->input('search_judul_surat');
+        if (!empty($searchJudul)) {
+            $query->where('judul_surat', 'like', "%{$searchJudul}%");
         }
 
         return DataTables::of($query)
@@ -561,7 +607,7 @@ class tatausahaController extends Controller
                 return $latestStatus ? $latestStatus->statusSurat->status_surat : '-';
             })
             ->addColumn('tanggal_pengajuan', function($row) {
-                return $row->tanggal_pengajuan ? date('d/m/Y', strtotime($row->tanggal_pengajuan)) : '-';
+                return $row->tanggal_pengajuan ? date('d-m-Y', strtotime($row->tanggal_pengajuan)) : '-';
             })
             ->rawColumns(['status'])
             ->make(true);
@@ -599,10 +645,10 @@ class tatausahaController extends Controller
                 return $row->nomor_surat ?? '-';
             })
             ->addColumn('tanggal_surat_dibuat', function($row) {
-                return $row->tanggal_surat_dibuat ? Carbon::parse($row->tanggal_surat_dibuat)->format('d/m/Y') : '-';
+                return $row->tanggal_surat_dibuat ? Carbon::parse($row->tanggal_surat_dibuat)->format('d-m-Y') : '-';
             })
             ->addColumn('tanggal_pengajuan', function($row) {
-                return Carbon::parse($row->tanggal_pengajuan)->format('d/m/Y');
+                return Carbon::parse($row->tanggal_pengajuan)->format('d-m-Y');
             })
             ->addColumn('status', function($row) {
                 return $row->statusTerakhir ? $row->statusTerakhir->statusSurat->status_surat : '-';
@@ -633,15 +679,25 @@ class tatausahaController extends Controller
         $lastRiwayat = RiwayatStatusSurat::where('id_surat', $surat->id_surat)
             ->orderBy('tanggal_rilis', 'desc')
             ->first();
-        $baseTime = $lastRiwayat ? \Carbon\Carbon::parse($lastRiwayat->tanggal_rilis) : now();
+        $baseTime = $lastRiwayat ? Carbon::parse($lastRiwayat->tanggal_rilis) : now();
 
         // Tambahkan riwayat status baru 'Diterbitkan' setelah status terakhir
         RiwayatStatusSurat::create([
             'id_surat' => $surat->id_surat,
             'id_status_surat' => $statusDiterbitkan->id_status_surat,
             'tanggal_rilis' => $baseTime->copy()->addSecond(1),
-            'keterangan' => 'Diterbitkan oleh Tata Usaha'
+            'keterangan' => 'Diterbitkan oleh Tata Usaha',
+            'diubah_oleh' => auth('staff')->user()->id_staff,
+            'diubah_oleh_tipe' => 'staff',
         ]);
+
+        // Trigger notifikasi ke semua pengusul dan pembuat surat
+        foreach ($surat->pengusul as $pengusul) {
+            $pengusul->notify(new SuratDiterbitkan($surat));
+        }
+        if ($surat->dibuatOleh && !$surat->pengusul->contains('id_pengusul', $surat->dibuat_oleh)) {
+            $surat->dibuatOleh->notify(new SuratDiterbitkan($surat));
+        }
 
         return redirect()->route('tatausaha.terbitkan')->with('success', 'Surat berhasil diterbitkan!');
     }

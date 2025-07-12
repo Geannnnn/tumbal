@@ -60,6 +60,11 @@ return [
             'driver' => 'session',
             'provider' => 'kepala_subs',
         ],
+
+        'direktur' => [
+            'driver' => 'session',
+            'provider' => 'direkturs',
+        ],
     ],
 
     /*
@@ -103,6 +108,11 @@ return [
         'kepala_subs' => [
             'driver' => 'eloquent',
             'model' => App\Models\KepalaSub::class,
+        ],
+
+        'direkturs' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Direktur::class,
         ],
     ],
 

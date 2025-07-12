@@ -10,7 +10,7 @@
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
-        @include('layouts.header')
+        @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
         <main class="flex-1 bg-gray-50 p-4 sm:p-6 md:p-8 lg:p-10">
             <div class="max-w-full mx-auto">
                 <h1 class="text-2xl font-bold text-gray-800 mb-6">Terbitkan Surat</h1>

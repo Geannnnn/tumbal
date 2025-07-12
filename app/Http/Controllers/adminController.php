@@ -17,9 +17,10 @@ class adminController extends Controller
 {
     public function index () {
 
-        $suratDiterima = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
-            $q->where('id_status_surat',1);
-        })->count();
+        $suratDiterima = Surat::where('is_draft',0)
+            ->whereHas('statusTerakhir.statusSurat', function($q){
+                $q->where('status_surat', 'Diterbitkan');
+            })->count();
 
         $suratDitolak = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
             $q->where('id_status_surat',2);

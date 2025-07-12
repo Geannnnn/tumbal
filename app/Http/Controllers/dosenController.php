@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\PengusulHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class dosenController extends Controller
 {
@@ -20,18 +21,9 @@ class dosenController extends Controller
         $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
 
         $suratDiterima = Surat::where('is_draft', 1)
-            ->whereNotNull('nomor_surat')
-            ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
-                $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
-            })
-            ->where(function($q) use ($user) {
-                $q->where('dibuat_oleh', $user)
-                  ->orWhereHas('pengusul', function($q2) use ($user) {
-                      $q2->where('pivot_pengusul_surat.id_pengusul', $user)
-                         ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
-                  });
-            })
-            ->count();
+            ->whereHas('statusTerakhir.statusSurat', function($q){
+                $q->where('status_surat', 'Diterbitkan');
+            })->count();
 
         $suratDitolak = Surat::where('is_draft', 1)
             ->whereNotNull('nomor_surat')
@@ -47,7 +39,23 @@ class dosenController extends Controller
             })
             ->count();
 
-        $notifikasiSurat = collect();
+        $notifikasiSurat = Surat::with(['jenisSurat', 'statusTerakhir.statusSurat'])
+            ->where('is_draft', 1)
+            ->whereNotNull('nomor_surat')
+            ->whereHas('riwayatStatus', function($q) use ($statusDiterbitkan) {
+                $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+            })
+            ->where(function($q) use ($user) {
+                $q->where('dibuat_oleh', $user)
+                  ->orWhereHas('pengusul', function($q2) use ($user) {
+                      $q2->where('pivot_pengusul_surat.id_pengusul', $user)
+                         ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                  });
+            })
+            ->orderByDesc('tanggal_surat_dibuat')
+            ->limit(5)
+            ->get();
+
         $columns = [
             'no' => "No",
             'nomor_surat' => "Nomor Surat",
@@ -91,10 +99,10 @@ class dosenController extends Controller
                 'no' => $index + $start + 1,
                 'nomor_surat' => $item->nomor_surat ?? '-',
                 'judul_surat' => $item->judul_surat ?? '-',
-                'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat ? date('d/m/Y', strtotime($item->tanggal_surat_dibuat)) : '-',
+                'tanggal_surat_dibuat' => $item->tanggal_surat_dibuat ? date('d-m-Y', strtotime($item->tanggal_surat_dibuat)) : '-',
                 'lampiran' => $item->lampiran,
-                'tanggal_pengajuan' => $item->tanggal_pengajuan ? date('d/m/Y', strtotime($item->tanggal_pengajuan)) : '-',
-                'aksi' => '<a href="' . route('dosen.surat.downloadPdf', $item->id_surat) . '" class="btn btn-success" target="_blank">Unduh PDF</a>'
+                'tanggal_pengajuan' => $item->tanggal_pengajuan ? date('d-m-Y', strtotime($item->tanggal_pengajuan)) : '-',
+                'aksi' => '<a href="' . route('dosen.surat.downloadPdf', $item->id_surat) . '" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-blue-700 transition duration-300" target="_blank"> <i class="fa-solid fa-file-pdf"></i> Unduh PDF</a>'
             ];
         });
         return response()->json([
@@ -235,7 +243,7 @@ class dosenController extends Controller
                     return $latestStatus ? $latestStatus->statusSurat->status_surat : '-';
             })
                 ->addColumn('tanggal_pengajuan', function($row) {
-                    return $row->tanggal_pengajuan ? date('d/m/Y', strtotime($row->tanggal_pengajuan)) : '-';
+                    return $row->tanggal_pengajuan ? date('d-m-Y', strtotime($row->tanggal_pengajuan)) : '-';
             })
                 ->rawColumns(['status'])
             ->make(true);
@@ -263,15 +271,24 @@ class dosenController extends Controller
     public function showStatusSurat($id)
     {
         $surat = Surat::with(['riwayatStatus' => function($q) {
-            $q->with('statusSurat')->orderBy('tanggal_rilis', 'asc');
+            $q->with('statusSurat','komentarSurat')->orderBy('tanggal_rilis', 'asc');
         }, 'dibuatOleh'])->findOrFail($id);
 
         $riwayat = [];
         $prevStatus = null;
         foreach ($surat->riwayatStatus as $item) {
             $statusName = $item->statusSurat->status_surat ?? '-';
-            $oleh = PengusulHelper::getNamaPengusul($surat->dibuat_oleh);
-            $tanggal = Carbon::parse($item->tanggal_rilis)->translatedFormat('j F Y H:i');
+            
+            // Logika untuk menentukan siapa yang mengubah status
+            if ($item->diubah_oleh && $item->diubah_oleh_tipe) {
+                // Jika ada data diubah_oleh, gunakan itu
+                $oleh = PengusulHelper::getNamaUserByTipe($item->diubah_oleh, $item->diubah_oleh_tipe);
+            } else {
+                // Jika tidak ada data diubah_oleh, gunakan pembuat surat (untuk status awal)
+                $oleh = PengusulHelper::getNamaPengusul($surat->dibuat_oleh);
+            }
+            
+            $tanggal = Carbon::parse($item->tanggal_rilis)->translatedFormat('j-m-Y H:i');
             
             // Tentukan warna berdasarkan status
             $warna = 'bg-purple-500'; // default
@@ -305,28 +322,43 @@ class dosenController extends Controller
                 'ke' => $statusName,
                 'oleh' => $oleh,
                 'warna' => $warna,
+                'komentar' => strtolower($statusName) === 'ditolak' 
+                    ? optional($item->komentarSurat->first())->komentar 
+                    : null,
             ];
             $prevStatus = $statusName;
         }
 
         return view('pengusul.dosen.riwayatstatus', [
-            'riwayat' => $riwayat
+            'riwayat' => $riwayat,
+            'judulSurat' => $surat->judul_surat,
+            'jenisSurat' => $surat->jenisSurat ? $surat->jenisSurat->jenis_surat : ''
         ]);
     }
 
     public function downloadPdf($id)
     {
         $surat = Surat::with(['dibuatOleh', 'jenisSurat', 'statusTerakhir.statusSurat'])->findOrFail($id);
-        $tanggalSurat = $surat->tanggal_surat_dibuat ? Carbon::parse($surat->tanggal_surat_dibuat)->translatedFormat('d F Y') : '-';
-        $tanggalPengajuan = $surat->tanggal_pengajuan ? Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d F Y') : '-';
-        $today = Carbon::now()->translatedFormat('d F Y');
+        $tanggalSurat = $surat->tanggal_surat_dibuat ? Carbon::parse($surat->tanggal_surat_dibuat)->translatedFormat('d-m-Y') : '-';
+        $tanggalPengajuan = $surat->tanggal_pengajuan ? Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d-m-Y') : '-';
+        $today = Carbon::now()->translatedFormat('d-m-Y');
         $pdf = Pdf::loadView('pdf.surat', [
             'surat' => $surat,
             'tanggalSurat' => $tanggalSurat,
             'tanggalPengajuan' => $tanggalPengajuan,
             'today' => $today
         ]);
-        $filename = $surat->nomor_surat ? ($surat->nomor_surat.'-'.$surat->id_surat.'.pdf') : ('surat-'.$id.'.pdf');
+        $jenisSurat = $surat->jenisSurat->jenis_surat ?? 'Surat';
+        $namaPengusul = $surat->dibuatOleh->nama ?? 'Pengusul';
+        $tanggalSuratDibuat = $surat->tanggal_surat_dibuat 
+            ? Carbon::parse($surat->tanggal_surat_dibuat)->format('Y-m-d')
+            : now()->format('Y-m-d');
+        $nomor = $surat->nomor_surat ?? 'no-nomor';
+
+        $filename = Str::slug($jenisSurat) . '_' . 
+                    Str::slug($namaPengusul) . '_' . 
+                    $tanggalSuratDibuat . '_' . 
+                    Str::slug($nomor) . '.pdf';
         return $pdf->stream($filename);
     }
 }

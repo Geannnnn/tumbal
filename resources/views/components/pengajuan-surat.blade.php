@@ -31,7 +31,7 @@
         <div class="flex justify-between">
             <div class="flex flex-col w-2/5 gap-4">
                 <span>Judul Surat</span>
-                <input type="text" name="judul_surat" class="bg-[#F0F2FF] py-2 px-4 rounded-lg outline-none" id="">
+                <input type="text" name="judul_surat" class="bg-[#F0F2FF] py-2 px-4 rounded-lg outline-none" id="" placeholder="Contoh Pengajuan Izin Cuti">
                 <!-- Input Nama Pengaju (readonly, default hidden) -->
                 <div id="input-nama-pengaju" class="flex flex-col gap-2 hidden">
                     <span>Nama Pengaju</span>
@@ -52,14 +52,18 @@
                     </div>
 
                     <div class="flex flex-col gap-2 w-full hidden" id="fileInputWrapper">
-                        <span class="text-sm text-gray-600">*Upload file jika ada</span>
+
+                        <span class="text-sm text-gray-600">
+                            *Upload file jika ada <br>
+                            <span class="text-xs text-red-500">Hanya diperbolehkan 1 file PDF, maksimal ukuran 10 MB.</span>
+                        </span>
                         <label for="real-file" class="w-full cursor-pointer bg-[#F0F2FF] text-[#6D727C] py-3 px-4 rounded-lg outline-none transition text-start hover:bg-[#e6e9f0]">
                             <i class="fa-regular fa-file mr-2"></i>Upload File
                         </label>
-                        <input type="file" id="real-file" name="lampiran" class="hidden" accept="application/pdf, image/*, .docx, .xlsx, .txt">
+                        <input type="file" id="real-file" name="lampiran" class="hidden" accept="application/pdf">
                         <span id="file-name" class="text-sm text-gray-500 mt-2">Belum ada file</span>
                     </div>
-
+                    
                     <script>
                         const toggle = document.getElementById("lampiranToggle");
                         const fileInputWrapper = document.getElementById("fileInputWrapper");
@@ -89,7 +93,7 @@
 
                 <!-- Input Tujuan Surat yang muncul secara dinamis -->
                 <div id="tujuan-surat-container" class="hidden">
-                    <span>Tujuan Surat <p class="text-[#6D727C] text-xs">\Max 100 huruf</p></span>
+                    <span class="flex">Tujuan Surat <p class="text-[#6D727C] text-xs">\Max 100 huruf</p></span>
                     <textarea 
                         name="tujuan_surat" 
                         id="tujuan_surat"
@@ -146,7 +150,7 @@
                     });
                 </script>
 
-                <span class="flex">Deskripsi<p class="text-[#6D727C]">\Max 300 huruf</p></span>
+                <span class="flex">Deskripsi<p class="text-[#6D727C] text-xs">\Max 300 huruf</p></span>
                 <textarea maxlength="300" name="deskripsi" class="w-full h-32 p-3 border border-gray-300 rounded-md bg-[#F0F2FF] outline-none" placeholder="Deskripsi Surat..."></textarea>
             </div>  
         </div>

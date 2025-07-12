@@ -9,7 +9,7 @@
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
-        @include('layouts.header')
+        @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
         <main class="flex-1 p-4 sm:p-6 md:p-8 lg:p-10">
             <div class="container mx-auto">
                 @if(!$surat->nomor_surat || optional($surat->statusTerakhir->statusSurat)->status_surat !== 'Diterbitkan')
@@ -64,7 +64,7 @@
                         </div>
                         <div class="grid grid-cols-12">
                             <span class="col-span-3 font-medium">Tanggal Pengajuan</span>
-                            <span class="col-span-9">: {{ $surat->tanggal_pengajuan ? \Carbon\Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d F Y') : '-' }}</span>
+                            <span class="col-span-9">: {{ $surat->tanggal_pengajuan ? \Carbon\Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d-m-Y') : '-' }}</span>
                         </div>
                         <div class="grid grid-cols-12">
                             <span class="col-span-3 font-medium">Dari</span>
@@ -108,9 +108,13 @@
                     <!-- Tanda Tangan -->
                     <div class="flex justify-end">
                         <div class="text-center">
-                            <p class="mb-16">Batam, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
-                            <p class="font-semibold">( ....................................... )</p>
-                            <p>Staff Umum</p>
+                            <p class="mb-4">Batam, {{ \Carbon\Carbon::now()->translatedFormat('d-m-Y') }}</p>
+                            <!-- QR Code Verifikasi -->
+                            <div class="mb-4 text-center">
+                                <img class="mx-auto" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode('https://tte.polibatam.ac.id/index.php?page=qrsign&id=UWtZZ1RNUkdldFU9') }}" alt="QR Verifikasi TTE">
+                                <p class="text-xs text-gray-500 mt-2">Link: <a href="https://tte.polibatam.ac.id/index.php?page=qrsign&id=UWtZZ1RNUkdldFU9" target="_blank" class="underline text-blue-600">Verifikasi TTE</a></p>
+                            </div>
+                            <p class="font-semibold">( Direktur )</p>
                         </div>
                     </div>
                 </div>

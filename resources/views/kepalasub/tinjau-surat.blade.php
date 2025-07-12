@@ -9,7 +9,7 @@
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
-        @include('layouts.header')
+        @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
         <main class="flex-1 p-4 sm:p-6 md:p-8 lg:p-10">
             <div class="container mx-auto">
                 <!-- Tombol Aksi di Atas -->
@@ -43,7 +43,7 @@
                         </div>
                         <div class="grid grid-cols-12">
                             <span class="col-span-3 font-medium">Tanggal</span>
-                            <span class="col-span-9">: {{ \Carbon\Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d F Y') }}</span>
+                            <span class="col-span-9">: {{ \Carbon\Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d-m-Y') }}</span>
                         </div>
                         <div class="grid grid-cols-12">
                             <span class="col-span-3 font-medium">Dari</span>
@@ -86,9 +86,8 @@
                     <!-- Tanda Tangan -->
                     <div class="flex justify-end">
                         <div class="text-center">
-                            <p class="mb-16">Batam, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}</p>
-                            <p class="font-semibold">( ....................................... )</p>
-                            <p>Kepala Sub Bagian</p>
+                            <p class="mb-24">Batam, {{ \Carbon\Carbon::now()->translatedFormat('d-m-Y') }}</p>
+                            <p class="font-semibold">( Kepala Sub Bagian )</p>
                         </div>
                     </div>
                 </div>

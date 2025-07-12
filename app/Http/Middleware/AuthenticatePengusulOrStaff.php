@@ -13,7 +13,8 @@ class AuthenticatePengusulOrStaff
             Auth::guard('pengusul')->check() ||
             Auth::guard('staff')->check() ||
             Auth::guard('admin')->check() ||
-            Auth::guard('kepala_sub')->check()
+            Auth::guard('kepala_sub')->check() ||
+            Auth::guard('direktur')->check()
         ) {
             return $next($request);
         }

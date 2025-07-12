@@ -10,6 +10,9 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Helpers\PengusulHelper;
+use App\Models\KomentarSurat;
+use App\Notifications\SuratDitolak;
+use Illuminate\Support\Facades\Auth;
 
 class KepalaSubController extends Controller
 {
@@ -28,9 +31,8 @@ class KepalaSubController extends Controller
 
         if ($statusMenungguPersetujuan) {
             $suratDiterima = Surat::where('is_draft', 1)
-                ->whereYear('tanggal_pengajuan', $currentYear)
-                ->whereHas('riwayatStatus', function($q) use ($statusMenungguPersetujuan) {
-                    $q->where('id_status_surat', $statusMenungguPersetujuan->id_status_surat);
+                ->whereHas('statusTerakhir.statusSurat', function($q){
+                    $q->where('status_surat', 'Diterbitkan');
                 })->count();
         }
 
@@ -145,7 +147,7 @@ class KepalaSubController extends Controller
                 'id' => $item->id_surat,
                 'nomor_surat' => $item->nomor_surat ?? '-',
                 'judul_surat' => $item->judul_surat ?? '-',
-                'tanggal_pengajuan' => $item->tanggal_pengajuan ? date('d/m/Y', strtotime($item->tanggal_pengajuan)) : '-',
+                'tanggal_pengajuan' => $item->tanggal_pengajuan ? date('d-m-Y', strtotime($item->tanggal_pengajuan)) : '-',
                 'jenis_surat' => $item->jenisSurat ? $item->jenisSurat->jenis_surat : '-',
                 'pengusul' => $item->dibuat_oleh ? PengusulHelper::getNamaPengusul($item->dibuat_oleh) : '-',
                 'lampiran' => $item->lampiran ?? '-',
@@ -320,10 +322,10 @@ class KepalaSubController extends Controller
                 return $surat->jenisSurat ? $surat->jenisSurat->jenis_surat : '-';
             })
             ->addColumn('pengusul', function($surat) {
-                return $surat->dibuat_oleh ? PengusulHelper::getNamaPengusul($surat->dibuat_oleh) : '-';
+                return $surat->dibuat_oleh ? $surat->dibuatOleh->nama : '-';
             })
             ->addColumn('tanggal_pengajuan', function($surat) {
-                return date('d/m/Y', strtotime($surat->tanggal_pengajuan));
+                return date('d-m-Y', strtotime($surat->tanggal_pengajuan));
             })
             ->addColumn('status', function($surat) {
                 return $surat->statusTerakhir && $surat->statusTerakhir->statusSurat 
@@ -347,8 +349,6 @@ class KepalaSubController extends Controller
     public function approveSurat(Request $request, $id) {
         try {
             $surat = Surat::findOrFail($id);
-
-            // Get status IDs
             $statusDisetujui = StatusSurat::where('status_surat', 'Disetujui')->first();
             $statusMenungguPenerbitan = StatusSurat::where('status_surat', 'Menunggu Penerbitan')->first();
 
@@ -368,7 +368,9 @@ class KepalaSubController extends Controller
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusDisetujui->id_status_surat,
                 'tanggal_rilis' => $baseTime->copy()->addSecond(1),
-                'keterangan' => 'Disetujui oleh Kepala Sub'
+                'keterangan' => 'Disetujui oleh Kepala Sub',
+                'diubah_oleh' => auth('kepala_sub')->user()->id_kepala_sub,
+                'diubah_oleh_tipe' => 'kepala_sub',
             ]);
 
             // Step 2: Add "Menunggu Penerbitan" status (+2 detik dari status terakhir)
@@ -376,9 +378,10 @@ class KepalaSubController extends Controller
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusMenungguPenerbitan->id_status_surat,
                 'tanggal_rilis' => $baseTime->copy()->addSecond(2),
-                'keterangan' => 'Menunggu penerbitan oleh Staff'
+                'keterangan' => 'Menunggu penerbitan oleh Staff',
+                'diubah_oleh' => auth('kepala_sub')->user()->id_kepala_sub,
+                'diubah_oleh_tipe' => 'kepala_sub',
             ]);
-
             return response()->json(['success' => true, 'message' => 'Surat berhasil disetujui dan menunggu penerbitan']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
@@ -392,25 +395,147 @@ class KepalaSubController extends Controller
             if (!$statusDitolak) {
                 return response()->json(['success' => false, 'message' => 'Status Ditolak tidak ditemukan']);
             }
+            // Ambil riwayat status terakhir
+            $lastRiwayat = RiwayatStatusSurat::where('id_surat', $surat->id_surat)
+                ->orderBy('tanggal_rilis', 'desc')
+                ->first();
+            $baseTime = $lastRiwayat ? Carbon::parse($lastRiwayat->tanggal_rilis) : now();
             // Tambahkan riwayat status baru
             $riwayat = RiwayatStatusSurat::create([
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusDitolak->id_status_surat,
-                'tanggal_rilis' => now(),
-                'keterangan' => 'Ditolak oleh Kepala Sub'
+                'tanggal_rilis' => $baseTime->copy()->addSecond(1),
+                'keterangan' => 'Ditolak oleh Kepala Sub',
+                'diubah_oleh' => auth('kepala_sub')->id(),
+                'diubah_oleh_tipe' => 'kepala_sub',
             ]);
             // Simpan komentar jika ada
             if ($request->filled('komentar')) {
-                \App\Models\KomentarSurat::create([
+                KomentarSurat::create([
                     'id_riwayat_status_surat' => $riwayat->id,
                     'id_surat' => $surat->id_surat,
                     'id_user' => auth('kepala_sub')->id(),
                     'komentar' => $request->komentar,
                 ]);
             }
+            $pembuat = $surat->dibuatOleh; 
+
+            if ($pembuat) {
+                $pembuat->notify(new SuratDitolak($surat));
+            }
             return response()->json(['success' => true, 'message' => 'Surat berhasil ditolak']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
+    }
+
+    public function riwayatPersetujuan()
+    {
+        $statusOptions = [
+            '' => 'Semua Status',
+            'disetujui' => 'Disetujui',
+            'ditolak' => 'Ditolak',
+        ];
+        return view('kepalasub.riwayat-persetujuan', compact('statusOptions'));
+    }
+
+    public function riwayatPersetujuanData(Request $request)
+    {
+        $statusDisetujui = StatusSurat::where('status_surat', 'Disetujui')->first();
+        $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
+        
+        // Get current logged in kepala sub
+        $currentKepalaSub = Auth::guard('kepala_sub')->user();
+        
+        $query = Surat::with(['jenisSurat', 'dibuatOleh', 'riwayatStatus' => function($q) {
+            $q->with('statusSurat')->latest('tanggal_rilis');
+        }])
+        ->where('is_draft', 1)
+        ->where(function($q) use ($statusDisetujui, $statusDitolak) {
+            if ($statusDisetujui) {
+                $q->whereHas('riwayatStatus', function($subQ) use ($statusDisetujui) {
+                    $subQ->where('id_status_surat', $statusDisetujui->id_status_surat);
+                });
+            }
+            if ($statusDitolak) {
+                $q->orWhereHas('riwayatStatus', function($subQ) use ($statusDitolak) {
+                    $subQ->where('id_status_surat', $statusDitolak->id_status_surat);
+                });
+            }
+        })
+        // Only show surat that have been processed by current kepala sub
+        ->whereHas('riwayatStatus', function($q) use ($currentKepalaSub) {
+            $q->where('diubah_oleh', $currentKepalaSub->id_kepala_sub)
+              ->where('diubah_oleh_tipe', 'kepala_sub');
+        });
+
+        // Filter by status
+        $statusFilter = $request->input('status_filter');
+        if ($statusFilter) {
+            $statusId = null;
+            if ($statusFilter === 'Disetujui' && $statusDisetujui) {
+                $statusId = $statusDisetujui->id_status_surat;
+            } elseif ($statusFilter === 'Ditolak' && $statusDitolak) {
+                $statusId = $statusDitolak->id_status_surat;
+            }
+            
+            if ($statusId) {
+                $query->whereHas('riwayatStatus', function($q) use ($statusId, $currentKepalaSub) {
+                    $q->where('id_status_surat', $statusId)
+                      ->where('diubah_oleh', $currentKepalaSub->id_kepala_sub)
+                      ->where('diubah_oleh_tipe', 'kepala_sub');
+                });
+            }
+        }
+        $totalData = $query->count();
+
+        // Search functionality
+        $searchQuery = $request->input('search_query');
+        $searchValue = $request->input('search.value');
+        
+        if ($searchQuery) {
+            $query->where(function ($q) use ($searchQuery) {
+                $q->where('judul_surat', 'like', "%$searchQuery%")
+                  ->orWhere('nomor_surat', 'like', "%$searchQuery%")
+                  ->orWhereHas('dibuatOleh', function($subQ) use ($searchQuery) {
+                      $subQ->where('nama', 'like', "%$searchQuery%");
+                  });
+            });
+        } elseif ($searchValue) {
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('judul_surat', 'like', "%$searchValue%")
+                  ->orWhere('nomor_surat', 'like', "%$searchValue%")
+                  ->orWhereHas('dibuatOleh', function($subQ) use ($searchValue) {
+                      $subQ->where('nama', 'like', "%$searchValue%");
+                  });
+            });
+        }
+
+        $filterData = $query->count();
+
+        $surats = $query->skip($request->input('start'))->take($request->input('length'))->get();
+        
+        $data = $surats->map(function($item, $index) use ($request) {
+            $currentStatus = $item->riwayatStatus->first();
+
+            return [
+                'no' => '', 
+                'id' => $item->id_surat,
+                'nomor_surat' => $item->nomor_surat ?? '-',
+                'judul_surat' => $item->judul_surat ?? '-',
+                'tanggal_pengajuan' => $item->tanggal_pengajuan ? date('d-m-Y', strtotime($item->tanggal_pengajuan)) : '-',
+                'jenis_surat' => $item->jenisSurat ? $item->jenisSurat->jenis_surat : '-',
+                'pengusul' => $item->dibuat_oleh ? $item->dibuatOleh->nama : '-',
+                'lampiran' => $item->lampiran ?? '-',
+                'status' => $currentStatus ? $currentStatus->statusSurat->status_surat : '-'
+            ];
+        });
+
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $totalData,
+            'recordsFiltered' => $filterData,
+            'data' => $data,
+        ]);
     }
 } 

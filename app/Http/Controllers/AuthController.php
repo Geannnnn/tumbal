@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Log;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use App\Mail\ResetPasswordMail;
+use App\Models\Admin;
+use App\Models\KepalaSub;
+use App\Models\Pengusul;
+use App\Models\Staff;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -20,6 +24,8 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        
+
         $request->validate([
             'identity' => 'required|string',
             'password' => 'required|string|min:6',
@@ -68,6 +74,12 @@ class AuthController extends Controller
         if (Auth::guard('admin')->attempt($adminCredentials)) {
             $request->session()->regenerate();
             return redirect('/admin')->with('success', 'Berhasil login sebagai Admin!');
+        }
+
+        $direkturCredentials = ['nip' => $identity, 'password' => $password];
+        if (Auth::guard('direktur')->attempt($direkturCredentials)) {
+            $request->session()->regenerate();
+            return redirect('/direktur')->with('success', 'Berhasil login sebagai Direktur!');
         }
 
         $kepalaSubCredentials = ['nip' => $identity, 'password' => $password];
@@ -138,16 +150,16 @@ class AuthController extends Controller
 
         if (DB::table('pengusul')->where('email', $email)->exists()) {
             $broker = 'pengusuls';
-            $modelClass = \App\Models\Pengusul::class;
+            $modelClass = Pengusul::class;
         } elseif (DB::table('admin')->where('email', $email)->exists()) {
             $broker = 'admins';
-            $modelClass = \App\Models\Admin::class;
+            $modelClass = Admin::class;
         } elseif (DB::table('kepala_sub')->where('email', $email)->exists()) {
             $broker = 'kepala_subs';
-            $modelClass = \App\Models\KepalaSub::class;
+            $modelClass = KepalaSub::class;
         } elseif (DB::table('staff')->where('email', $email)->exists()) {
             $broker = 'staffs';
-            $modelClass = \App\Models\Staff::class;
+            $modelClass = Staff::class;
         } else {
             return back()->withErrors(['email' => 'Email tidak ditemukan.']);
         }

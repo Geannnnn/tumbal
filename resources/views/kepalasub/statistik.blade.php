@@ -9,7 +9,7 @@
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
-        @include('layouts.header')
+        @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
         
         <main class="flex-1 bg-white">
             <div class="bg-gradient-to-b from-white to-blue-50 h-full w-full px-9 py-8 flex-grow">

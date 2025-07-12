@@ -15,7 +15,7 @@ class CheckUserPrivileges
     public function handle(Request $request, Closure $next): Response
     {
         // Cek apakah ada user yang login di salah satu guard
-        $guards = ['pengusul', 'staff', 'admin', 'kepala_sub'];
+        $guards = ['pengusul', 'staff', 'admin', 'kepala_sub','direktur'];
         $user = null;
         $currentGuard = null;
 

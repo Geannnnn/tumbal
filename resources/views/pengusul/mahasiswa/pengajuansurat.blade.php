@@ -7,7 +7,7 @@
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col">
-        @include('layouts.header')
+        @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
         @include('components.alertnotif')
         <main class="flex-1 bg-white p-10">
             @yield('content')
@@ -28,7 +28,7 @@
                             <h1 class="text-[#6D727C] font-medium text-[18px] py-4">List Pengajuan Surat Politeknik Negeri Batam</h1>
         
                             <div class="flex justify-end py-4 pr-5">
-                                <x-form.search name="" id="custom-search" placeholder="Search..." bgColor="#D9DCE2" textColor="black" class="w-full" />
+                                <x-form.search name="" id="custom-search" placeholder="Cari Surat..." bgColor="#D9DCE2" textColor="black" class="w-full" />
                             </div>
                         </div>
                     </div>
@@ -57,6 +57,7 @@
                             :showEdit="false"
                             :showDelete="false"
                             :search="true"
+                            
                         />
                     </div>      
                 </div>
