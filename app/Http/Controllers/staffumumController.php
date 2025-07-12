@@ -178,7 +178,7 @@ class staffumumController extends Controller
             'endDate'
         ));
     }
-
+    
     public function terbitkan()
     {
         return view('staff.staff-umum.terbitkan');
