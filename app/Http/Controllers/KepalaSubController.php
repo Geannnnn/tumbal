@@ -356,18 +356,11 @@ class KepalaSubController extends Controller
                 return response()->json(['success' => false, 'message' => 'Status tidak ditemukan']);
             }
 
-            // Ambil tanggal_rilis terakhir dari riwayat status surat ini
-            $lastRiwayat = RiwayatStatusSurat::where('id_surat', $surat->id_surat)
-                ->orderBy('tanggal_rilis', 'desc')
-                ->first();
-
-            $baseTime = $lastRiwayat ? Carbon::parse($lastRiwayat->tanggal_rilis) : now();
-
             // Step 1: Add "Disetujui" status (+1 detik dari status terakhir)
             RiwayatStatusSurat::create([
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusDisetujui->id_status_surat,
-                'tanggal_rilis' => $baseTime->copy()->addSecond(1),
+                'tanggal_rilis' => now('Asia/Jakarta'),
                 'keterangan' => 'Disetujui oleh Kepala Sub',
                 'diubah_oleh' => auth('kepala_sub')->user()->id_kepala_sub,
                 'diubah_oleh_tipe' => 'kepala_sub',
@@ -377,7 +370,7 @@ class KepalaSubController extends Controller
             RiwayatStatusSurat::create([
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusMenungguPenerbitan->id_status_surat,
-                'tanggal_rilis' => $baseTime->copy()->addSecond(2),
+                'tanggal_rilis' => now('Asia/Jakarta')->addSeconds(1),
                 'keterangan' => 'Menunggu penerbitan oleh Staff',
                 'diubah_oleh' => auth('kepala_sub')->user()->id_kepala_sub,
                 'diubah_oleh_tipe' => 'kepala_sub',
@@ -399,12 +392,11 @@ class KepalaSubController extends Controller
             $lastRiwayat = RiwayatStatusSurat::where('id_surat', $surat->id_surat)
                 ->orderBy('tanggal_rilis', 'desc')
                 ->first();
-            $baseTime = $lastRiwayat ? Carbon::parse($lastRiwayat->tanggal_rilis) : now();
             // Tambahkan riwayat status baru
             $riwayat = RiwayatStatusSurat::create([
                 'id_surat' => $surat->id_surat,
                 'id_status_surat' => $statusDitolak->id_status_surat,
-                'tanggal_rilis' => $baseTime->copy()->addSecond(1),
+                'tanggal_rilis' => now('Asia/Jakarta'),
                 'keterangan' => 'Ditolak oleh Kepala Sub',
                 'diubah_oleh' => auth('kepala_sub')->id(),
                 'diubah_oleh_tipe' => 'kepala_sub',
