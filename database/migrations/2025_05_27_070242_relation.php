@@ -39,7 +39,6 @@ return new class extends Migration
         Schema::table('komentar_surat', function (Blueprint $table) {
             $table->foreign('id')->references('id')->on('riwayat_status_surat');
             $table->foreign('id_surat')->references('id_surat')->on('surat');
-            $table->foreign('id_user')->references('id')->on('users'); // sesuaikan dengan tabel user/staff anda
         });
     }
 
@@ -70,7 +69,7 @@ return new class extends Migration
         });
 
         Schema::table('komentar_surat', function (Blueprint $table) {
-            $table->dropForeign(['id_riwayat_status_surat']);
+            $table->dropForeign(['id']);
             $table->dropForeign(['id_surat']);
             $table->dropForeign(['id_user']);
         });

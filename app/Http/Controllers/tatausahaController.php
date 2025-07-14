@@ -350,6 +350,8 @@ class tatausahaController extends Controller
             });
         }
 
+        $query->orderBy("tanggal_pengajuan","asc");
+
         return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('judul_surat', function($row) {

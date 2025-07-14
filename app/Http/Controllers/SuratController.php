@@ -257,7 +257,7 @@ class SuratController extends Controller
 
         $rules = [
             'judul_surat' => 'required|string|max:255',
-            'lampiran' => 'nullable|file|mimes:pdf,jpeg,png,jpg,docx,xlsx|max:10240',
+            'lampiran' => 'nullable|file|mimes:pdf|max:10240',
             'tujuan_surat' => 'nullable|string|max:500',
         ];
         if (!$personalSurat) {
@@ -273,7 +273,9 @@ class SuratController extends Controller
             $rules['jenis_surat'] = 'required|exists:jenis_surat,id_jenis_surat';
             $rules['deskripsi'] = 'required|string|max:300';
         }
-        $request->validate($rules);
+        $request->validate($rules,[
+            'lampiran.mimes'=> 'Format file yang diterima hanya PDF',
+        ]);
 
         DB::beginTransaction();
         try {

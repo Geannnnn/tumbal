@@ -91,6 +91,21 @@
 
 @push('scripts')
 <script>
+    const toggle = document.getElementById("lampiranToggle");
+    const fileInputWrapper = document.getElementById("fileInputWrapper");
+
+    toggle.addEventListener("change", function () {
+        fileInputWrapper.classList.toggle("hidden", !this.checked);
+    });
+
+    const realFile = document.getElementById("real-file");
+    const fileName = document.getElementById("file-name");
+
+    realFile.addEventListener("change", function () {
+        fileName.textContent = this.files.length > 0 ? this.files[0].name : "Belum ada file";
+    });
+
+
     document.addEventListener('DOMContentLoaded', function() {
         const jenisSuratSelect = document.getElementById('jenis_surat');
         const tujuanSuratContainer = document.getElementById('tujuan-surat-container');
@@ -138,3 +153,6 @@
 </script>
 @endpush
 
+<script>
+    
+</script>
