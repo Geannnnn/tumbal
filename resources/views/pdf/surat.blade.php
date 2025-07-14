@@ -47,10 +47,6 @@
             <td>: {{ $surat->dibuatOleh->nama ?? '-' }}</td>
         </tr>
         <tr>
-            <td class="meta-label">Kepada</td>
-            <td>: Kepala Sub Bagian</td>
-        </tr>
-        <tr>
             <td class="meta-label">Perihal</td>
             <td>: {{ $surat->judul_surat }}</td>
         </tr>
@@ -59,7 +55,7 @@
     <div class="desc-content">{{ $surat->deskripsi ?: 'Tidak ada deskripsi' }}</div>
     <div class="ttd-container">
         <div class="ttd">
-            <div>Batam, {{ $today }}</div>
+            <div>Batam, {{ $tanggalSurat }}</div>
             <div class="nama">( ................................. )</div>
             <div class="jabatan">Kepala Sub Bagian</div>
         </div>
