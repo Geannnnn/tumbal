@@ -74,7 +74,7 @@ Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
             Route::get('/draft/data','draftData')->name('mahasiswa.draftData');
             Route::get('/draft', 'draft')->name('mahasiswa.draft');
             Route::get('/status', 'status')->name('mahasiswa.statussurat');
-            Route::get('/status/data', 'getStatusSuratData')->name('statusSurat.data');
+            Route::get('/status/data', 'getStatusSuratData')->name('mahasiswa.statussurat.data');
             Route::get('/setting', 'setting')->name('mahasiswa.setting');
             Route::get('/statussurat/{id}', 'showStatusSurat')->name('mahasiswa.statussurat.show');
             Route::get('/surat/{id}/download', 'downloadPdf')->name('mahasiswa.surat.downloadPdf');
@@ -93,7 +93,7 @@ Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
             Route::get('/draft/data','draftData')->name('dosen.draftData');
             Route::get('/draft', 'draft')->name('dosen.draft');
             Route::get('/status', 'status')->name('dosen.statussurat');
-            Route::get('/status/data', 'getStatusSuratData')->name('statusSurat.data');
+            Route::get('/status/data', 'getStatusSuratData')->name('dosen.statussurat.data');
             Route::get('/setting', 'setting')->name('dosen.setting');
             Route::get('/statussurat/{id}', 'showStatusSurat')->name('dosen.statussurat.show');
             Route::get('/surat/{id}/download', 'downloadPdf')->name('dosen.surat.downloadPdf');
@@ -149,25 +149,26 @@ Route::middleware(['multi-auth', 'check-privileges'])->group(function () {
     });
 
     // ======================= Admin =======================
-    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/', [adminController::class, 'index'])->name('dashboard');
-        Route::get('/search', [adminController::class, 'search'])->name('search');
-        Route::get('/kelola-pengusul', [adminController::class, 'kelolapengusul'])->name('kelolapengusul');
-        Route::get('/jenis-surat', [adminController::class, 'jenissurat'])->name('kelolajenissurat');
-        Route::post('/jenis-surat', [adminController::class, 'store'])->name('jenissurat.store');
-        Route::put('/jenis-surat/{id}', [adminController::class, 'update'])->name('jenissurat.update');
-        Route::delete('/jenis-surat/{id}', [adminController::class, 'destroy'])->name('jenissurat.destroy');
-        Route::get('/pengusul/data', [adminController::class, 'pengusulData'])->name('pengusul.data');
-        Route::get('/pengusul/{id}', [adminController::class, 'getPengusul'])->name('pengusul.get');
-        Route::post('/pengusul', [adminController::class, 'storePengusul'])->name('pengusul.store');
-        Route::put('/pengusul/{id}', [adminController::class, 'updatePengusul'])->name('pengusul.update');
-        Route::delete('/pengusul/{id}', [adminController::class, 'destroyPengusul'])->name('pengusul.destroy');
+    Route::middleware('role:admin')->prefix('admin')->controller(adminController::class)->name('admin.')->group(function () {
+        Route::get('/',  'index')->name('dashboard');
+        Route::get('/search',  'search')->name('search');
+        Route::get('/riwayat-pengajuan',  'riwayatPengajuan')->name('riwayatPengajuan');
+        Route::get('/kelola-pengusul',  'kelolapengusul')->name('kelolapengusul');
+        Route::get('/jenis-surat',  'jenissurat')->name('kelolajenissurat');
+        Route::post('/jenis-surat',  'store')->name('jenissurat.store');
+        Route::put('/jenis-surat/{id}',  'update')->name('jenissurat.update');
+        Route::delete('/jenis-surat/{id}',  'destroy')->name('jenissurat.destroy');
+        Route::get('/pengusul/data',  'pengusulData')->name('pengusul.data');
+        Route::get('/pengusul/{id}',  'getPengusul')->name('pengusul.get');
+        Route::post('/pengusul',  'storePengusul')->name('pengusul.store');
+        Route::put('/pengusul/{id}',  'updatePengusul')->name('pengusul.update');
+        Route::delete('/pengusul/{id}',  'destroyPengusul')->name('pengusul.destroy');
         
         // Status Surat CRUD
-        Route::get('/status-surat', [adminController::class, 'kelolaStatusSurat'])->name('kelolastatussurat');
-        Route::post('/status-surat', [adminController::class, 'storeStatusSurat'])->name('statussurat.store');
-        Route::put('/status-surat/{id}', [adminController::class, 'updateStatusSurat'])->name('statussurat.update');
-        Route::delete('/status-surat/{id}', [adminController::class, 'destroyStatusSurat'])->name('statussurat.destroy');
+        Route::get('/status-surat',  'kelolaStatusSurat')->name('kelolastatussurat');
+        Route::post('/status-surat',  'storeStatusSurat')->name('statussurat.store');
+        Route::put('/status-surat/{id}',  'updateStatusSurat')->name('statussurat.update');
+        Route::delete('/status-surat/{id}',  'destroyStatusSurat')->name('statussurat.destroy');
     });
 
     // ======================= Kepala Sub =======================

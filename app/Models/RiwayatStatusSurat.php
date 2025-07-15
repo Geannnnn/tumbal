@@ -58,7 +58,7 @@ class RiwayatStatusSurat extends Model
                     $pengusul = Pengusul::find($this->diubah_oleh);
                     return $pengusul ? $pengusul->nama : '-';
                 case 'staff':
-                    $staff = Staff::find($this->diubah_oleh);
+                    $staff = Staff::where('id_staff', $this->diubah_oleh)->first();
                     return $staff ? $staff->nama : '-';
                 case 'kepala_sub':
                     $kepalaSub = KepalaSub::find($this->diubah_oleh);

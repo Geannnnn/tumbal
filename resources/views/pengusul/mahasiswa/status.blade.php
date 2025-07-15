@@ -8,7 +8,7 @@
     subtitle="Riwayat dan tahapan status surat yang diajukan."
     :jenisSurat="$jenisSurat"
     :statusSurat="$StatusSurat"
-    :ajaxRoute="route('statusSurat.data')"
+    :ajaxRoute="route('mahasiswa.statussurat.data')"
     searchPlaceholder="Cari nama surat..."
 />
 @endsection

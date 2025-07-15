@@ -8,7 +8,7 @@
     subtitle=""
     :jenisSurat="$jenisSurat"
     :statusSurat="$StatusSurat"
-    :ajaxRoute="route('statusSurat.data')"
+    :ajaxRoute="route('dosen.statussurat.data')"
     searchPlaceholder="Cari status surat..."
 />
 @endsection

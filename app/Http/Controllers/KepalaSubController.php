@@ -29,26 +29,30 @@ class KepalaSubController extends Controller
         $suratDisetujui = 0;
         $suratDitolak = 0;
 
-        if ($statusMenungguPersetujuan) {
-            $suratDiterima = Surat::where('is_draft', 1)
-                ->whereHas('statusTerakhir.statusSurat', function($q){
-                    $q->where('status_surat', 'Diterbitkan');
-                })->count();
-        }
+        $currentKepalaSub = auth('kepala_sub')->user();
+        $suratDiterima = Surat::where('is_draft', 1)
+        ->whereHas('riwayatStatus', function($q) {
+            $q->where('id_status_surat', StatusSurat::where('status_surat', 'Menunggu Persetujuan')->first()->id_status_surat);
+        })
+        ->count();
 
         if ($statusDisetujui) {
             $suratDisetujui = Surat::where('is_draft', 1)
                 ->whereYear('tanggal_pengajuan', $currentYear)
-                ->whereHas('riwayatStatus', function($q) use ($statusDisetujui) {
-                    $q->where('id_status_surat', $statusDisetujui->id_status_surat);
+                ->whereHas('riwayatStatus', function($q) use ($statusDisetujui, $currentKepalaSub) {
+                    $q->where('id_status_surat', $statusDisetujui->id_status_surat)
+                      ->where('diubah_oleh_tipe', 'kepala_sub')
+                      ->where('diubah_oleh', $currentKepalaSub ? $currentKepalaSub->id_kepala_sub : 0);
                 })->count();
         }
 
         if ($statusDitolak) {
             $suratDitolak = Surat::where('is_draft', 1)
                 ->whereYear('tanggal_pengajuan', $currentYear)
-                ->whereHas('riwayatStatus', function($q) use ($statusDitolak) {
-                    $q->where('id_status_surat', $statusDitolak->id_status_surat);
+                ->whereHas('riwayatStatus', function($q) use ($statusDitolak, $currentKepalaSub) {
+                    $q->where('id_status_surat', $statusDitolak->id_status_surat)
+                      ->where('diubah_oleh_tipe', 'kepala_sub')
+                      ->where('diubah_oleh', $currentKepalaSub ? $currentKepalaSub->id_kepala_sub : 0);
                 })->count();
         }
 
@@ -81,27 +85,35 @@ class KepalaSubController extends Controller
             ]);
         }
 
+        $currentKepalaSub = auth('kepala_sub')->user();
+        $statusMenungguPersetujuan = StatusSurat::where('status_surat', 'Menunggu Persetujuan')->first();
+        $statusDisetujui = StatusSurat::where('status_surat', 'Disetujui')->first();
+        $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
+
         $query = Surat::with(['jenisSurat', 'dibuatOleh', 'riwayatStatus' => function($q) {
             $q->with('statusSurat')->latest('tanggal_rilis');
         }])
         ->where('is_draft', 1)
-        ->where(function($q) use ($statusMenungguPersetujuan, $statusDisetujui, $statusDitolak) {
-            // Show letters with current status "Menunggu Persetujuan"
-            $q->whereHas('riwayatStatus', function($subQ) use ($statusMenungguPersetujuan) {
-                $subQ->where('id_status_surat', $statusMenungguPersetujuan->id_status_surat);
+        ->where(function($q) use ($statusMenungguPersetujuan, $statusDisetujui, $statusDitolak, $currentKepalaSub) {
+            // Status terakhir Menunggu Persetujuan
+            $q->whereHas('statusTerakhir.statusSurat', function($subQ) use ($statusMenungguPersetujuan) {
+                $subQ->where('status_surat', 'Menunggu Persetujuan');
             })
-            // Or show letters that have been approved or rejected (as history)
-            ->orWhere(function($subQ) use ($statusDisetujui, $statusDitolak) {
-                if ($statusDisetujui) {
-                    $subQ->whereHas('riwayatStatus', function($subSubQ) use ($statusDisetujui) {
-                        $subSubQ->where('id_status_surat', $statusDisetujui->id_status_surat);
-                    });
-                }
-                if ($statusDitolak) {
-                    $subQ->orWhereHas('riwayatStatus', function($subSubQ) use ($statusDitolak) {
-                        $subSubQ->where('id_status_surat', $statusDitolak->id_status_surat);
-                    });
-                }
+            // Atau status terakhir Disetujui oleh kepala sub ini
+            ->orWhere(function($subQ) use ($statusDisetujui, $currentKepalaSub) {
+                $subQ->whereHas('statusTerakhir', function($stQ) use ($statusDisetujui, $currentKepalaSub) {
+                    $stQ->where('id_status_surat', $statusDisetujui ? $statusDisetujui->id_status_surat : 0)
+                        ->where('diubah_oleh_tipe', 'kepala_sub')
+                        ->where('diubah_oleh', $currentKepalaSub ? $currentKepalaSub->id_kepala_sub : 0);
+                });
+            })
+            // Atau status terakhir Ditolak oleh kepala sub ini
+            ->orWhere(function($subQ) use ($statusDitolak, $currentKepalaSub) {
+                $subQ->whereHas('statusTerakhir', function($stQ) use ($statusDitolak, $currentKepalaSub) {
+                    $stQ->where('id_status_surat', $statusDitolak ? $statusDitolak->id_status_surat : 0)
+                        ->where('diubah_oleh_tipe', 'kepala_sub')
+                        ->where('diubah_oleh', $currentKepalaSub ? $currentKepalaSub->id_kepala_sub : 0);
+                });
             });
         });
 

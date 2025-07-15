@@ -15,27 +15,99 @@ use Illuminate\Support\Facades\DB;
 
 class adminController extends Controller
 {
-    public function index () {
-
-        $suratDiterima = Surat::where('is_draft',0)
-            ->whereHas('statusTerakhir.statusSurat', function($q){
-                $q->where('status_surat', 'Diterbitkan');
-            })->count();
-
-        $suratDitolak = Surat::where('is_draft',0)->whereHas('riwayatStatus',function($q){
-            $q->where('id_status_surat',2);
+    public function index(Request $request)
+    {
+        // Statistik
+        $suratDiterima = Surat::where('is_draft', 1)->whereHas('statusTerakhir.statusSurat', function($q) {
+            $q->where('status_surat', 'Diterbitkan');
         })->count();
 
-        $notifikasiSurat = collect();
+        $suratDitolak = Surat::where('is_draft', 1)->whereHas('statusTerakhir.statusSurat', function($q) {
+            $q->where('status_surat', 'Ditolak');
+        })->count();
+
+        $totalSurat = Surat::where('is_draft', 1)->count();
 
         $columns = [
-            'nomor_surat' => "Nomor Surat",
-            'judul_surat' =>'Nama Surat', 
-            'tanggal_surat_dibuat' => 'Tanggal Terbit', 
-            'lampiran' => 'Dokumen', 
-            'tanggal_pengajuan' => 'Dibuat Pada'];
+            ['data' => 'no', 'title' => 'No'],
+            ['data' => 'nomor_surat', 'title' => 'Nomor Surat'],
+            ['data' => 'judul', 'title' => 'Judul'],
+            ['data' => 'nama_pengusul', 'title' => 'Pengusul'],
+            ['data' => 'status', 'title' => 'Status'],
+            ['data' => 'created_at', 'title' => 'Tanggal Pengajuan'],
+        ];
 
-        return view('admin.index',compact('columns','notifikasiSurat', 'suratDiterima', 'suratDitolak'));
+        return view('admin.index', compact('suratDiterima', 'suratDitolak', 'totalSurat', 'columns'));
+    }
+
+    // Server-side datatable untuk seluruh surat
+    public function search(Request $request)
+    {
+        $query = Surat::with(['statusTerakhir.statusSurat', 'dibuatOleh'])->where('is_draft', 1);
+
+        // Filter status jika ada
+        $status = $request->input('status');
+        if ($status && $status != 'all') {
+            $query->whereHas('statusTerakhir.statusSurat', function($q) use ($status) {
+                $q->where('status_surat', $status);
+            });
+        }
+
+        // Search (DataTables: $request->input('search.value'))
+        $search = $request->input('search.value');
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('judul_surat', 'like', "%$search%")
+                  ->orWhere('nomor_surat', 'like', "%$search%")
+                  ->orWhere('is_draft','1')
+                  ->orWhereHas('dibuatOleh', function($q2) use ($search) {
+                      $q2->where('nama', 'like', "%$search%")
+                         ->orWhere('nim', 'like', "%$search%")
+                         ->orWhere('nip', 'like', "%$search%")
+                         ->orWhere('email', 'like', "%$search%") ;
+                  });
+            });
+        }
+
+        $total = Surat::where('is_draft', 1)->count();
+        $filtered = $query->count();
+
+        // Pagination
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+        $data = $query->skip($start)->take($length)->get();
+
+        $result = $data->map(function($surat, $i) use ($start) {
+            return [
+                'no' => $start + $i + 1,
+                'nomor_surat' => $surat->nomor_surat ?? '-',
+                'judul' => $surat->judul_surat,
+                'nama_pengusul' => $surat->dibuatOleh->nama ?? '-',
+                'status' => optional(optional($surat->statusTerakhir)->statusSurat)->status_surat ?? '-',
+                'created_at' => $surat->tanggal_pengajuan ? date('d-m-Y', strtotime($surat->tanggal_pengajuan)) : '-',
+            ];
+        });
+
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => $total,
+            'recordsFiltered' => $filtered,
+            'data' => $result,
+        ]);
+    }
+
+    // Halaman riwayat pengajuan dengan filter status
+    public function riwayatPengajuan(Request $request)
+    {
+        $status = $request->get('status', 'all');
+        $columns = [
+            ['data' => 'nomor_surat', 'title' => 'Nomor Surat'],
+            ['data' => 'judul', 'title' => 'Judul'],
+            ['data' => 'nama_pengusul', 'title' => 'Pengusul'],
+            ['data' => 'status', 'title' => 'Status'],
+            ['data' => 'created_at', 'title' => 'Tanggal Pengajuan'],
+        ];
+        return view('admin.riwayat', compact('columns', 'status'));
     }
 
     public function kelolapengusul () {
@@ -127,7 +199,9 @@ class adminController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'jenis_surat' => 'required|string|max:255',
+            'jenis_surat' => 'required|string|max:255|unique:jenis_surat,jenis_surat',
+        ],[
+            'jenis_surat.unique' => 'Jenis Surat sudah ada',
         ]);
 
         JenisSurat::create([
@@ -140,7 +214,9 @@ class adminController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'jenis_surat' => 'required|string|max:255',
+            'jenis_surat' => 'required|string|max:255|unique:jenis_surat,jenis_surat',
+        ],[
+            'jenis_surat.unique' => 'Jenis Surat sudah ada',
         ]);
 
         try {

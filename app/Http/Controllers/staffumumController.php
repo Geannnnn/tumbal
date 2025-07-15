@@ -386,15 +386,33 @@ class staffumumController extends Controller
 
     public function terbitkanSurat(Request $request, $id)
     {
-        $request->validate([
-            'nomor_surat' => 'required|string|max:255',
-        ]);
         $surat = Surat::findOrFail($id);
         $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
         if (!$statusDiterbitkan) {
             return back()->with('error', 'Status Diterbitkan tidak ditemukan!');
         }
-        $surat->nomor_surat = $request->nomor_surat;
+        // Generate nomor surat otomatis
+        $tahun = now('Asia/Jakarta')->year;
+        $jenisSurat = $surat->jenisSurat;
+        $lastSurat = Surat::where('id_jenis_surat', $surat->id_jenis_surat)
+            ->whereYear('tanggal_surat_dibuat', $tahun)
+            ->whereNotNull('nomor_surat')
+            ->orderByDesc('tanggal_surat_dibuat')
+            ->orderByDesc('id_surat')
+            ->first();
+        $lastNumber = 0;
+        if ($lastSurat && preg_match('/^(\d{3})\//', $lastSurat->nomor_surat, $matches)) {
+            $lastNumber = (int)$matches[1];
+        }
+        $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+        // Singkatan jenis surat: huruf depan tiap kata
+        $singkatan = collect(explode(' ', $jenisSurat->jenis_surat))->map(function($word) {
+            return strtoupper(substr($word, 0, 1));
+        })->implode('');
+        // Gabungkan tanggal, bulan, jam, menit, detik tanpa pemisah
+        $tanggalJamDetik = now('Asia/Jakarta')->format('dmHis'); // ddmmHHMMSS
+        $nomorSurat = "$newNumber/$singkatan/$tanggalJamDetik/$tahun";
+        $surat->nomor_surat = $nomorSurat;
         $surat->tanggal_surat_dibuat = now('Asia/Jakarta')->toDateString();
         $surat->save();
         $lastRiwayat = RiwayatStatusSurat::where('id_surat', $surat->id_surat)
@@ -409,7 +427,6 @@ class staffumumController extends Controller
             'diubah_oleh' => auth('staff')->id(),
             'diubah_oleh_tipe' => 'staff',
         ]);
-
         // Trigger notifikasi ke semua pengusul dan pembuat surat
         foreach ($surat->pengusul as $pengusul) {
             $pengusul->notify(new SuratDiterbitkan($surat));
@@ -417,7 +434,6 @@ class staffumumController extends Controller
         if ($surat->dibuatOleh && !$surat->pengusul->contains('id_pengusul', $surat->dibuat_oleh)) {
             $surat->dibuatOleh->notify(new SuratDiterbitkan($surat));
         }
-
         return redirect()->route('staffumum.terbitkan')->with('success', 'Surat berhasil diterbitkan!');
     }
 

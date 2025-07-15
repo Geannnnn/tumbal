@@ -7,7 +7,6 @@ use App\Models\PivotPengusulSurat;
 use App\Models\StatusSurat;
 use App\Models\Surat;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use App\Models\Pengusul;
@@ -15,9 +14,11 @@ use App\Models\RiwayatStatusSurat;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use App\Helpers\PengusulHelper;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Notifications\SuratDiterbitkan;
 use Illuminate\Notifications\DatabaseNotification;
+use Barryvdh\Snappy\Facades\SnappyPdf;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class mahasiswaController extends Controller
 {   
@@ -438,30 +439,77 @@ class mahasiswaController extends Controller
         }
 
 
-    public function downloadPdf($id)
-    {
-        $surat = Surat::with(['dibuatOleh', 'jenisSurat', 'statusTerakhir.statusSurat'])->findOrFail($id);
-        $tanggalSurat = $surat->tanggal_surat_dibuat ? Carbon::parse($surat->tanggal_surat_dibuat)->translatedFormat('d-m-Y') : '-';
-        $tanggalPengajuan = $surat->tanggal_pengajuan ? Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('d-m-Y') : '-';
-        $today = Carbon::now()->translatedFormat('d-m-Y');
-        $pdf = Pdf::loadView('pdf.surat', [
-            'surat' => $surat,
-            'tanggalSurat' => $tanggalSurat,
-            'tanggalPengajuan' => $tanggalPengajuan,
-            'today' => $today
-        ]);
-        $jenisSurat = $surat->jenisSurat->jenis_surat ?? 'Surat';
-        $namaPengusul = $surat->dibuatOleh->nama ?? 'Pengusul';
-        $tanggalSuratDibuat = $surat->tanggal_surat_dibuat 
-            ? Carbon::parse($surat->tanggal_surat_dibuat)->format('Y-m-d') 
-            : now()->format('Y-m-d');
-        $nomor = $surat->nomor_surat ?? 'no-nomor';
+        public function downloadPdf($id)
+        {
+            $surat = Surat::with([
+                'dibuatOleh',
+                'jenisSurat',
+                'statusTerakhir.statusSurat',
+                'pengusul'
+            ])->findOrFail($id);
 
-        $filename = Str::slug($jenisSurat) . '_' . 
-                    Str::slug($namaPengusul) . '_' . 
-                    $tanggalSuratDibuat . '_' . 
-                    Str::slug($nomor) . '.pdf';
-        return $pdf->stream($filename);
+            $tanggalSurat = $surat->tanggal_surat_dibuat
+            ? Carbon::parse($surat->tanggal_surat_dibuat)->translatedFormat('l, d F Y')
+            : '-';
+            $tanggalPengajuan = $surat->tanggal_pengajuan
+            ? Carbon::parse($surat->tanggal_pengajuan)->translatedFormat('l, d F Y')
+            : '-';
+            $today = Carbon::now()->translatedFormat('d-m-Y');
+
+            // --- Generate QR Pengaju & Kepala Sub (SVG) ---
+            $qrDir = storage_path('app/public');
+            if (!file_exists($qrDir)) {
+                mkdir($qrDir, 0777, true);
+            }
+            $qrPengajuPath = $qrDir . '/qr_pengaju.png';
+            $this->generateQrPNG($surat->dibuatOleh->nama ?? '-', $qrPengajuPath);
+
+            $qrKepalaSubPath = $qrDir . '/qr_kepalasub.png';
+            $this->generateQrPNG('https://tte.polibatam.ac.id/index.php?page=qrsign&id=UWtZZ1RNUkdldFU9', $qrKepalaSubPath);
+
+            $qrPengajuSVG = file_exists($qrPengajuPath) ? file_get_contents($qrPengajuPath) : '';
+            $qrKepalaSubSVG = file_exists($qrKepalaSubPath) ? file_get_contents($qrKepalaSubPath) : '';
+
+            $qrPengajuSVG = $this->cleanSVG($qrPengajuSVG);
+            $qrKepalaSubSVG = $this->cleanSVG($qrKepalaSubSVG);
+
+            $jenisSurat = $surat->jenisSurat->jenis_surat ?? 'Surat';
+            $namaPengusul = $surat->dibuatOleh->nama ?? 'Pengusul';
+            $tanggalSuratDibuat = $surat->tanggal_surat_dibuat 
+                ? Carbon::parse($surat->tanggal_surat_dibuat)->format('Y-m-d') 
+                : now()->format('Y-m-d');
+            $nomor = $surat->nomor_surat ?? 'no-nomor';
+
+            $filename = Str::slug($jenisSurat) . '_' . 
+                        Str::slug($namaPengusul) . '_' . 
+                        $tanggalSuratDibuat . '_' . 
+                        Str::slug($nomor) . '.pdf';
+
+            $pdf = Pdf::loadView('pdf.surat', [
+                'surat' => $surat,
+                'tanggalSurat' => $tanggalSurat,
+                'tanggalPengajuan' => $tanggalPengajuan,
+                'today' => $today,
+                'qrPengajuSVG' => $qrPengajuSVG,
+                'qrKepalaSubSVG' => $qrKepalaSubSVG,
+            ]);
+            return $pdf->download($filename);
+        }
+
+        private function generateQrPNG($data, $filename)
+        {
+            $options = new QROptions([
+                'outputType' => QRCode::OUTPUT_IMAGE_PNG,
+                'eccLevel' => QRCode::ECC_L,
+                'scale' => 5, // bisa disesuaikan
+            ]);
+        
+            (new QRCode($options))->render($data, $filename);
+        }
+
+    private function cleanSVG($svg)
+    {
+        return preg_replace('/<\\?xml.*?\\?>/', '', $svg);
     }
 
 }

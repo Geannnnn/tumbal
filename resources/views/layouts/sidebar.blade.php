@@ -62,6 +62,7 @@
             <x-sidebar-link route="admin.kelolapengusul" icon="fa-users" label="Kelola Pengusul" />
             <x-sidebar-link route="admin.kelolajenissurat" icon="fa-folder-open" label="Kelola Jenis Surat" />
             <x-sidebar-link route="admin.kelolastatussurat" icon="fa-square-check" label="Kelola Status Surat" />
+            <x-sidebar-link route="admin.riwayatPengajuan" icon="fa-history" label="Riwayat Pengajuan" />
         @endif
 
         {{-- Kepala Sub --}}

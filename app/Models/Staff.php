@@ -27,4 +27,5 @@ class Staff extends Authenticatable implements CanResetPassword
     {
         return 'nip';
     }
+
 }

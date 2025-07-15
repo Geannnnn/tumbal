@@ -107,15 +107,15 @@
 </div>
 
 <!-- Modal Tolak -->
-<div id="modalTolak" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+<div id="modalTolak" class="fixed inset-0 z-50 flex items-center justify-center bg-opacity-40 backdrop-blur-sm hidden transition-opacity duration-300 ease-in-out">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
         <h2 class="text-lg font-bold mb-4">Tolak Surat</h2>
         <form id="form-tolak" action="{{ route('tatausaha.surat.tolak', $surat->id_surat) }}" method="POST">
             @csrf
             <textarea name="komentar" required class="w-full border rounded p-2 mb-4" rows="4" placeholder="Tulis alasan penolakan..."></textarea>
             <div class="flex justify-end gap-2">
-                <button type="button" onclick="closeTolakModal()" class="px-4 py-2 bg-gray-200 rounded">Batal</button>
-                <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded">Kirim</button>
+                <button type="button" onclick="closeTolakModal()" class="cursor-pointer px-5 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg focus:ring-4 focus:outline-none focus:ring-rose-300 transition-all duration-300 hover:scale-110">Batal</button>
+                <button type="submit" onclick="this.disabled=true;this.form.submit()" class="cursor-pointer px-5 py-2 text-sm font-medium text-white bg-rose-600 rounded-lg hover:bg-rose-700 focus:ring-4 focus:outline-none focus:ring-rose-300 transition-all duration-300 hover:scale-110">Kirim</button>
             </div>
         </form>
     </div>

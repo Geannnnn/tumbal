@@ -95,7 +95,7 @@ class PengusulHelper
                     }
                     return '-';
                 case 'staff':
-                    $staff = Staff::find($id_user);
+                    $staff = Staff::where('id_staff', $id_user)->first();
                     if ($staff) {
                         $identifier = $staff->nip ? "| {$staff->nip}" : '';
                         return $identifier ? "{$staff->nama} {$identifier}" : $staff->nama;
