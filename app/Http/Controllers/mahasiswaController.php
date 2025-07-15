@@ -22,58 +22,69 @@ use Illuminate\Notifications\DatabaseNotification;
 class mahasiswaController extends Controller
 {   
 
-    public function index () {
-        $user = auth('pengusul')->id();
-        $statusDiterima = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+    public function index()
+{
+    $user = auth('pengusul')->id();
 
-        if ($statusDiterima) {
-            $suratDiterima = Surat::where('is_draft', 1)
-                ->whereNotNull('nomor_surat')
-                ->whereHas('riwayatStatus', function($q) use ($statusDiterima) {
-                    $q->where('id_status_surat', $statusDiterima->id_status_surat);
-                })
-                ->whereHas('pengusul', function ($q) use ($user) {
-                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
-                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
-                })
-                ->count();
-        } else {
-            $suratDiterima = 0;
-        }
+    $statusDiterima = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+    $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
 
-        $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
-
-        if ($statusDitolak) {
-            $suratDitolak = Surat::where('is_draft', 1)
-                ->whereYear('tanggal_surat_dibuat', date('Y')) // Default tahun saat ini
-                ->whereHas('riwayatStatus', function($q) use ($statusDitolak) {
-                    $q->where('id_status_surat', $statusDitolak->id_status_surat);
+    // Hitung surat DITERIMA
+    $suratDiterima = 0;
+    if ($statusDiterima) {
+        $suratDiterima = Surat::whereNotNull('nomor_surat')
+            ->whereHas('statusTerakhir', function ($q) use ($statusDiterima) {
+                $q->where('id_status_surat', $statusDiterima->id_status_surat);
+            })
+            ->where(function ($q) use ($user) {
+                $q->whereHas('pengusul', function ($q2) use ($user) {
+                    $q2->where('pivot_pengusul_surat.id_pengusul', $user)
+                        ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
                 })
-                ->whereHas('pengusul', function ($q) use ($user) {
-                    $q->where('pivot_pengusul_surat.id_pengusul', $user)
-                      ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
-                })
-                ->count();
-        } else {
-            $suratDitolak = 0;
-        }
+                ->orWhere('dibuat_oleh', $user); // Tambahan untuk surat personal
+            })
+            ->count();
+    }
 
-        $notifikasiSurat = DatabaseNotification::where('notifiable_type', Pengusul::class)
-        ->where('notifiable_id', auth('pengusul')->id())
+    // Hitung surat DITOLAK
+    $suratDitolak = 0;
+    if ($statusDitolak) {
+        $suratDitolak = Surat::whereHas('statusTerakhir', function ($q) use ($statusDitolak) {
+                $q->where('id_status_surat', $statusDitolak->id_status_surat);
+            })
+            ->where(function ($q) use ($user) {
+                $q->whereHas('pengusul', function ($q2) use ($user) {
+                    $q2->where('pivot_pengusul_surat.id_pengusul', $user)
+                        ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
+                })
+                ->orWhere('dibuat_oleh', $user); // Tambahan untuk surat personal
+            })
+            ->count();
+    }
+
+    $notifikasiSurat = DatabaseNotification::where('notifiable_type', Pengusul::class)
+        ->where('notifiable_id', $user)
         ->latest()
         ->limit(5)
         ->get();
 
-        $columns = [
-            'no' => "No",
-            'nomor_surat' => "Nomor Surat",
-            'judul_surat' =>'Nama Surat', 
-            'tanggal_surat_dibuat' => 'Tanggal Terbit', 
-            'lampiran' => 'Dokumen', 
-            'tanggal_pengajuan' => 'Dibuat Pada'];
+    $columns = [
+        'no' => "No",
+        'nomor_surat' => "Nomor Surat",
+        'judul_surat' => 'Nama Surat',
+        'tanggal_surat_dibuat' => 'Tanggal Terbit',
+        'lampiran' => 'Dokumen',
+        'tanggal_pengajuan' => 'Dibuat Pada'
+    ];
 
-            return view('pengusul.mahasiswa.index', compact('columns','suratDiterima','suratDitolak','notifikasiSurat'));
-    }
+    return view('pengusul.mahasiswa.index', compact(
+        'columns',
+        'suratDiterima',
+        'suratDitolak',
+        'notifikasiSurat'
+    ));
+}
+
 
     public function pengajuan() {
         $columns = [
@@ -234,7 +245,8 @@ class mahasiswaController extends Controller
             $q->with('statusSurat')->latest('tanggal_rilis');
         }])
         ->whereYear('tanggal_pengajuan', $request->input('year', date('Y')))
-        ->where('is_draft', 1);
+        ->where('is_draft', 1)
+        ->orderBy('id_surat','desc');
 
     if ($guard === 'pengusul') {
         $query->where('dibuat_oleh', $user->id_pengusul);
@@ -296,7 +308,7 @@ class mahasiswaController extends Controller
                 $oleh = PengusulHelper::getNamaPengusul($surat->dibuat_oleh);
             }
             
-            $tanggal = \Carbon\Carbon::parse($item->tanggal_rilis)->translatedFormat('j-m-Y H:i');
+            $tanggal = Carbon::parse($item->tanggal_rilis)->translatedFormat('j-m-Y H:i');
             
             // Tentukan warna berdasarkan status
             $warna = 'bg-purple-500'; // default
