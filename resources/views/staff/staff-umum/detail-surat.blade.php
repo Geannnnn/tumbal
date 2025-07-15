@@ -64,10 +64,6 @@
                         </div>
                         @endif
                         <div class="grid grid-cols-12">
-                            <span class="col-span-3 font-medium">Kepada</span>
-                            <span class="col-span-9">: Kepala Sub Bagian</span>
-                        </div>
-                        <div class="grid grid-cols-12">
                             <span class="col-span-3 font-medium">Perihal</span>
                             <span class="col-span-9">: {{ $surat->judul_surat }}</span>
                         </div>

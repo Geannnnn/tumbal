@@ -11,40 +11,45 @@
 
     <div class="flex-1 flex flex-col">
         @include('layouts.header', ['notifikasiSurat' => $notifikasiSurat ?? collect([])])
-        <main class="flex-1 bg-gray-50 p-4 sm:p-6 md:p-8 lg:p-10">
-            <div class="max-w-full mx-auto">
-                <h1 class="text-2xl font-bold text-gray-800 mb-6">Terbitkan Surat</h1>
-                <p class="text-gray-600 mb-8">Halaman untuk menerbitkan surat dari dosen yang telah disetujui.</p>
-                
+        <main class="flex-1 bg-gray-50 p-6">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <!-- Header Section -->
+                <div class="mb-6">
+                    <h1 class="text-2xl font-semibold">Terbitkan Surat</h1>
+                    <p class="text-gray-600 mt-1">Halaman untuk menerbitkan surat dari dosen yang telah disetujui.</p>
+                </div>
                 <!-- Data Table Section -->
                 <div id="data-table-section" class="mb-8 w-full" style="display: none;">
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h2 class="text-lg font-semibold text-gray-800 mb-4">Surat Menunggu Penerbitan</h2>
-                        <div class="overflow-x-auto w-full">
-                            <table id="terbitkan-table" class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul Surat</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis Surat</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosen</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Pengajuan</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="overflow-x-auto">
+                        <x-datatable
+                            id="terbitkan-table"
+                            :columns="[
+                                'DT_RowIndex' => 'No',
+                                'judul_surat' => 'Judul Surat',
+                                'jenis_surat' => 'Jenis Surat',
+                                'dosen' => 'Dosen',
+                                'tanggal_pengajuan' => 'Tanggal Pengajuan',
+                                'actions' => 'Aksi'
+                            ]"
+                            ajaxUrl="{{ route('staffumum.terbitkan.data') }}"
+                            :ordering="false"
+                            :lengthMenu="false"
+                            :manual-init="true"
+                            :pageLength="10"
+                        />
                     </div>
                 </div>
-
                 <!-- Information Section -->
-                <div id="info-section" class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <h2 class="text-lg font-semibold text-blue-800 mb-4">Informasi</h2>
-                    <p class="text-blue-700">
-                        Surat yang telah disetujui akan dapat diterbitkan melalui halaman ini.
-                    </p>
+                <div id="info-section" class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-8 text-center">
+                    <div class="flex flex-col items-center">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-b from-blue-500 to-blue-600 flex items-center justify-center mb-4 shadow-lg">
+                            <i class="fa-solid fa-file-circle-check text-white text-3xl"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-blue-800 mb-3">Belum Ada Surat untuk Diterbitkan</h2>
+                        <p class="text-blue-700 max-w-md">
+                            Surat yang telah disetujui akan muncul di halaman ini untuk dapat diterbitkan.
+                        </p>
+                    </div>
                 </div>
             </div>
         </main>

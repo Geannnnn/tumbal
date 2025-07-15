@@ -27,36 +27,37 @@ class tatausahaController extends Controller
             'status' => 'Status', 
         ];
 
-        // Get jenis surat IDs for Tata Usaha letter types (Surat Tugas, Surat Undangan Kegiatan, Surat Izin Tidak Masuk)
-        $jenisSuratIds = JenisSurat::whereIn('jenis_surat', ['Surat Tugas', 'Surat Undangan Kegiatan', 'Surat Izin Tidak Masuk'])->pluck('id_jenis_surat');
-        
-        // Get role dosen ID
-        $roleDosen = RolePengusul::where('role', 'Mahasiswa')->first();
-        
-        // Get status IDs
-        $statusDiajukan = StatusSurat::where('status_surat', 'Diajukan')->first();
+        // Jenis surat sesuai permintaan
+        $jenisSuratIds = JenisSurat::whereIn('jenis_surat', ['Surat Permohonan', 'Surat Pengantar', 'Surat Cuti Akademik'])->pluck('id_jenis_surat');
+        $roleMahasiswa = RolePengusul::where('role', 'Mahasiswa')->first();
+        $statusMenunggu = StatusSurat::where('status_surat', 'Diajukan')->first();
         $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
 
-        // Calculate surat diterima (letters from dosen with specific types)
+        // Surat diterima: status terakhir 'Menunggu Persetujuan'
         $suratDiterima = 0;
-        if ($roleDosen && $statusDiajukan) {
+        if ($roleMahasiswa && $statusMenunggu) {
             $suratDiterima = Surat::where('is_draft', 1)
                 ->whereIn('id_jenis_surat', $jenisSuratIds)
-                ->whereHas('dibuatOleh', function($q) use ($roleDosen) {
-                    $q->where('id_role_pengusul', $roleDosen->id_role_pengusul);
+                ->whereHas('dibuatOleh', function($q) use ($roleMahasiswa) {
+                    $q->where('id_role_pengusul', $roleMahasiswa->id_role_pengusul);
                 })
-                ->whereHas('riwayatStatus', function($q) use ($statusDiajukan) {
-                    $q->where('id_status_surat', $statusDiajukan->id_status_surat);
+                ->whereHas('statusTerakhir', function($q) use ($statusMenunggu) {
+                    $q->where('id_status_surat', $statusMenunggu->id_status_surat);
                 })
                 ->count();
         }
 
-        // Calculate surat ditolak (all rejected letters)
+        // Surat ditolak: status terakhir 'Ditolak' dan diubah_oleh_tipe = 'staff'
         $suratDitolak = 0;
-        if ($statusDitolak) {
+        if ($roleMahasiswa && $statusDitolak) {
             $suratDitolak = Surat::where('is_draft', 1)
-                ->whereHas('riwayatStatus', function($q) use ($statusDitolak) {
-                    $q->where('id_status_surat', $statusDitolak->id_status_surat);
+                ->whereIn('id_jenis_surat', $jenisSuratIds)
+                ->whereHas('dibuatOleh', function($q) use ($roleMahasiswa) {
+                    $q->where('id_role_pengusul', $roleMahasiswa->id_role_pengusul);
+                })
+                ->whereHas('statusTerakhir', function($q) use ($statusDitolak) {
+                    $q->where('id_status_surat', $statusDitolak->id_status_surat)
+                      ->where('diubah_oleh_tipe', 'staff');
                 })
                 ->count();
         }
@@ -695,7 +696,7 @@ class tatausahaController extends Controller
             'id_status_surat' => $statusDiterbitkan->id_status_surat,
             'tanggal_rilis' => $baseTime->copy()->addSecond(1),
             'keterangan' => 'Diterbitkan oleh Tata Usaha',
-            'diubah_oleh' => auth('staff')->id(),
+            'diubah_oleh' => auth('staff')->user()->id_staff,
             'diubah_oleh_tipe' => 'staff',
         ]);
         // Trigger notifikasi ke semua pengusul dan pembuat surat
@@ -708,7 +709,7 @@ class tatausahaController extends Controller
 
 
 
-        return redirect()->route('staffumum.terbitkan')->with('success', 'Surat berhasil diterbitkan!');
+        return redirect()->route('tatausaha.terbitkan')->with('success', 'Surat berhasil diterbitkan!');
     }
 
     // Contoh penggunaan function GetNamaPengusul

@@ -2,7 +2,7 @@
 
 @include('components.alertnotif')
 
-@section('title','Terbitkan Surat - Staff Umum')
+@section('title','Terbitkan Surat - Tata Usaha')
 
 @section('content')
 <div class="flex h-screen bg-gray-50 ml-[250px] overflow-x-hidden">
@@ -13,7 +13,7 @@
         <main class="flex-1 p-4 sm:p-6 md:p-8 lg:p-10">
             <div class="container mx-auto">
                 @if(!$surat->nomor_surat || optional($surat->statusTerakhir->statusSurat)->status_surat !== 'Diterbitkan')
-                <form id="form-terbitkan" action="{{ route('staffumum.terbitkan.surat', $surat->id_surat) }}" method="POST">
+                <form id="form-terbitkan" action="{{ route('tatausaha.surat.terbitkan', $surat->id_surat) }}" method="POST">
                     @csrf
                 @endif
                 
@@ -35,7 +35,7 @@
                     @endif
                     
                     <!-- Kembali -->
-                    <a href="{{ route('staffumum.terbitkan') }}"
+                    <a href="{{ route('tatausaha.terbitkan') }}"
                     class="inline-block px-5 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-all duration-300 hover:scale-110">
                         Kembali
                     </a>

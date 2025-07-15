@@ -27,27 +27,26 @@ class mahasiswaController extends Controller
 {
     $user = auth('pengusul')->id();
 
-    $statusDiterima = StatusSurat::where('status_surat', 'Diterbitkan')->first();
+    $statusDiterbitkan = StatusSurat::where('status_surat', 'Diterbitkan')->first();
     $statusDitolak = StatusSurat::where('status_surat', 'Ditolak')->first();
 
-    // Hitung surat DITERIMA
+    // Hitung surat DITERIMA (status terakhir Diterbitkan)
     $suratDiterima = 0;
-    if ($statusDiterima) {
-        $suratDiterima = Surat::whereNotNull('nomor_surat')
-            ->whereHas('statusTerakhir', function ($q) use ($statusDiterima) {
-                $q->where('id_status_surat', $statusDiterima->id_status_surat);
+    if ($statusDiterbitkan) {
+        $suratDiterima = Surat::whereHas('statusTerakhir', function ($q) use ($statusDiterbitkan) {
+            $q->where('id_status_surat', $statusDiterbitkan->id_status_surat);
+        })
+        ->where(function ($q) use ($user) {
+            $q->whereHas('pengusul', function ($q2) use ($user) {
+                $q2->where('pivot_pengusul_surat.id_pengusul', $user)
+                    ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
             })
-            ->where(function ($q) use ($user) {
-                $q->whereHas('pengusul', function ($q2) use ($user) {
-                    $q2->where('pivot_pengusul_surat.id_pengusul', $user)
-                        ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
-                })
-                ->orWhere('dibuat_oleh', $user); // Tambahan untuk surat personal
-            })
-            ->count();
+            ->orWhere('dibuat_oleh', $user);
+        })
+        ->count();
     }
 
-    // Hitung surat DITOLAK
+    // Hitung surat DITOLAK (status terakhir Ditolak)
     $suratDitolak = 0;
     if ($statusDitolak) {
         $suratDitolak = Surat::whereHas('statusTerakhir', function ($q) use ($statusDitolak) {
@@ -58,7 +57,7 @@ class mahasiswaController extends Controller
                     $q2->where('pivot_pengusul_surat.id_pengusul', $user)
                         ->whereIn('pivot_pengusul_surat.id_peran_keanggotaan', [1, 2]);
                 })
-                ->orWhere('dibuat_oleh', $user); // Tambahan untuk surat personal
+                ->orWhere('dibuat_oleh', $user);
             })
             ->count();
     }
